@@ -4,6 +4,7 @@ import { useOutletContext } from 'react-router-dom';
 import userService from '../../services/userService';
 import VerificationComponent from '../../components/VerificationComponent';
 import ProfileSettings from '../../components/ProfileSettings';
+import UserBookings from '../../components/UserBookings';
 
 const UserDashboard = () => {
   const { user } = useAuth();
@@ -127,6 +128,9 @@ const UserDashboard = () => {
             onProfileUpdate={handleProfileUpdate}
           />
         );
+      
+      case 'bookings':
+        return <UserBookings />;
       
       default:
         return null;

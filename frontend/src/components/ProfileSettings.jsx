@@ -15,13 +15,15 @@ const ProfileSettings = ({ user, onProfileUpdate }) => {
       country: ''
     }
   });
+  const [originalData, setOriginalData] = useState({});
+  const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (user) {
-      setFormData({
+      const userData = {
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         email: user.email || '',
@@ -33,7 +35,9 @@ const ProfileSettings = ({ user, onProfileUpdate }) => {
           zipCode: user.address?.zipCode || '',
           country: user.address?.country || ''
         }
-      });
+      };
+      setFormData(userData);
+      setOriginalData(userData);
     }
   }, [user]);
 
@@ -57,6 +61,16 @@ const ProfileSettings = ({ user, onProfileUpdate }) => {
     }
   };
 
+  const handleEditToggle = () => {
+    if (isEditing) {
+      // Cancel editing - revert to original data
+      setFormData(originalData);
+      setError('');
+      setMessage('');
+    }
+    setIsEditing(!isEditing);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -68,6 +82,8 @@ const ProfileSettings = ({ user, onProfileUpdate }) => {
       
       if (response.success) {
         setMessage('Profile updated successfully!');
+        setOriginalData(formData); // Update original data with new changes
+        setIsEditing(false); // Exit edit mode after successful update
         // Notify parent component to refresh user data
         if (onProfileUpdate) {
           onProfileUpdate();
@@ -85,7 +101,18 @@ const ProfileSettings = ({ user, onProfileUpdate }) => {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-semibold text-primary mb-6">Profile Settings</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-semibold text-primary">Profile Settings</h2>
+        {!isEditing && (
+          <button
+            type="button"
+            onClick={handleEditToggle}
+            className="bg-primary hover:bg-primary/90 text-white font-semibold py-2 px-4 rounded-md transition-colors"
+          >
+            Edit Profile
+          </button>
+        )}
+      </div>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Personal Information */}
@@ -102,7 +129,10 @@ const ProfileSettings = ({ user, onProfileUpdate }) => {
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                readOnly={!isEditing}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${
+                  !isEditing ? 'bg-gray-100 cursor-not-allowed' : ''
+                }`}
                 required
               />
             </div>
@@ -117,7 +147,10 @@ const ProfileSettings = ({ user, onProfileUpdate }) => {
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                readOnly={!isEditing}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${
+                  !isEditing ? 'bg-gray-100 cursor-not-allowed' : ''
+                }`}
                 required
               />
             </div>
@@ -138,7 +171,10 @@ const ProfileSettings = ({ user, onProfileUpdate }) => {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                readOnly={!isEditing}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${
+                  !isEditing ? 'bg-gray-100 cursor-not-allowed' : ''
+                }`}
                 required
               />
             </div>
@@ -153,7 +189,10 @@ const ProfileSettings = ({ user, onProfileUpdate }) => {
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                readOnly={!isEditing}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${
+                  !isEditing ? 'bg-gray-100 cursor-not-allowed' : ''
+                }`}
                 placeholder="+1 (555) 123-4567"
               />
             </div>
@@ -174,7 +213,10 @@ const ProfileSettings = ({ user, onProfileUpdate }) => {
                 name="address.street"
                 value={formData.address.street}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                readOnly={!isEditing}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${
+                  !isEditing ? 'bg-gray-100 cursor-not-allowed' : ''
+                }`}
               />
             </div>
             
@@ -188,7 +230,10 @@ const ProfileSettings = ({ user, onProfileUpdate }) => {
                 name="address.city"
                 value={formData.address.city}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                readOnly={!isEditing}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${
+                  !isEditing ? 'bg-gray-100 cursor-not-allowed' : ''
+                }`}
               />
             </div>
             
@@ -202,7 +247,10 @@ const ProfileSettings = ({ user, onProfileUpdate }) => {
                 name="address.state"
                 value={formData.address.state}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                readOnly={!isEditing}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${
+                  !isEditing ? 'bg-gray-100 cursor-not-allowed' : ''
+                }`}
               />
             </div>
             
@@ -216,7 +264,10 @@ const ProfileSettings = ({ user, onProfileUpdate }) => {
                 name="address.zipCode"
                 value={formData.address.zipCode}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                readOnly={!isEditing}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${
+                  !isEditing ? 'bg-gray-100 cursor-not-allowed' : ''
+                }`}
               />
             </div>
             
@@ -230,7 +281,10 @@ const ProfileSettings = ({ user, onProfileUpdate }) => {
                 name="address.country"
                 value={formData.address.country}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                readOnly={!isEditing}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${
+                  !isEditing ? 'bg-gray-100 cursor-not-allowed' : ''
+                }`}
               />
             </div>
           </div>
@@ -250,15 +304,35 @@ const ProfileSettings = ({ user, onProfileUpdate }) => {
         )}
 
         {/* Submit Button */}
-        <div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-accent hover:bg-accent/90 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-md transition-colors"
-          >
-            {loading ? 'Updating...' : 'Update Profile'}
-          </button>
-        </div>
+        {isEditing ? (
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={handleEditToggle}
+              disabled={loading}
+              className="flex-1 bg-gray-300 hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed text-gray-800 font-semibold py-2 px-4 rounded-md transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-accent hover:bg-accent/90 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-md transition-colors"
+            >
+              {loading ? 'Updating...' : 'Save Changes'}
+            </button>
+          </div>
+        ) : (
+          <div className="hidden">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-accent hover:bg-accent/90 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-md transition-colors"
+            >
+              {loading ? 'Updating...' : 'Update Profile'}
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );
