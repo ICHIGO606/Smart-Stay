@@ -23,9 +23,13 @@ const ProfileSettings = ({ user, onProfileUpdate }) => {
 
   useEffect(() => {
     if (user) {
+      // Split fullName into first + last (fallback if only one word exists)
+      const [firstName = '', ...rest] = (user.fullName || '').split(' ');
+      const lastName = rest.join(' ');
+
       const userData = {
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
+        firstName,
+        lastName,
         email: user.email || '',
         phone: user.phone || '',
         address: {
@@ -78,16 +82,21 @@ const ProfileSettings = ({ user, onProfileUpdate }) => {
     setMessage('');
 
     try {
-      const response = await userService.updateProfile(formData);
+      // Combine first + last into fullName for backend
+      const payload = {
+        fullName: `${formData.firstName} ${formData.lastName}`.trim(),
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address
+      };
+
+      const response = await userService.updateProfile(payload);
       
       if (response.success) {
         setMessage('Profile updated successfully!');
-        setOriginalData(formData); // Update original data with new changes
-        setIsEditing(false); // Exit edit mode after successful update
-        // Notify parent component to refresh user data
-        if (onProfileUpdate) {
-          onProfileUpdate();
-        }
+        setOriginalData(formData);
+        setIsEditing(false);
+        if (onProfileUpdate) onProfileUpdate();
       } else {
         setError(response.message || 'Update failed');
       }

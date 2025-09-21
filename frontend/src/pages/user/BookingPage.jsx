@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import bookingService from '../../services/bookingService';
 import hotelService from '../../services/hotelService';
+import userService from '../../services/userService';
 
 const BookingPage = () => {
   const { hotelId, roomId } = useParams();
@@ -13,6 +14,9 @@ const BookingPage = () => {
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [familyMembers, setFamilyMembers] = useState([]);
+  const [showNewUserForm, setShowNewUserForm] = useState(false);
+  const [newUserData, setNewUserData] = useState({ fullName: '', age: '', relationship: '' });
   const [bookingData, setBookingData] = useState({
     checkInDate: '',
     checkOutDate: '',
@@ -44,6 +48,16 @@ const BookingPage = () => {
         }
         setRoom(selectedRoom);
         
+        // Fetch family members if user is logged in
+        if (user) {
+          try {
+            const familyResponse = await userService.getFamilyMembers();
+            setFamilyMembers(familyResponse.data || []);
+          } catch (err) {
+            console.error('Error fetching family members:', err);
+          }
+        }
+        
       } catch (err) {
         setError('Failed to fetch booking details');
         console.error('Error:', err);
@@ -55,7 +69,7 @@ const BookingPage = () => {
     if (hotelId && roomId) {
       fetchData();
     }
-  }, [hotelId, roomId]);
+  }, [hotelId, roomId, user]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -84,6 +98,14 @@ const BookingPage = () => {
     }));
   };
 
+  const handleNewUserChange = (e) => {
+    const { name, value } = e.target;
+    setNewUserData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   const addGuest = () => {
     setBookingData(prev => ({
       ...prev,
@@ -97,6 +119,37 @@ const BookingPage = () => {
         ...prev,
         guestDetails: prev.guestDetails.filter((_, i) => i !== index)
       }));
+    }
+  };
+
+  const selectFamilyMember = (member, index) => {
+    setBookingData(prev => ({
+      ...prev,
+      guestDetails: prev.guestDetails.map((guest, i) => 
+        i === index ? { fullName: member.fullName, age: member.age } : guest
+      )
+    }));
+  };
+
+  const addNewFamilyMember = async () => {
+    try {
+      const response = await userService.addFamilyMember({
+        fullName: newUserData.fullName,
+        age: parseInt(newUserData.age),
+        relationship: newUserData.relationship || 'Family Member'
+      });
+      
+      setFamilyMembers(prev => [...prev, response.data]);
+      setNewUserData({ fullName: '', age: '', relationship: '' });
+      setShowNewUserForm(false);
+      
+      // Auto-fill the last guest slot with the new member
+      const lastIndex = bookingData.guestDetails.length - 1;
+      selectFamilyMember(response.data, lastIndex);
+      
+    } catch (err) {
+      setError('Failed to add family member');
+      console.error('Error adding family member:', err);
     }
   };
 
@@ -322,6 +375,30 @@ const BookingPage = () => {
                               />
                             </div>
                           </div>
+                          
+                          {/* Family Member Selection */}
+                          {user && familyMembers.length > 0 && (
+                            <div className="mt-2">
+                              <label className="block text-xs text-gray-600 mb-1">Select Family Member</label>
+                              <select
+                                value=""
+                                onChange={(e) => {
+                                  const selectedMember = familyMembers.find(m => m._id === e.target.value);
+                                  if (selectedMember) {
+                                    selectFamilyMember(selectedMember, index);
+                                  }
+                                }}
+                                className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                              >
+                                <option value="">Choose from family members...</option>
+                                {familyMembers.map(member => (
+                                  <option key={member._id} value={member._id}>
+                                    {member.fullName} ({member.age} years old){member.relationship ? ` - ${member.relationship}` : ''}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
                         </div>
                       ))}
                       <button
@@ -331,6 +408,78 @@ const BookingPage = () => {
                       >
                         + Add Another Guest
                       </button>
+                      
+                      {/* Add New Family Member Section */}
+                      {user && (
+                        <div className="mt-4 p-3 border border-dashed border-gray-300 rounded-md">
+                          {!showNewUserForm ? (
+                            <button
+                              type="button"
+                              onClick={() => setShowNewUserForm(true)}
+                              className="text-primary hover:text-primary-dark text-sm font-medium"
+                            >
+                              + Add New Family Member
+                            </button>
+                          ) : (
+                            <div className="space-y-3">
+                              <h4 className="text-sm font-medium text-gray-700">Add New Family Member</h4>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <input
+                                    type="text"
+                                    name="fullName"
+                                    value={newUserData.fullName}
+                                    onChange={handleNewUserChange}
+                                    className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                                    placeholder="Full Name"
+                                    required
+                                  />
+                                </div>
+                                <div>
+                                  <input
+                                    type="number"
+                                    name="age"
+                                    value={newUserData.age}
+                                    onChange={handleNewUserChange}
+                                    className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                                    placeholder="Age"
+                                    min="1"
+                                    max="120"
+                                    required
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <input
+                                  type="text"
+                                  name="relationship"
+                                  value={newUserData.relationship}
+                                  onChange={handleNewUserChange}
+                                  className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                                  placeholder="Relationship (optional)"
+                                />
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={addNewFamilyMember}
+                                  className="bg-primary text-white px-3 py-1 rounded text-sm"
+                                  disabled={!newUserData.fullName || !newUserData.age}
+                                >
+                                  Add Member
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setShowNewUserForm(false)}
+                                  className="bg-gray-300 text-gray-700 px-3 py-1 rounded text-sm"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 

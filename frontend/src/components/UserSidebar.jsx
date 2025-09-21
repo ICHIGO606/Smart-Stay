@@ -5,6 +5,7 @@ const UserSidebar = ({ onTabChange, activeTab }) => {
   
   const tabs = [
     { id: 'dashboard', label: 'Dashboard' },
+    { id: 'family', label: 'Family Members' },
     { id: 'bookings', label: 'My Bookings' },
     { id: 'verification', label: 'ID Verification' },
     { id: 'settings', label: 'Profile Settings' },
