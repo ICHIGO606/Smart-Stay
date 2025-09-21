@@ -13,9 +13,11 @@ const BookingPage = () => {
   const [hotel, setHotel] = useState(null);
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [familyMembers, setFamilyMembers] = useState([]);
   const [showNewUserForm, setShowNewUserForm] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
   const [newUserData, setNewUserData] = useState({ fullName: '', age: '', relationship: '' });
   const [bookingData, setBookingData] = useState({
     checkInDate: '',
@@ -52,9 +54,27 @@ const BookingPage = () => {
         if (user) {
           try {
             const familyResponse = await userService.getFamilyMembers();
-            setFamilyMembers(familyResponse.data || []);
+            
+            // Handle different response formats for family members
+            let members = [];
+            if (Array.isArray(familyResponse)) {
+              members = familyResponse;
+            } else if (familyResponse && Array.isArray(familyResponse.data)) {
+              members = familyResponse.data;
+            } else if (familyResponse && familyResponse.familyMembers) {
+              members = familyResponse.familyMembers;
+            } else if (familyResponse && familyResponse.data && familyResponse.data.familyMembers) {
+              members = familyResponse.data.familyMembers;
+            } else if (familyResponse && typeof familyResponse === 'object') {
+              members = Object.values(familyResponse).filter(item => 
+                item && typeof item === 'object' && item.fullName !== undefined
+              );
+            }
+            
+            setFamilyMembers(members);
           } catch (err) {
             console.error('Error fetching family members:', err);
+            setFamilyMembers([]);
           }
         }
         
@@ -80,13 +100,37 @@ const BookingPage = () => {
   };
 
   const handleGuestChange = (type, value) => {
-    setBookingData(prev => ({
-      ...prev,
-      guests: {
+    const newValue = parseInt(value);
+    setBookingData(prev => {
+      const newGuests = {
         ...prev.guests,
-        [type]: parseInt(value)
+        [type]: newValue
+      };
+      
+      // Update guest details array based on total guests
+      const totalGuests = newGuests.adults + newGuests.children + newGuests.infants;
+      const currentGuestDetails = prev.guestDetails;
+      
+      let newGuestDetails;
+      if (totalGuests > currentGuestDetails.length) {
+        // Add new guest detail entries
+        newGuestDetails = [
+          ...currentGuestDetails,
+          ...Array(totalGuests - currentGuestDetails.length).fill({ fullName: '', age: '' })
+        ];
+      } else if (totalGuests < currentGuestDetails.length) {
+        // Remove excess guest detail entries
+        newGuestDetails = currentGuestDetails.slice(0, totalGuests);
+      } else {
+        newGuestDetails = currentGuestDetails;
       }
-    }));
+      
+      return {
+        ...prev,
+        guests: newGuests,
+        guestDetails: newGuestDetails
+      };
+    });
   };
 
   const handleGuestDetailChange = (index, field, value) => {
@@ -106,22 +150,6 @@ const BookingPage = () => {
     }));
   };
 
-  const addGuest = () => {
-    setBookingData(prev => ({
-      ...prev,
-      guestDetails: [...prev.guestDetails, { fullName: '', age: '' }]
-    }));
-  };
-
-  const removeGuest = (index) => {
-    if (bookingData.guestDetails.length > 1) {
-      setBookingData(prev => ({
-        ...prev,
-        guestDetails: prev.guestDetails.filter((_, i) => i !== index)
-      }));
-    }
-  };
-
   const selectFamilyMember = (member, index) => {
     setBookingData(prev => ({
       ...prev,
@@ -139,13 +167,27 @@ const BookingPage = () => {
         relationship: newUserData.relationship || 'Family Member'
       });
       
-      setFamilyMembers(prev => [...prev, response.data]);
+      let newMember;
+      if (response && response.data) {
+        newMember = response.data;
+      } else if (response && typeof response === 'object') {
+        newMember = response;
+      } else {
+        newMember = {
+          _id: Date.now().toString(),
+          fullName: newUserData.fullName,
+          age: parseInt(newUserData.age),
+          relationship: newUserData.relationship || 'Family Member',
+          isVerified: false
+        };
+      }
+      
+      setFamilyMembers(prev => [...prev, newMember]);
       setNewUserData({ fullName: '', age: '', relationship: '' });
       setShowNewUserForm(false);
       
-      // Auto-fill the last guest slot with the new member
       const lastIndex = bookingData.guestDetails.length - 1;
-      selectFamilyMember(response.data, lastIndex);
+      selectFamilyMember(newMember, lastIndex);
       
     } catch (err) {
       setError('Failed to add family member');
@@ -163,6 +205,25 @@ const BookingPage = () => {
     return nights * room.pricePerNight;
   };
 
+  const calculateNights = () => {
+    if (!bookingData.checkInDate || !bookingData.checkOutDate) return 0;
+    const checkIn = new Date(bookingData.checkInDate);
+    const checkOut = new Date(bookingData.checkOutDate);
+    return Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+  };
+
+  const isStep1Valid = () => {
+    return bookingData.checkInDate && bookingData.checkOutDate && 
+           new Date(bookingData.checkOutDate) > new Date(bookingData.checkInDate);
+  };
+
+  const isStep2Valid = () => {
+    const totalGuests = bookingData.guests.adults + bookingData.guests.children + bookingData.guests.infants;
+    return totalGuests > 0 && bookingData.guestDetails.every(guest => 
+      guest.fullName.trim() && guest.age && parseInt(guest.age) > 0
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -172,7 +233,7 @@ const BookingPage = () => {
     }
 
     try {
-      setLoading(true);
+      setSubmitting(true);
       
       const bookingPayload = {
         bookingType: "Hotel",
@@ -192,10 +253,11 @@ const BookingPage = () => {
 
       const response = await bookingService.createBooking(bookingPayload);
       
-      navigate('/user/bookings', { 
+      navigate('/user', { 
         state: { 
           message: 'Booking created successfully!',
-          bookingId: response.data._id 
+          bookingId: response.data._id,
+          activeTab: 'bookings'
         }
       });
       
@@ -203,350 +265,616 @@ const BookingPage = () => {
       setError(err.message || 'Failed to create booking');
       console.error('Booking error:', err);
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading booking details...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white p-6 rounded-lg shadow-md max-w-md w-full">
-          <div className="text-red-600 mb-4">{error}</div>
-          <button 
-            onClick={() => navigate(-1)}
-            className="w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-primary-dark"
-          >
-            Go Back
-          </button>
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full mx-4">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h3>
+            <p className="text-red-600 mb-6">{error}</p>
+            <button 
+              onClick={() => navigate(-1)}
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              Go Back
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          {/* Header */}
-          <div className="bg-primary text-white p-6">
-            <h1 className="text-2xl font-bold mb-2">Complete Your Booking</h1>
-            <p className="text-primary-light">
-              {hotel?.name} - {room?.type}
-            </p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Progress Steps */}
+        <div className="mb-8">
+          <div className="flex items-center justify-center space-x-8">
+            {[1, 2, 3].map((step) => (
+              <div key={step} className="flex items-center">
+                <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-300 ${
+                  currentStep >= step 
+                    ? 'bg-blue-600 border-blue-600 text-white' 
+                    : 'border-gray-300 text-gray-400'
+                }`}>
+                  {currentStep > step ? (
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <span className="font-semibold">{step}</span>
+                  )}
+                </div>
+                <div className="ml-3 text-sm">
+                  <p className={`font-medium ${currentStep >= step ? 'text-blue-600' : 'text-gray-400'}`}>
+                    {step === 1 ? 'Dates & Guests' : step === 2 ? 'Guest Details' : 'Review & Book'}
+                  </p>
+                </div>
+                {step < 3 && (
+                  <div className={`w-16 h-0.5 ml-8 ${currentStep > step ? 'bg-blue-600' : 'bg-gray-300'}`} />
+                )}
+              </div>
+            ))}
           </div>
+        </div>
 
-          <div className="p-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Booking Form */}
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Booking Details</h2>
-                
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Check-in Date
-                      </label>
-                      <input
-                        type="date"
-                        name="checkInDate"
-                        value={bookingData.checkInDate}
-                        onChange={handleInputChange}
-                        min={new Date().toISOString().split('T')[0]}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                        required
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Check-out Date
-                      </label>
-                      <input
-                        type="date"
-                        name="checkOutDate"
-                        value={bookingData.checkOutDate}
-                        onChange={handleInputChange}
-                        min={bookingData.checkInDate || new Date().toISOString().split('T')[0]}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                        required
-                      />
-                    </div>
-                  </div>
-
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-8">
+                <div className="flex items-start justify-between">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Guests
-                    </label>
-                    <div className="grid grid-cols-3 gap-2">
+                    <h1 className="text-3xl font-bold mb-2">Complete Your Booking</h1>
+                    <p className="text-blue-100 text-lg">
+                      {hotel?.name} • {room?.type}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-blue-100 text-sm">Starting from</p>
+                    <p className="text-2xl font-bold">${room?.pricePerNight}<span className="text-lg font-normal">/night</span></p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-8">
+                <form onSubmit={handleSubmit}>
+                  {/* Step 1: Dates & Guests */}
+                  {currentStep === 1 && (
+                    <div className="space-y-8 animate-fadeIn">
+                      <h2 className="text-2xl font-bold text-gray-900 mb-6">When are you staying?</h2>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="group">
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Check-in Date
+                          </label>
+                          <input
+                            type="date"
+                            name="checkInDate"
+                            value={bookingData.checkInDate}
+                            onChange={handleInputChange}
+                            min={new Date().toISOString().split('T')[0]}
+                            className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all duration-300"
+                            required
+                          />
+                        </div>
+                        
+                        <div className="group">
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Check-out Date
+                          </label>
+                          <input
+                            type="date"
+                            name="checkOutDate"
+                            value={bookingData.checkOutDate}
+                            onChange={handleInputChange}
+                            min={bookingData.checkInDate || new Date().toISOString().split('T')[0]}
+                            className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all duration-300"
+                            required
+                          />
+                        </div>
+                      </div>
+
                       <div>
-                        <label className="block text-xs text-gray-600 mb-1">Adults</label>
-                        <select
-                          value={bookingData.guests.adults}
-                          onChange={(e) => handleGuestChange('adults', e.target.value)}
-                          className="w-full p-2 border border-gray-300 rounded-md"
-                        >
-                          {[1, 2, 3, 4].map(num => (
-                            <option key={num} value={num}>{num}</option>
+                        <h3 className="text-xl font-bold text-gray-900 mb-4">How many guests?</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {[
+                            { key: 'adults', label: 'Adults', desc: '13+ years', max: 4 },
+                            { key: 'children', label: 'Children', desc: '2-12 years', max: 3 },
+                            { key: 'infants', label: 'Infants', desc: 'Under 2 years', max: 2 }
+                          ].map(({ key, label, desc, max }) => (
+                            <div key={key} className="border-2 border-gray-200 rounded-xl p-4 hover:border-blue-300 transition-colors">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="font-semibold text-gray-900">{label}</p>
+                                  <p className="text-sm text-gray-500">{desc}</p>
+                                </div>
+                                <div className="flex items-center space-x-3">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleGuestChange(key, Math.max(0, bookingData.guests[key] - 1))}
+                                    className="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                                    disabled={key === 'adults' ? bookingData.guests[key] <= 1 : bookingData.guests[key] <= 0}
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12H4" />
+                                    </svg>
+                                  </button>
+                                  <span className="font-bold text-lg w-8 text-center">{bookingData.guests[key]}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleGuestChange(key, Math.min(max, bookingData.guests[key] + 1))}
+                                    className="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                                    disabled={bookingData.guests[key] >= max}
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
                           ))}
-                        </select>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setCurrentStep(2)}
+                          disabled={!isStep1Valid()}
+                          className="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-300 font-semibold"
+                        >
+                          Continue to Guest Details
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 2: Guest Details */}
+                  {currentStep === 2 && (
+                    <div className="space-y-8 animate-fadeIn">
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-2xl font-bold text-gray-900">Guest Information</h2>
+                        <button
+                          type="button"
+                          onClick={() => setCurrentStep(1)}
+                          className="text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                          ← Back to Dates
+                        </button>
                       </div>
                       
-                      <div>
-                        <label className="block text-xs text-gray-600 mb-1">Children</label>
-                        <select
-                          value={bookingData.guests.children}
-                          onChange={(e) => handleGuestChange('children', e.target.value)}
-                          className="w-full p-2 border border-gray-300 rounded-md"
-                        >
-                          {[0, 1, 2, 3].map(num => (
-                            <option key={num} value={num}>{num}</option>
-                          ))}
-                        </select>
-                      </div>
-                      
-                      <div>
-                        <label className="block text-xs text-gray-600 mb-1">Infants</label>
-                        <select
-                          value={bookingData.guests.infants}
-                          onChange={(e) => handleGuestChange('infants', e.target.value)}
-                          className="w-full p-2 border border-gray-300 rounded-md"
-                        >
-                          {[0, 1, 2].map(num => (
-                            <option key={num} value={num}>{num}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Guest Information
-                    </label>
-                    <div className="space-y-3">
-                      {bookingData.guestDetails.map((guest, index) => (
-                        <div key={index} className="border border-gray-200 rounded-md p-3 bg-white">
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="text-sm font-medium text-gray-700">
-                              Guest {index + 1}
-                            </span>
-                            {bookingData.guestDetails.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => removeGuest(index)}
-                                className="text-red-600 hover:text-red-800 text-sm"
-                              >
-                                Remove
-                              </button>
+                      <div className="space-y-6">
+                        {bookingData.guestDetails.map((guest, index) => (
+                          <div key={index} className="border-2 border-gray-200 rounded-xl p-6 hover:border-blue-200 transition-colors">
+                            <div className="flex justify-between items-center mb-4">
+                              <h3 className="text-lg font-semibold text-gray-900">
+                                Guest {index + 1} {index === 0 && "(Primary Guest)"}
+                              </h3>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                              <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
+                                <input
+                                  type="text"
+                                  value={guest.fullName}
+                                  onChange={(e) => handleGuestDetailChange(index, 'fullName', e.target.value)}
+                                  className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all duration-300"
+                                  placeholder="Enter full name"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Age</label>
+                                <input
+                                  type="number"
+                                  value={guest.age}
+                                  onChange={(e) => handleGuestDetailChange(index, 'age', e.target.value)}
+                                  className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all duration-300"
+                                  placeholder="Age"
+                                  min="1"
+                                  max="120"
+                                  required
+                                />
+                              </div>
+                            </div>
+                            
+                            {/* Family Member Selection */}
+                            {user && familyMembers.length > 0 && (
+                              <div className="border-t pt-4">
+                                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                  Quick Fill from Family Members
+                                </label>
+                                <div className="flex flex-wrap gap-2">
+                                  {familyMembers.map(member => (
+                                    <button
+                                      key={member._id}
+                                      type="button"
+                                      onClick={() => selectFamilyMember(member, index)}
+                                      className="bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-gray-200 hover:border-blue-300"
+                                    >
+                                      {member.fullName} ({member.age}y)
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
                             )}
                           </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <label className="block text-xs text-gray-600 mb-1">Full Name</label>
-                              <input
-                                type="text"
-                                value={guest.fullName}
-                                onChange={(e) => handleGuestDetailChange(index, 'fullName', e.target.value)}
-                                className="w-full p-2 border border-gray-300 rounded-md text-sm"
-                                placeholder="Full name"
-                                required
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs text-gray-600 mb-1">Age</label>
-                              <input
-                                type="number"
-                                value={guest.age}
-                                onChange={(e) => handleGuestDetailChange(index, 'age', e.target.value)}
-                                className="w-full p-2 border border-gray-300 rounded-md text-sm"
-                                placeholder="Age"
-                                min="1"
-                                max="120"
-                                required
-                              />
-                            </div>
-                          </div>
-                          
-                          {/* Family Member Selection */}
-                          {user && familyMembers.length > 0 && (
-                            <div className="mt-2">
-                              <label className="block text-xs text-gray-600 mb-1">Select Family Member</label>
-                              <select
-                                value=""
-                                onChange={(e) => {
-                                  const selectedMember = familyMembers.find(m => m._id === e.target.value);
-                                  if (selectedMember) {
-                                    selectFamilyMember(selectedMember, index);
-                                  }
-                                }}
-                                className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                        ))}
+                        
+                        {/* Add New Family Member */}
+                        {user && (
+                          <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-blue-300 transition-colors">
+                            {!showNewUserForm ? (
+                              <button
+                                type="button"
+                                onClick={() => setShowNewUserForm(true)}
+                                className="w-full text-center py-4 text-blue-600 hover:text-blue-700 font-medium"
                               >
-                                <option value="">Choose from family members...</option>
-                                {familyMembers.map(member => (
-                                  <option key={member._id} value={member._id}>
-                                    {member.fullName} ({member.age} years old){member.relationship ? ` - ${member.relationship}` : ''}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={addGuest}
-                        className="text-primary hover:text-primary-dark text-sm font-medium"
-                      >
-                        + Add Another Guest
-                      </button>
-                      
-                      {/* Add New Family Member Section */}
-                      {user && (
-                        <div className="mt-4 p-3 border border-dashed border-gray-300 rounded-md">
-                          {!showNewUserForm ? (
-                            <button
-                              type="button"
-                              onClick={() => setShowNewUserForm(true)}
-                              className="text-primary hover:text-primary-dark text-sm font-medium"
-                            >
-                              + Add New Family Member
-                            </button>
-                          ) : (
-                            <div className="space-y-3">
-                              <h4 className="text-sm font-medium text-gray-700">Add New Family Member</h4>
-                              <div className="grid grid-cols-2 gap-2">
-                                <div>
+                                + Add New Family Member for Future Bookings
+                              </button>
+                            ) : (
+                              <div className="space-y-4">
+                                <h4 className="text-lg font-semibold text-gray-900">Add New Family Member</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <input
                                     type="text"
                                     name="fullName"
                                     value={newUserData.fullName}
                                     onChange={handleNewUserChange}
-                                    className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                                    className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 transition-colors"
                                     placeholder="Full Name"
                                     required
                                   />
-                                </div>
-                                <div>
                                   <input
                                     type="number"
                                     name="age"
                                     value={newUserData.age}
                                     onChange={handleNewUserChange}
-                                    className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                                    className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 transition-colors"
                                     placeholder="Age"
                                     min="1"
                                     max="120"
                                     required
                                   />
                                 </div>
-                              </div>
-                              <div>
                                 <input
                                   type="text"
                                   name="relationship"
                                   value={newUserData.relationship}
                                   onChange={handleNewUserChange}
-                                  className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                                  className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 transition-colors"
                                   placeholder="Relationship (optional)"
                                 />
+                                <div className="flex gap-3">
+                                  <button
+                                    type="button"
+                                    onClick={addNewFamilyMember}
+                                    className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium"
+                                    disabled={!newUserData.fullName || !newUserData.age}
+                                  >
+                                    Add Member
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowNewUserForm(false)}
+                                    className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
                               </div>
-                              <div className="flex gap-2">
-                                <button
-                                  type="button"
-                                  onClick={addNewFamilyMember}
-                                  className="bg-primary text-white px-3 py-1 rounded text-sm"
-                                  disabled={!newUserData.fullName || !newUserData.age}
-                                >
-                                  Add Member
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setShowNewUserForm(false)}
-                                  className="bg-gray-300 text-gray-700 px-3 py-1 rounded text-sm"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex justify-between">
+                        <button
+                          type="button"
+                          onClick={() => setCurrentStep(1)}
+                          className="border-2 border-gray-300 text-gray-700 px-8 py-3 rounded-xl hover:border-gray-400 transition-all duration-300 font-semibold"
+                        >
+                          Back
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setCurrentStep(3)}
+                          disabled={!isStep2Valid()}
+                          className="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-300 font-semibold"
+                        >
+                          Review Booking
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 3: Review & Special Requests */}
+                  {currentStep === 3 && (
+                    <div className="space-y-8 animate-fadeIn">
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-2xl font-bold text-gray-900">Review Your Booking</h2>
+                        <button
+                          type="button"
+                          onClick={() => setCurrentStep(2)}
+                          className="text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                          ← Back to Guest Details
+                        </button>
+                      </div>
+
+                      {/* Booking Review */}
+                      <div className="bg-gray-50 rounded-xl p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <h4 className="font-semibold text-gray-900 mb-2">Stay Duration</h4>
+                            <p className="text-gray-600">
+                              {new Date(bookingData.checkInDate).toLocaleDateString()} - {new Date(bookingData.checkOutDate).toLocaleDateString()}
+                            </p>
+                            <p className="text-sm text-gray-500">{calculateNights()} nights</p>
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-gray-900 mb-2">Guests</h4>
+                            <p className="text-gray-600">
+                              {bookingData.guests.adults} Adults
+                              {bookingData.guests.children > 0 && `, ${bookingData.guests.children} Children`}
+                              {bookingData.guests.infants > 0 && `, ${bookingData.guests.infants} Infants`}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-4">
+                          <h4 className="font-semibold text-gray-900 mb-2">Guest Names</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {bookingData.guestDetails.map((guest, index) => (
+                              <span key={index} className="bg-white px-3 py-1 rounded-full text-sm border">
+                                {guest.fullName} ({guest.age}y)
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-3">
+                          Special Requests (Optional)
+                        </label>
+                        <textarea
+                          name="specialRequests"
+                          value={bookingData.specialRequests}
+                          onChange={handleInputChange}
+                          rows={4}
+                          className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all duration-300 resize-none"
+                          placeholder="Let us know about any special requirements, dietary preferences, accessibility needs, or other requests..."
+                        />
+                      </div>
+
+                      <div className="flex justify-between">
+                        <button
+                          type="button"
+                          onClick={() => setCurrentStep(2)}
+                          className="border-2 border-gray-300 text-gray-700 px-8 py-3 rounded-xl hover:border-gray-400 transition-all duration-300 font-semibold"
+                        >
+                          Back
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={submitting}
+                          className="bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-3 rounded-xl hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-300 font-semibold flex items-center"
+                        >
+                          {submitting ? (
+                            <>
+                              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
+                              Processing...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              Confirm Booking
+                            </>
                           )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </form>
+              </div>
+            </div>
+          </div>
+
+          {/* Booking Summary - Sticky Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-8">
+              <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-6 border-b">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Booking Summary</h3>
+                </div>
+                
+                <div className="p-6 space-y-6">
+                  {/* Hotel Info */}
+                  {hotel && (
+                    <div className="border-b pb-4">
+                      <div className="flex items-start space-x-4">
+                        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">
+                          {hotel.name.charAt(0)}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-bold text-gray-900">{hotel.name}</h4>
+                          <p className="text-sm text-gray-600 mb-1">{hotel.location}</p>
+                          <div className="flex items-center">
+                            <div className="flex text-yellow-400">
+                              {[...Array(5)].map((_, i) => (
+                                <svg key={i} className="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                              ))}
+                            </div>
+                            <span className="text-sm text-gray-600 ml-2">4.8 (234 reviews)</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Room Info */}
+                  {room && (
+                    <div className="border-b pb-4">
+                      <h4 className="font-bold text-gray-900 mb-2">{room.type}</h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center text-sm text-gray-600">
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                          </svg>
+                          Up to {room.capacity} guests
+                        </div>
+                        <div className="flex items-center text-sm text-gray-600">
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                          </svg>
+                          {room.beds} beds
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Date Summary */}
+                  {bookingData.checkInDate && bookingData.checkOutDate && (
+                    <div className="border-b pb-4">
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium text-gray-700">Check-in</span>
+                          <span className="text-sm text-gray-900">{new Date(bookingData.checkInDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium text-gray-700">Check-out</span>
+                          <span className="text-sm text-gray-900">{new Date(bookingData.checkOutDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium text-gray-700">Duration</span>
+                          <span className="text-sm text-gray-900">{calculateNights()} nights</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Guests Summary */}
+                  <div className="border-b pb-4">
+                    <h5 className="font-medium text-gray-900 mb-2">Guests</h5>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Adults</span>
+                        <span className="text-gray-900">{bookingData.guests.adults}</span>
+                      </div>
+                      {bookingData.guests.children > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Children</span>
+                          <span className="text-gray-900">{bookingData.guests.children}</span>
+                        </div>
+                      )}
+                      {bookingData.guests.infants > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Infants</span>
+                          <span className="text-gray-900">{bookingData.guests.infants}</span>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Special Requests (Optional)
-                    </label>
-                    <textarea
-                      name="specialRequests"
-                      value={bookingData.specialRequests}
-                      onChange={handleInputChange}
-                      rows={3}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      placeholder="Any special requirements or preferences..."
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-accent text-white py-3 px-4 rounded-md hover:bg-accent-dark disabled:opacity-50"
-                  >
-                    {loading ? 'Processing...' : 'Confirm Booking'}
-                  </button>
-                </form>
-              </div>
-
-              {/* Booking Summary */}
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h2 className="text-xl font-semibold mb-4">Booking Summary</h2>
-                
-                {hotel && (
-                  <div className="mb-4">
-                    <h3 className="font-semibold text-gray-800">{hotel.name}</h3>
-                    <p className="text-sm text-gray-600">{hotel.location}</p>
-                  </div>
-                )}
-                
-                {room && (
-                  <div className="mb-4">
-                    <h4 className="font-medium text-gray-800">{room.type}</h4>
-                    <p className="text-sm text-gray-600">
-                      {room.capacity} guests • {room.beds} beds
-                    </p>
-                    <p className="text-lg font-semibold text-accent mt-2">
-                      ${room.pricePerNight}/night
-                    </p>
-                  </div>
-                )}
-
-                {bookingData.checkInDate && bookingData.checkOutDate && (
-                  <div className="border-t pt-4 mt-4">
-                    <div className="flex justify-between mb-2">
-                      <span>Room price</span>
-                      <span>${room?.pricePerNight} × {Math.ceil((new Date(bookingData.checkOutDate) - new Date(bookingData.checkInDate)) / (1000 * 60 * 60 * 24))} nights</span>
+                  {/* Price Breakdown */}
+                  {room && calculateNights() > 0 && (
+                    <div>
+                      <h5 className="font-medium text-gray-900 mb-3">Price Details</h5>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">
+                            ${room.pricePerNight} × {calculateNights()} nights
+                          </span>
+                          <span className="text-gray-900">${room.pricePerNight * calculateNights()}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Service fee</span>
+                          <span className="text-gray-900">$0</span>
+                        </div>
+                        <div className="border-t pt-2">
+                          <div className="flex justify-between items-center">
+                            <span className="font-bold text-lg text-gray-900">Total</span>
+                            <span className="font-bold text-2xl text-blue-600">${calculateTotal()}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex justify-between font-semibold text-lg">
-                      <span>Total</span>
-                      <span className="text-accent">${calculateTotal()}</span>
+                  )}
+
+                  {/* Trust Indicators */}
+                  <div className="bg-green-50 rounded-xl p-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-green-800">Secure Booking</p>
+                        <p className="text-xs text-green-600">Your information is protected</p>
+                      </div>
                     </div>
                   </div>
-                )}
+
+                  <div className="bg-blue-50 rounded-xl p-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-blue-800">Free Cancellation</p>
+                        <p className="text-xs text-blue-600">Cancel up to 24 hours before check-in</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.5s ease-out;
+        }
+      `}</style>
     </div>
   );
 };
