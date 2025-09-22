@@ -51,10 +51,10 @@ export const bookingService = {
     }
   },
 
-  // Get all bookings (Admin only)
-  getAllBookings: async () => {
+  // Get all bookings (Admin only) with pagination, sorting, and filtering
+  getAllBookings: async (params = {}) => {
     try {
-      const response = await api.get('/bookings');
+      const response = await api.get('/bookings', { params });
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
