@@ -20,6 +20,10 @@ const bookingSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Room", // required if Hotel booking
     },
+    roomNumbers: {
+      type: [Number], // specific room numbers assigned to this booking
+      default: [],
+    },
     package: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Package", // required if Package booking

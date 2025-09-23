@@ -27,6 +27,8 @@ const BookingManagement = () => {
     maxAmount: ''
   });
   
+  const [appliedFilters, setAppliedFilters] = useState({});
+  
   // Sorting state
   const [sorting, setSorting] = useState({
     sortBy: 'createdAt',
@@ -39,7 +41,7 @@ const BookingManagement = () => {
 
   useEffect(() => {
     fetchBookings();
-  }, [currentPage, itemsPerPage, filters, sorting]);
+  }, [currentPage, itemsPerPage, appliedFilters, sorting]);
 
   const fetchBookings = async () => {
     try {
@@ -50,12 +52,12 @@ const BookingManagement = () => {
         limit: itemsPerPage,
         sortBy: sorting.sortBy,
         sortOrder: sorting.sortOrder,
-        ...(filters.status !== 'all' && { status: filters.status }),
-        ...(filters.searchTerm && { search: filters.searchTerm }),
-        ...(filters.dateFrom && { dateFrom: filters.dateFrom }),
-        ...(filters.dateTo && { dateTo: filters.dateTo }),
-        ...(filters.minAmount && { minAmount: filters.minAmount }),
-        ...(filters.maxAmount && { maxAmount: filters.maxAmount })
+        ...(appliedFilters.status && appliedFilters.status !== 'all' && { status: appliedFilters.status }),
+        ...(appliedFilters.searchTerm && { search: appliedFilters.searchTerm }),
+        ...(appliedFilters.dateFrom && { dateFrom: appliedFilters.dateFrom }),
+        ...(appliedFilters.dateTo && { dateTo: appliedFilters.dateTo }),
+        ...(appliedFilters.minAmount && { minAmount: appliedFilters.minAmount }),
+        ...(appliedFilters.maxAmount && { maxAmount: appliedFilters.maxAmount })
       };
       
       const response = await bookingService.getAllBookings(params);
@@ -102,8 +104,25 @@ const BookingManagement = () => {
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const applyFilters = () => {
+    setAppliedFilters(filters);
     setCurrentPage(1);
   };
+
+  // const clearFilters = () => {
+  //   setFilters({
+  //     status: 'all',
+  //     searchTerm: '',
+  //     dateFrom: '',
+  //     dateTo: '',
+  //     minAmount: '',
+  //     maxAmount: ''
+  //   });
+  //   setAppliedFilters({});
+  //   setCurrentPage(1);
+  // };
 
   const handleSortChange = (sortBy) => {
     setSorting(prev => ({
@@ -262,7 +281,7 @@ const BookingManagement = () => {
                   className={`p-2 rounded-lg ${viewMode === 'cards' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                   </svg>
                 </button>
               </div>
@@ -376,15 +395,26 @@ const BookingManagement = () => {
           <div className="p-6 border-b border-gray-200">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold text-gray-900">Advanced Filters</h2>
-              <button
-                onClick={clearFilters}
-                className="text-sm text-gray-500 hover:text-gray-700 flex items-center"
-              >
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Clear All
-              </button>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={applyFilters}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center text-sm font-medium"
+                >
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z" />
+                  </svg>
+                  Apply Filters
+                </button>
+                <button
+                  onClick={clearFilters}
+                  className="text-sm text-gray-500 hover:text-gray-700 flex items-center"
+                >
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Clear All
+                </button>
+              </div>
             </div>
           </div>
           

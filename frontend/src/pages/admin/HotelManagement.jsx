@@ -61,6 +61,14 @@ const HotelManagement = () => {
     }
   };
 
+  // Helper function to calculate total room numbers for a hotel
+  const calculateTotalRoomNumbers = (hotel) => {
+    if (!hotel.rooms) return 0;
+    return hotel.rooms.reduce((total, room) => {
+      return total + (room.roomNumbers?.length || 0);
+    }, 0);
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -155,7 +163,7 @@ const HotelManagement = () => {
 
                 <div className="flex justify-between items-center">
                   <span className="text-accent font-semibold">
-                    {hotel.rooms?.length || 0} Rooms
+                    {calculateTotalRoomNumbers(hotel)} Rooms
                   </span>
                   <div className="flex space-x-2">
                     <button

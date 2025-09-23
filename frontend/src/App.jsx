@@ -21,7 +21,7 @@ const UserBookings = () => <div className="p-8"><h1 className="text-2xl font-bol
 // Admin Pages
 import HotelManagement from './pages/admin/HotelManagement';
 import BookingManagement from './pages/admin/BookingManagement';
-const AdminDashboard = () => <div className="p-8"><h1 className="text-2xl font-bold">Admin Dashboard</h1></div>;
+import AdminDashboard from './pages/admin/AdminDashboard';
 const AdminPackages = () => <div className="p-8"><h1 className="text-2xl font-bold">Package Management</h1></div>;
 const AdminUsers = () => <div className="p-8"><h1 className="text-2xl font-bold">User Management</h1></div>;
 const AdminVerifications = () => <div className="p-8"><h1 className="text-2xl font-bold">Verification Requests</h1></div>;

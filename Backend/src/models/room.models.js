@@ -44,6 +44,14 @@ const roomSchema = new mongoose.Schema(
       },
       index: true, // quick search for a specific room number
     },
+    bookedRoomNumbers: [
+      {
+        roomNumber: { type: Number, required: true },
+        checkInDate: { type: Date, required: true },
+        checkOutDate: { type: Date, required: true },
+        bookingId: { type: mongoose.Schema.Types.ObjectId, ref: "Booking" }
+      }
+    ],
     amenities: {
       type: [String],
       default: [],
