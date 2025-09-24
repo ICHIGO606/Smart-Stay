@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   addFamilyMember,
+  changePassword,
   getFamilyMemberById,
   getFamilyMembers,
   logoutUser,
@@ -23,6 +24,7 @@ router.route("/family").post(verifyJWT, addFamilyMember);
 router.route("/family/:memberId").delete(verifyJWT, removeFamilyMember);
 router.route("/family/:memberId").put(verifyJWT, updateFamilyMember);
 router.route("/").get(verifyJWT, getCurrentUser).put(verifyJWT, updateUser);
+router.route("/change-password").post(verifyJWT, changePassword);
 
 router.route("/upload-verification").post(verifyJWT, upload.single("document"), uploadVerificationDocument);
 router.post("/family/:memberId/verify", verifyJWT, upload.single("document"), uploadFamilyMemberVerificationDoc);

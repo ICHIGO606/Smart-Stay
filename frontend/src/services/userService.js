@@ -78,6 +78,16 @@ export const userService = {
     } catch (error) {
       throw error.response?.data || error;
     }
+  },
+
+  // Change password
+  changePassword: async (passwordData) => {
+    try {
+      const response = await api.post('/users/change-password', passwordData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
   }
 };
 

@@ -211,7 +211,7 @@ const BookingManagement = () => {
     return {
       total: pagination.totalCount,
       confirmed: bookings.filter(b => b.bookingStatus?.toLowerCase() === 'confirmed').length,
-      pending: bookings.filter(b => b.bookingStatus?.toLowerCase() === 'Pending').length,
+      pending: bookings.filter(b => b.bookingStatus?.toLowerCase() === 'pending').length,
       cancelled: bookings.filter(b => b.bookingStatus?.toLowerCase() === 'cancelled').length,
       revenue: bookings
         .filter(b => b.bookingStatus?.toLowerCase() === 'confirmed')

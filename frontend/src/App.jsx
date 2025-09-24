@@ -22,6 +22,7 @@ const UserBookings = () => <div className="p-8"><h1 className="text-2xl font-bol
 import HotelManagement from './pages/admin/HotelManagement';
 import BookingManagement from './pages/admin/BookingManagement';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminProfile from './pages/admin/AdminProfile';
 const AdminPackages = () => <div className="p-8"><h1 className="text-2xl font-bold">Package Management</h1></div>;
 const AdminUsers = () => <div className="p-8"><h1 className="text-2xl font-bold">User Management</h1></div>;
 const AdminVerifications = () => <div className="p-8"><h1 className="text-2xl font-bold">Verification Requests</h1></div>;
@@ -55,6 +56,7 @@ function App() {
             <Route path="packages" element={<AdminPackages />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="verifications" element={<AdminVerifications />} />
+            <Route path="profile" element={<AdminProfile />} />
           </Route>
 
           {/* Fallback Route */}

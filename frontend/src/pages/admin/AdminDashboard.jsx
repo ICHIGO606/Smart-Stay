@@ -42,28 +42,37 @@ const AdminDashboard = () => {
       const availableRooms = totalRooms - bookedRooms;
       const occupancyRate = totalRooms > 0 ? (bookedRooms / totalRooms) * 100 : 0;
 
-      // Fetch bookings data
-      const bookingsResponse = await bookingService.getAllBookings({ 
-        page: 1, 
-        limit: 1000 
-      });
-      const bookings = bookingsResponse.data?.bookings || [];
-      
+      // Fetch all bookings data using pagination
+      let allBookings = [];
+      let page = 1;
+      const limit = 100;
+      let hasMore = true;
+
+      while (hasMore) {
+        const bookingsResponse = await bookingService.getAllBookings({ page, limit });
+        const bookingsPage = bookingsResponse.data?.bookings || [];
+        allBookings = allBookings.concat(bookingsPage);
+
+        // If the number of bookings returned is less than the limit, we've reached the last page
+        hasMore = bookingsPage.length === limit;
+        page += 1;
+      }
+
       // Calculate booking statistics
-      const totalBookings = bookings.length;
-      const pendingBookings = bookings.filter(b => b.bookingStatus === 'pending').length;
-      const confirmedBookings = bookings.filter(b => b.bookingStatus === 'confirmed').length;
-      const cancelledBookings = bookings.filter(b => b.bookingStatus === 'cancelled').length;
-      const totalRevenue = bookings
-        .filter(b => b.bookingStatus === 'confirmed' || b.bookingStatus === 'completed')
+      const totalBookings = allBookings.length;
+      const pendingBookings = allBookings.filter(b => b.bookingStatus === 'Pending').length;
+      const confirmedBookings = allBookings.filter(b => b.bookingStatus === 'Confirmed').length;
+      const cancelledBookings = allBookings.filter(b => b.bookingStatus === 'Cancelled').length;
+      const totalRevenue = allBookings
+        .filter(b => b.bookingStatus === 'Confirmed' || b.bookingStatus === 'Completed')
         .reduce((sum, booking) => sum + (booking.totalAmount || 0), 0);
       
       // Calculate monthly revenue (last 30 days)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
-      const monthlyRevenue = bookings
-        .filter(b => (b.bookingStatus === 'confirmed' || b.bookingStatus === 'completed') && 
+      const monthlyRevenue = allBookings
+        .filter(b => (b.bookingStatus === 'Confirmed' || b.bookingStatus === 'Completed') && 
                     new Date(b.createdAt) >= thirtyDaysAgo)
         .reduce((sum, booking) => sum + (booking.totalAmount || 0), 0);
 
