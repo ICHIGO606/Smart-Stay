@@ -16,6 +16,11 @@ const hotelSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    currency: {
+      type: String,
+      default: "INR",
+      enum: ["INR", "USD", "EUR", "GBP", "CAD", "AUD", "JPY", "CNY"],
+    },
   },
   { timestamps: true }
 );

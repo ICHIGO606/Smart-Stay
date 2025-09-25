@@ -19,10 +19,12 @@ import adminRouter from './routes/admin.routes.js'
 import bookingRouter from './routes/booking.routes.js'
 import reviewRouter from './routes/review.routes.js'
 import hotelRouter from './routes/hotel.routes.js'
+import paymentRouter from './routes/payment.routes.js'
 app.use('/api/v1/auth',authRouter)
 app.use('/api/v1/users',userRouter)
 app.use('/api/v1/admin',adminRouter)
 app.use("/api/v1/bookings", bookingRouter);
 app.use("/api/reviews", reviewRouter);
 app.use("/api/v1/hotels", hotelRouter);
+app.use("/api/v1/payments", paymentRouter);
 export  {app};

@@ -23,6 +23,7 @@
     "mongoose": "^8.17.1",
     "multer": "^2.0.2",
     "multer-storage-cloudinary": "^4.0.0",
+    "razorpay": "^2.9.6",
     "router": "^2.2.0"
   },
   "devDependencies": {
