@@ -12,6 +12,13 @@ import {
   getHotelRoomsStatus,
   getHotelBookings,
 } from "../controllers/admin.controllers.js";
+import {
+  getPendingVerifications,
+  getUserVerification,
+  verifyUser,
+  getVerifiedUsers,
+  getVerificationStats
+} from "../controllers/adminVerification.controllers.js";
 
 const router = Router();
 router.get("/hotels", verifyJWT, isAdmin, getAdminHotels);
@@ -62,5 +69,12 @@ router.get("/hotels/:hotelId/bookings", verifyJWT, verifyHotelAdmin, getHotelBoo
 
 // Get all rooms with booked/available info (Admin)
 router.get("/hotels/:hotelId/rooms-status", verifyJWT, verifyHotelAdmin, getHotelRoomsStatus);
+
+// Verification management routes
+router.get("/verifications/pending", verifyJWT, isAdmin, getPendingVerifications);
+router.get("/verifications/verified", verifyJWT, isAdmin, getVerifiedUsers);
+router.get("/verifications/stats", verifyJWT, isAdmin, getVerificationStats);
+router.get("/verifications/user/:userId", verifyJWT, isAdmin, getUserVerification);
+router.put("/verifications/verify/:userId", verifyJWT, isAdmin, verifyUser);
 
 export default router;

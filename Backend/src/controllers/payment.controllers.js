@@ -6,11 +6,18 @@ import { Hotel } from "../models/hotel.models.js";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import dotenv from "dotenv";
-dotenv.config();
+dotenv.config(
+  {
+    path:"../.env"
+  }
+);
+// console.log("Loaded RAZORPAY_KEY_ID:", process.env.RAZORPAY_KEY_ID);
+// console.log("Loaded RAZORPAY_KEY_SECRET:", process.env.RAZORPAY_KEY_SECRET);
+
 // Initialize Razorpay
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
+  key_id: "rzp_test_A7v1Yk3gk3bX4M",
+  key_secret: "1fX3Y5eH2b8u3y5z7w9vL0aP",
 });
 
 // Create payment order
@@ -35,8 +42,8 @@ const createPaymentOrder = asyncHandler(async (req, res) => {
 
   // For pay at hotel, create a dummy order and mark as completed
   if (paymentMethod === "pay_at_hotel") {
-    booking.paymentStatus = "Completed";
-    booking.bookingStatus = "Confirmed";
+    booking.paymentStatus = "Pending";
+    booking.bookingStatus = "Pending";
     await booking.save();
 
     return res.status(200).json(

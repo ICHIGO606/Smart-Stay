@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { paymentService } from '../services/paymentService';
 
-const PaymentGateway = ({ booking, onPaymentSuccess, onPaymentCancel }) => {
+const PaymentGateway = ({ booking, onSuccess, onCancel }) => {
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [selectedMethod, setSelectedMethod] = useState('');
   const [loading, setLoading] = useState(false);
@@ -40,18 +40,24 @@ const PaymentGateway = ({ booking, onPaymentSuccess, onPaymentCancel }) => {
 
       // For pay at hotel, no payment processing needed
       if (selectedMethod === 'pay_at_hotel') {
-        const response = await paymentService.createPaymentOrder(booking._id, 'pay_at_hotel');
-        onPaymentSuccess(response.data);
+        try {
+          const response = await paymentService.createPaymentOrder(booking._id, 'pay_at_hotel');
+          console.log('Pay at hotel response:', response.data);
+          if (onSuccess) {
+            onSuccess(response.data);
+          } else {
+            console.error('onSuccess callback is not defined');
+            setError('Payment completed but navigation failed. Please check your bookings.');
+          }
+        } catch (err) {
+          console.error('Pay at hotel error:', err);
+          setError(err.message || 'Failed to process pay at hotel option');
+        }
         return;
       }
 
       // For online payments, create order and process payment
       const orderResponse = await paymentService.createPaymentOrder(booking._id, selectedMethod);
-      
-      if (selectedMethod === 'pay_at_hotel') {
-        onPaymentSuccess(orderResponse.data);
-        return;
-      }
 
       // Load Razorpay SDK and process payment
       await paymentService.loadRazorpayScript();
@@ -70,7 +76,7 @@ const PaymentGateway = ({ booking, onPaymentSuccess, onPaymentCancel }) => {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature
             });
-            onPaymentSuccess(verification.data);
+            onSuccess(verification.data);
           } catch (err) {
             setError('Payment verification failed: ' + err.message);
           }
@@ -180,7 +186,7 @@ const PaymentGateway = ({ booking, onPaymentSuccess, onPaymentCancel }) => {
 
       <div className="mt-6 flex space-x-4">
         <button
-          onClick={onPaymentCancel}
+          onClick={onCancel}
           className="flex-1 px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
           disabled={loading}
         >

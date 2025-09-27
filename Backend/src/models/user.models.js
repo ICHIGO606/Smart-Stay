@@ -25,7 +25,16 @@ const userSchema = new mongoose.Schema(
         enum: ["Unverified", "Pending", "Verified", "Rejected"],
         default: "Unverified",
       },
-      documentUrl: { type: String, default: null }, 
+      documentUrl: { type: String, default: null },
+      verifiedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: null
+      },
+      verifiedAt: {
+        type: Date,
+        default: null
+      }
     },
 
     familyMembers: [

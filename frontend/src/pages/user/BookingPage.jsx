@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import bookingService from '../../services/bookingService';
 import hotelService from '../../services/hotelService';
 import userService from '../../services/userService';
+import PaymentGateway from '../../components/PaymentGateway';
 
 const BookingPage = () => {
   const { hotelId, roomId } = useParams();
@@ -32,6 +33,10 @@ const BookingPage = () => {
     ],
     specialRequests: ''
   });
+  
+  // Payment integration state
+  const [showPaymentGateway, setShowPaymentGateway] = useState(false);
+  const [createdBooking, setCreatedBooking] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -253,13 +258,9 @@ const BookingPage = () => {
 
       const response = await bookingService.createBooking(bookingPayload);
       
-      navigate('/user', { 
-        state: { 
-          message: 'Booking created successfully!',
-          bookingId: response.data._id,
-          activeTab: 'bookings'
-        }
-      });
+      // Store the created booking and show payment gateway
+      setCreatedBooking(response.data);
+      setShowPaymentGateway(true);
       
     } catch (err) {
       setError(err.message || 'Failed to create booking');
@@ -865,6 +866,30 @@ const BookingPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Payment Gateway Modal */}
+      {showPaymentGateway && createdBooking && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <PaymentGateway 
+              booking={createdBooking}
+              onSuccess={() => {
+                setShowPaymentGateway(false);
+                navigate('/user', { 
+                  state: { 
+                    activeTab: 'bookings',
+                    message: 'Booking confirmed! Payment successful.',
+                    bookingId: createdBooking._id
+                  }
+                });
+              }}
+              onCancel={() => {
+                setShowPaymentGateway(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         @keyframes fadeIn {

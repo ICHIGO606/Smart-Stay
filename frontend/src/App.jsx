@@ -23,9 +23,9 @@ import HotelManagement from './pages/admin/HotelManagement';
 import BookingManagement from './pages/admin/BookingManagement';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProfile from './pages/admin/AdminProfile';
+import AdminVerifications from './pages/admin/AdminVerifications';
 const AdminPackages = () => <div className="p-8"><h1 className="text-2xl font-bold">Package Management</h1></div>;
 const AdminUsers = () => <div className="p-8"><h1 className="text-2xl font-bold">User Management</h1></div>;
-const AdminVerifications = () => <div className="p-8"><h1 className="text-2xl font-bold">Verification Requests</h1></div>;
 
 function App() {
   return (
