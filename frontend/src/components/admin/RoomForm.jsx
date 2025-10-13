@@ -1,13 +1,13 @@
 import { useState } from 'react';
 
-const RoomForm = ({ hotel, onSubmit, onCancel }) => {
+const RoomForm = ({ hotel, onSubmit, onCancel, initialData }) => {
   const [formData, setFormData] = useState({
-    type: '',
-    pricePerNight: '',
-    maxOccupancy: '',
-    description: '',
-    roomNumbers: [''],
-    amenities: [],
+    type: initialData?.type || '',
+    pricePerNight: initialData?.pricePerNight || '',
+    maxOccupancy: initialData?.maxOccupancy || '',
+    description: initialData?.description || '',
+    roomNumbers: initialData?.roomNumbers || [''],
+    amenities: initialData?.amenities || [],
     images: []
   });
   
@@ -115,7 +115,7 @@ const RoomForm = ({ hotel, onSubmit, onCancel }) => {
           ← Back
         </button>
         <h2 className="text-2xl font-bold text-primary">
-          Add Room to {hotel.name}
+          {initialData ? 'Edit Room' : 'Add Room'} to {hotel.name}
         </h2>
       </div>
 

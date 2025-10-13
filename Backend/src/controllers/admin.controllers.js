@@ -3,8 +3,9 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Hotel } from "../models/hotel.models.js";
 import { Room } from "../models/room.models.js";
+import { Booking } from "../models/booking.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
-
+import mongoose from "mongoose";
 // ------------------- HOTEL CONTROLLERS ------------------- //
 
 // Create hotel
@@ -228,45 +229,124 @@ const getHotelBookings = asyncHandler(async (req, res) => {
 });
 
 // Get all rooms with their booked status (Admin)
+// const getHotelRoomsStatus = asyncHandler(async (req, res) => {
+//   const { hotelId } = req.params;
+
+//   // Check if hotel belongs to this admin
+//   const hotel = await Hotel.findOne({ _id: hotelId, adminId: req.user._id });
+//   if (!hotel) throw new ApiError(404, "Hotel not found or not accessible by this admin");
+
+//   const rooms = await Room.find({ hotelId });
+
+//   // For each room, check which roomNumbers are booked
+//   const roomsWithStatus = await Promise.all(
+//     rooms.map(async (room) => {
+//       // Fetch confirmed bookings for this room
+//       const bookings = await Booking.find({
+//         roomId: room._id,
+//         bookingStatus: "Confirmed",
+//       });
+
+//       // Flatten all booked roomNumbers
+//       const bookedRoomNumbers = bookings.flatMap(b => b.roomNumbers);
+
+//       const availableRoomNumbers = room.roomNumbers.filter(
+//         rn => !bookedRoomNumbers.includes(rn)
+//       );
+
+//       return {
+//         ...room.toObject(),
+//         bookedRoomNumbers,
+//         availableRoomNumbers,
+//       };
+//     })
+//   );
+
+//   return res
+//     .status(200)
+//     .json(new ApiResponse(200, roomsWithStatus, "Rooms status fetched successfully"));
+// });
+
 const getHotelRoomsStatus = asyncHandler(async (req, res) => {
   const { hotelId } = req.params;
 
-  // Check if hotel belongs to this admin
-  const hotel = await Hotel.findOne({ _id: hotelId, adminId: req.user._id });
-  if (!hotel) throw new ApiError(404, "Hotel not found or not accessible by this admin");
+  if (!hotelId || !mongoose.Types.ObjectId.isValid(hotelId)) {
+    return res.status(400).json({ message: "Valid Hotel ID is required." });
+  }
 
-  const rooms = await Room.find({ hotelId });
+  // Fetch all rooms for the hotel
+  const rooms = await Room.find({ hotelId }).lean();
 
-  // For each room, check which roomNumbers are booked
-  const roomsWithStatus = await Promise.all(
-    rooms.map(async (room) => {
-      // Fetch confirmed bookings for this room
-      const bookings = await Booking.find({
-        roomId: room._id,
-        bookingStatus: "Confirmed",
-      });
+  if (!rooms.length) {
+    return res.status(404).json({ message: "No rooms found for this hotel." });
+  }
 
-      // Flatten all booked roomNumbers
-      const bookedRoomNumbers = bookings.flatMap(b => b.roomNumbers);
+  // Fetch bookings for these rooms that are active or future
+  const roomIds = rooms.map((room) => room._id);
+  const bookings = await Booking.find({
+    roomId: { $in: roomIds },
+    checkOutDate: { $gte: new Date() }, // active or future bookings
+  })
+    .populate({
+      path: "user",
+      select: "fullName email",
+    })
+    .lean();
 
-      const availableRoomNumbers = room.roomNumbers.filter(
-        rn => !bookedRoomNumbers.includes(rn)
+  // Arrange rooms by floor
+  const floorWiseRooms = {};
+
+  rooms.forEach((room) => {
+    (room.roomNumbers || []).forEach((roomNumber) => {
+      const floor = Math.floor(roomNumber / 100); // 101 → floor 1
+
+      if (!floorWiseRooms[floor]) floorWiseRooms[floor] = [];
+
+      // Check if this roomNumber has a booking
+      const booking = bookings.find(
+        (b) =>
+          b.roomId.toString() === room._id.toString() &&
+          b.roomNumbers.includes(roomNumber)
       );
 
-      return {
-        ...room.toObject(),
-        bookedRoomNumbers,
-        availableRoomNumbers,
-      };
-    })
-  );
+      floorWiseRooms[floor].push({
+        roomId: room._id,
+        roomType: room.type,
+        roomNumber,
+        status: booking ? "Booked" : "Available",
+        bookingDetails: booking
+          ? {
+              bookingId: booking._id,
+              user: booking.user || null,
+              checkInDate: booking.checkInDate,
+              checkOutDate: booking.checkOutDate,
+              bookingStatus: booking.bookingStatus,
+              paymentStatus: booking.paymentStatus,
+              guests: booking.guests || [],
+            }
+          : null,
+      });
+    });
+  });
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, roomsWithStatus, "Rooms status fetched successfully"));
+  // Sort rooms inside each floor
+  for (const floor in floorWiseRooms) {
+    floorWiseRooms[floor].sort((a, b) => a.roomNumber - b.roomNumber);
+  }
+
+  return res.status(200).json({
+    hotelId,
+    floors: floorWiseRooms,
+  });
 });
+const getHotelRooms = asyncHandler(async (req, res) => {
+  const { hotelId } = req.params;
+  const rooms = await Room.find({ hotelId });
+  // if (!rooms.length) throw new ApiError(404, "No rooms found for this hotel");
+  return res.status(200).json(new ApiResponse(200, rooms, "Rooms fetched successfully"));
+})
+  
 
 
 
-
-export { createHotel, updateHotel, addRoom, updateRoom, deleteRoom,getAdminHotels,getHotelBookings, getHotelRoomsStatus  };
+export { createHotel, updateHotel, addRoom, updateRoom, deleteRoom,getAdminHotels,getHotelBookings, getHotelRoomsStatus ,getHotelRooms};

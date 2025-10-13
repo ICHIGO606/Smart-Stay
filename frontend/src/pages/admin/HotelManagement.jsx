@@ -1,15 +1,14 @@
-import { useState, useEffect } from 'react';
-import adminHotelService from '../../services/adminHotelService';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import  adminHotelService  from '../../services/adminHotelService';
 import HotelForm from '../../components/admin/HotelForm';
-import RoomForm from '../../components/admin/RoomForm';
 
 const HotelManagement = () => {
+  const navigate = useNavigate();
   const [hotels, setHotels] = useState([]);
-  const [selectedHotel, setSelectedHotel] = useState(null);
-  const [showHotelForm, setShowHotelForm] = useState(false);
-  const [showRoomForm, setShowRoomForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showHotelForm, setShowHotelForm] = useState(false);
 
   useEffect(() => {
     fetchHotels();
@@ -33,17 +32,6 @@ const HotelManagement = () => {
     try {
       await adminHotelService.createHotel(hotelData);
       setShowHotelForm(false);
-      fetchHotels();
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const handleCreateRoom = async (roomData) => {
-    try {
-      await adminHotelService.createRoom(selectedHotel._id, roomData);
-      setShowRoomForm(false);
-      setSelectedHotel(null);
       fetchHotels();
     } catch (err) {
       setError(err.message);
@@ -88,21 +76,6 @@ const HotelManagement = () => {
     );
   }
 
-  if (showRoomForm && selectedHotel) {
-    return (
-      <div className="p-8">
-        <RoomForm
-          hotel={selectedHotel}
-          onSubmit={handleCreateRoom}
-          onCancel={() => {
-            setShowRoomForm(false);
-            setSelectedHotel(null);
-          }}
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
@@ -134,7 +107,7 @@ const HotelManagement = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {hotels.map((hotel) => (
-            <div key={hotel._id} className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div key={hotel._id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
               {hotel.images && hotel.images.length > 0 && (
                 <img
                   src={hotel.images[0]}
@@ -150,7 +123,7 @@ const HotelManagement = () => {
                 <div className="mb-4">
                   <h4 className="font-medium text-primary mb-2">Amenities:</h4>
                   <div className="flex flex-wrap gap-1">
-                    {hotel.amenities?.map((amenity, index) => (
+                    {hotel.amenities?.slice(0, 3).map((amenity, index) => (
                       <span
                         key={index}
                         className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded"
@@ -158,30 +131,36 @@ const HotelManagement = () => {
                         {amenity}
                       </span>
                     ))}
+                    {hotel.amenities?.length > 3 && (
+                      <span className="text-xs text-gray-500">
+                        +{hotel.amenities.length - 3} more
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center mb-4">
                   <span className="text-accent font-semibold">
                     {calculateTotalRoomNumbers(hotel)} Rooms
                   </span>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => {
-                        setSelectedHotel(hotel);
-                        setShowRoomForm(true);
-                      }}
-                      className="btn-secondary text-sm"
-                    >
-                      Add Room
-                    </button>
-                    <button
-                      onClick={() => handleDeleteHotel(hotel._id)}
-                      className="btn-danger text-sm"
-                    >
-                      Delete
-                    </button>
-                  </div>
+                  <span className="text-sm text-gray-600">
+                    {hotel.rooms?.length || 0} Room Types
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <button
+                    onClick={() => navigate(`/admin/hotels/${hotel._id}`)}
+                    className="btn-primary text-sm"
+                  >
+                    View Details
+                  </button>
+                  <button
+                    onClick={() => handleDeleteHotel(hotel._id)}
+                    className="btn-danger text-sm"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             </div>

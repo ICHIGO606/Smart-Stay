@@ -6,10 +6,37 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 // Admin creates a package
 const createPackage = asyncHandler(async (req, res) => {
-  const { name, description, destinations, duration, price, itinerary } = req.body;
+  let { name, description, destinations, duration, price, itinerary } = req.body;
 
   if (!name || !description || !destinations || !duration || !price || !itinerary) {
     throw new ApiError(400, "All package fields are required");
+  }
+
+  // ✅ Parse destinations if it's a string (e.g. "Paris,Rome")
+  if (typeof destinations === "string") {
+    try {
+      destinations = JSON.parse(destinations);
+    } catch {
+      destinations = destinations.split(",").map(d => d.trim());
+    }
+  }
+
+  // ✅ Parse duration (string → object)
+  if (typeof duration === "string") {
+    try {
+      duration = JSON.parse(duration);
+    } catch {
+      throw new ApiError(400, "Invalid duration format");
+    }
+  }
+
+  // ✅ Parse itinerary (string → array of objects)
+  if (typeof itinerary === "string") {
+    try {
+      itinerary = JSON.parse(itinerary);
+    } catch {
+      throw new ApiError(400, "Invalid itinerary format");
+    }
   }
 
   let images = [];
@@ -36,6 +63,7 @@ const createPackage = asyncHandler(async (req, res) => {
     .status(201)
     .json(new ApiResponse(201, newPackage, "Package created successfully"));
 });
+
 
 // Admin updates a package
 const updatePackage = asyncHandler(async (req, res) => {

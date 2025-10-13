@@ -21,6 +21,7 @@ import reviewRouter from './routes/review.routes.js'
 import hotelRouter from './routes/hotel.routes.js'
 import paymentRouter from './routes/payment.routes.js'
 import webhookRouter from './routes/webhook.routes.js'
+import packageRouter from './routes/package.routes.js'
 app.use('/api/v1/auth',authRouter)
 app.use('/api/v1/users',userRouter)
 app.use('/api/v1/admin',adminRouter)
@@ -29,4 +30,5 @@ app.use("/api/reviews", reviewRouter);
 app.use("/api/v1/hotels", hotelRouter);
 app.use("/api/v1/payments", paymentRouter);
 app.use("/webhooks", webhookRouter);
+app.use("/api/v1/packages", packageRouter);
 export  {app};

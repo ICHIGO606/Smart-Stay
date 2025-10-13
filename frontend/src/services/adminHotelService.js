@@ -1,6 +1,15 @@
 import api  from './api';
 
 const adminHotelService = {
+  // Get hotel rooms status for visualization
+  getHotelRoomsStatus: async (hotelId) => {
+    try {
+      const response = await api.get(`/admin/hotels/${hotelId}/rooms-status`);
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
   // Get all hotels for admin
   getAdminHotels: async () => {
     try {
@@ -133,7 +142,7 @@ const adminHotelService = {
   // Get rooms for a hotel
   getHotelRooms: async (hotelId) => {
     try {
-      const response = await api.get(`/admin/hotels/${hotelId}/rooms`);
+      const response = await api.get(`/admin/hotels/${hotelId}/rooms-status`);
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to fetch rooms');

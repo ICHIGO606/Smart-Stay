@@ -11,6 +11,7 @@ import {
   getAdminHotels,
   getHotelRoomsStatus,
   getHotelBookings,
+  getHotelRooms
 } from "../controllers/admin.controllers.js";
 import {
   getPendingVerifications,
@@ -69,7 +70,7 @@ router.get("/hotels/:hotelId/bookings", verifyJWT, verifyHotelAdmin, getHotelBoo
 
 // Get all rooms with booked/available info (Admin)
 router.get("/hotels/:hotelId/rooms-status", verifyJWT, verifyHotelAdmin, getHotelRoomsStatus);
-
+router.get("/hotels/:hotelId/rooms", verifyJWT, verifyHotelAdmin, getHotelRooms);
 // Verification management routes
 router.get("/verifications/pending", verifyJWT, isAdmin, getPendingVerifications);
 router.get("/verifications/verified", verifyJWT, isAdmin, getVerifiedUsers);

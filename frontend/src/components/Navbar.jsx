@@ -27,6 +27,7 @@ const Navbar = () => {
           <div className="hidden md:flex md:items-center md:space-x-4">
             <Link to="/" className="px-3 py-2 text-primary hover:text-accent">Home</Link>
             <Link to="/hotels" className="px-3 py-2 text-primary hover:text-accent">Hotels</Link>
+            <Link to="/packages" className="px-3 py-2 text-primary hover:text-accent">Packages</Link>
             
             {isAuthenticated ? (
               <div className="relative ml-3">
@@ -114,6 +115,13 @@ const Navbar = () => {
               onClick={() => setMobileMenuOpen(false)}
             >
               Hotels
+            </Link>
+            <Link 
+              to="/packages" 
+              className="block px-3 py-2 text-primary hover:text-accent"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Packages
             </Link>
             
             {isAuthenticated ? (
