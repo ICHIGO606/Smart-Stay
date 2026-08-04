@@ -29,7 +29,7 @@ import AdminProfile from './pages/admin/AdminProfile';
 import AdminVerifications from './pages/admin/AdminVerifications';
 import PackageListPage from './pages/admin/PackageListPage';
 import PackageFormPage from './pages/admin/PackageFormPage';
-const AdminUsers = () => <div className="p-8"><h1 className="text-2xl font-bold">User Management</h1></div>;
+// const AdminUsers = () => <div className="p-8"><h1 className="text-2xl font-bold">User Management</h1></div>;
 
 function App() {
   return (
@@ -63,7 +63,7 @@ function App() {
             <Route path="packages" element={<PackageListPage />} />
             <Route path="packages/new" element={<PackageFormPage />} />
             <Route path="packages/edit/:id" element={<PackageFormPage />} />
-            <Route path="users" element={<AdminUsers />} />
+            {/* <Route path="users" element={<AdminUsers />} /> */}
             <Route path="verifications" element={<AdminVerifications />} />
             <Route path="profile" element={<AdminProfile />} />
           </Route>

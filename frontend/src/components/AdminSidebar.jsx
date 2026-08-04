@@ -8,7 +8,7 @@ const AdminSidebar = () => {
     { to: '/admin/hotels', label: 'Hotel Management', icon: '🏨' },
     { to: '/admin/bookings', label: 'Booking Management', icon: '📅' },
     { to: '/admin/packages', label: 'Package Management', icon: '🎁' },
-    { to: '/admin/users', label: 'User Management', icon: '👥' },
+    // { to: '/admin/users', label: 'User Management', icon: '👥' },
     { to: '/admin/verifications', label: 'Verification Requests', icon: '🪪' },
     { to: '/admin/profile', label: 'Profile Settings', icon: '⚙️' },
   ];
