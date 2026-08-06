@@ -4,7 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Hotel } from "../models/hotel.models.js";
 import { Room } from "../models/room.models.js";
 import { Booking } from "../models/booking.models.js";
-import escapeRegex from "../utils/helpers.js";
+import {escapeRegex} from "../utils/helpers.js";
 
 const getLocationSuggestions = asyncHandler(async (req, res) => {
   const { query } = req.query;
