@@ -1,10 +1,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
+import path from "path";
 import { ApiError } from "./ApiError.js";
-
-console.log(process.env.CLOUDINARY_CLOUD_NAME)
-console.log(process.env.CLOUDINARY_API_KEY)
-console.log(process.env.CLOUDINARY_API_SECRET)
 
 cloudinary.config({ 
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
@@ -16,16 +13,28 @@ const uploadOnCloudinary = async (localFilePath) => {
   try {
     if (!localFilePath) return null;
 
-    const response = await cloudinary.uploader.upload(localFilePath, {
+    if (localFilePath.indexOf('\0') !== -1 || localFilePath.includes('..')) {
+      throw new ApiError(400, "Invalid file path detected");
+    }
+    const safePath = path.normalize(localFilePath);
+
+    const response = await cloudinary.uploader.upload(safePath, {
       resource_type: "auto"
     });
 
-    fs.unlinkSync(localFilePath); // remove local file
-    return response; // Return the full response object
+    fs.unlinkSync(safePath);
+    return response; 
   } catch (error) {
     console.error("Cloudinary upload error:", error);
-  if (fs.existsSync(localFilePath)) fs.unlinkSync(localFilePath);
-  throw new ApiError(500, "Failed to upload file to Cloudinary");
+
+    if (localFilePath && localFilePath.indexOf('\0') === -1 && !localFilePath.includes('..')) {
+      const safePath = path.normalize(localFilePath);
+      if (fs.existsSync(safePath)) {
+        fs.unlinkSync(safePath);
+      }
+    }
+    
+    throw new ApiError(500, "Failed to upload file to Cloudinary");
   }
 };
 

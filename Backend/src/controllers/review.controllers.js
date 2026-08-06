@@ -10,18 +10,22 @@ const addReview = asyncHandler(async (req, res) => {
     throw new ApiError(400, "All fields are required for review");
   }
 
+  // CodeQL Fix: Sanitize user input to prevent NoSQL Injection
+  const safeTargetId = String(targetId);
+  const safeTargetModel = String(targetModel);
+
   const review = await Review.findOne({
     user: req.user._id,
-    targetId,
-    targetModel,
+    targetId: safeTargetId,
+    targetModel: safeTargetModel,
   });
 
   if (review) throw new ApiError(409, "You already submitted a review");
 
   const newReview = await Review.create({
     user: req.user._id,
-    targetId,
-    targetModel,
+    targetId: safeTargetId,
+    targetModel: safeTargetModel,
     rating,
     comment,
   });
@@ -35,8 +39,14 @@ const addReview = asyncHandler(async (req, res) => {
 const getReviews = asyncHandler(async (req, res) => {
   const { targetId, targetModel } = req.params;
 
-  const reviews = await Review.find({ targetId, targetModel })
-    .populate("user", "fullName");
+  // CodeQL Fix: Sanitize user input from params
+  const safeTargetId = String(targetId);
+  const safeTargetModel = String(targetModel);
+
+  const reviews = await Review.find({ 
+    targetId: safeTargetId, 
+    targetModel: safeTargetModel 
+  }).populate("user", "fullName");
 
   return res
     .status(200)

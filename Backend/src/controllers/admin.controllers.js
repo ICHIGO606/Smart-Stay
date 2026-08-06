@@ -6,6 +6,7 @@ import { Room } from "../models/room.models.js";
 import { Booking } from "../models/booking.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import mongoose from "mongoose";
+
 // ------------------- HOTEL CONTROLLERS ------------------- //
 
 // Create hotel
@@ -42,7 +43,10 @@ const updateHotel = asyncHandler(async (req, res) => {
   const { hotelId } = req.params;
   const { name, city, description, amenities, address, images } = req.body;
 
-  const hotel = await Hotel.findById(hotelId);
+  // CodeQL Fix: Sanitize user input
+  const safeHotelId = String(hotelId);
+
+  const hotel = await Hotel.findById(safeHotelId);
   if (!hotel) throw new ApiError(404, "Hotel not found");
 
   if (name) hotel.name = name;
@@ -97,20 +101,24 @@ const addRoom = asyncHandler(async (req, res) => {
   if (!type || !pricePerNight || !maxOccupancy || !roomNumbers)
     throw new ApiError(400, "All fields are required");
 
+  // CodeQL Fix: Sanitize variables used in database queries
+  const safeHotelId = String(hotelId);
+  const safeType = String(type);
+
   const parsedNumbers = parseRoomNumbers(roomNumbers);
   if (parsedNumbers.length === 0) throw new ApiError(400, "Invalid room numbers");
 
   let imageUrls = [];
-if (req.files?.images) {
-    imageUrls = await Promise.all(
-        req.files.images.map(async (file) => {
-            const result = await uploadOnCloudinary(file.path);
-            return result.secure_url;
-        })
-    );
-}
+  if (req.files?.images) {
+      imageUrls = await Promise.all(
+          req.files.images.map(async (file) => {
+              const result = await uploadOnCloudinary(file.path);
+              return result.secure_url;
+          })
+      );
+  }
 
-  let existingRoom = await Room.findOne({ hotelId, type });
+  let existingRoom = await Room.findOne({ hotelId: safeHotelId, type: safeType });
   if (existingRoom) {
     existingRoom.roomNumbers = [...new Set([...existingRoom.roomNumbers, ...parsedNumbers])];
     existingRoom.pricePerNight = pricePerNight;
@@ -122,8 +130,8 @@ if (req.files?.images) {
   }
 
   const newRoom = await Room.create({
-    hotelId,
-    type,
+    hotelId: safeHotelId,
+    type: safeType,
     pricePerNight,
     maxOccupancy,
     roomNumbers: parsedNumbers,
@@ -139,7 +147,10 @@ const updateRoom = asyncHandler(async (req, res) => {
   const { roomId } = req.params;
   const { type, pricePerNight, maxOccupancy, roomNumbers, amenities, images } = req.body;
 
-  const room = await Room.findById(roomId);
+  // CodeQL Fix: Sanitize user input
+  const safeRoomId = String(roomId);
+
+  const room = await Room.findById(safeRoomId);
   if (!room) throw new ApiError(404, "Room not found");
 
   if (type) room.type = type;
@@ -170,7 +181,11 @@ const updateRoom = asyncHandler(async (req, res) => {
 const deleteRoom = asyncHandler(async (req, res) => {
   const { roomId } = req.params;
   const { roomNumber } = req.body;
-  const room = await Room.findById(roomId);
+  
+  // CodeQL Fix: Sanitize user input
+  const safeRoomId = String(roomId);
+  
+  const room = await Room.findById(safeRoomId);
   if (!room) throw new ApiError(404, "Room type not found");
 
   if (roomNumber) {
@@ -208,18 +223,19 @@ const getAdminHotels = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, hotelsWithRooms, "Hotels fetched successfully"));
 });
 
-
-
 // Get bookings for a specific hotel (Admin)
 const getHotelBookings = asyncHandler(async (req, res) => {
   const { hotelId } = req.params;
 
+  // CodeQL Fix: Sanitize user input
+  const safeHotelId = String(hotelId);
+
   // Check if hotel belongs to this admin
-  const hotel = await Hotel.findOne({ _id: hotelId, adminId: req.user._id });
+  const hotel = await Hotel.findOne({ _id: safeHotelId, adminId: req.user._id });
   if (!hotel) throw new ApiError(404, "Hotel not found or not accessible by this admin");
 
   // Fetch all bookings for this hotel
-  const bookings = await Booking.find({ hotelId })
+  const bookings = await Booking.find({ hotelId: safeHotelId })
     .populate("roomId", "type roomNumbers")
     .populate("user", "fullName email");
 
@@ -228,45 +244,6 @@ const getHotelBookings = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, bookings, "Bookings fetched successfully"));
 });
 
-// Get all rooms with their booked status (Admin)
-// const getHotelRoomsStatus = asyncHandler(async (req, res) => {
-//   const { hotelId } = req.params;
-
-//   // Check if hotel belongs to this admin
-//   const hotel = await Hotel.findOne({ _id: hotelId, adminId: req.user._id });
-//   if (!hotel) throw new ApiError(404, "Hotel not found or not accessible by this admin");
-
-//   const rooms = await Room.find({ hotelId });
-
-//   // For each room, check which roomNumbers are booked
-//   const roomsWithStatus = await Promise.all(
-//     rooms.map(async (room) => {
-//       // Fetch confirmed bookings for this room
-//       const bookings = await Booking.find({
-//         roomId: room._id,
-//         bookingStatus: "Confirmed",
-//       });
-
-//       // Flatten all booked roomNumbers
-//       const bookedRoomNumbers = bookings.flatMap(b => b.roomNumbers);
-
-//       const availableRoomNumbers = room.roomNumbers.filter(
-//         rn => !bookedRoomNumbers.includes(rn)
-//       );
-
-//       return {
-//         ...room.toObject(),
-//         bookedRoomNumbers,
-//         availableRoomNumbers,
-//       };
-//     })
-//   );
-
-//   return res
-//     .status(200)
-//     .json(new ApiResponse(200, roomsWithStatus, "Rooms status fetched successfully"));
-// });
-
 const getHotelRoomsStatus = asyncHandler(async (req, res) => {
   const { hotelId } = req.params;
 
@@ -274,8 +251,11 @@ const getHotelRoomsStatus = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Valid Hotel ID is required." });
   }
 
+  // CodeQL Fix: Sanitize user input just to be perfectly safe
+  const safeHotelId = String(hotelId);
+
   // Fetch all rooms for the hotel
-  const rooms = await Room.find({ hotelId }).lean();
+  const rooms = await Room.find({ hotelId: safeHotelId }).lean();
 
   if (!rooms.length) {
     return res.status(404).json({ message: "No rooms found for this hotel." });
@@ -335,18 +315,19 @@ const getHotelRoomsStatus = asyncHandler(async (req, res) => {
   }
 
   return res.status(200).json({
-    hotelId,
+    hotelId: safeHotelId,
     floors: floorWiseRooms,
   });
 });
+
 const getHotelRooms = asyncHandler(async (req, res) => {
   const { hotelId } = req.params;
-  const rooms = await Room.find({ hotelId });
-  // if (!rooms.length) throw new ApiError(404, "No rooms found for this hotel");
-  return res.status(200).json(new ApiResponse(200, rooms, "Rooms fetched successfully"));
-})
   
+  // CodeQL Fix: Sanitize user input
+  const safeHotelId = String(hotelId);
+  
+  const rooms = await Room.find({ hotelId: safeHotelId });
+  return res.status(200).json(new ApiResponse(200, rooms, "Rooms fetched successfully"));
+});
 
-
-
-export { createHotel, updateHotel, addRoom, updateRoom, deleteRoom,getAdminHotels,getHotelBookings, getHotelRoomsStatus ,getHotelRooms};
+export { createHotel, updateHotel, addRoom, updateRoom, deleteRoom, getAdminHotels, getHotelBookings, getHotelRoomsStatus, getHotelRooms };

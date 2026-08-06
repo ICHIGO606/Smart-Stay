@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import {Booking} from '../models/booking.models.js';
+import { Booking } from '../models/booking.models.js';
 
 // Verify Razorpay webhook signature
 const verifyWebhookSignature = (body, signature, secret) => {
@@ -8,7 +8,16 @@ const verifyWebhookSignature = (body, signature, secret) => {
     .update(JSON.stringify(body))
     .digest('hex');
   
-  return expectedSignature === signature;
+  try {
+    // Proactive Security Fix: Use timingSafeEqual to prevent timing attacks
+    return crypto.timingSafeEqual(
+      Buffer.from(expectedSignature),
+      Buffer.from(signature)
+    );
+  } catch (error) {
+    // timingSafeEqual throws if buffer lengths don't match
+    return false; 
+  }
 };
 
 export const handlePaymentWebhook = async (req, res) => {
@@ -69,8 +78,11 @@ export const handlePaymentWebhook = async (req, res) => {
 
 const handlePaymentCaptured = async (payment) => {
   try {
+    // CodeQL Fix: Sanitize user input by casting to String
+    const safeOrderId = String(payment.order_id);
+    
     const booking = await Booking.findOne({ 
-      'paymentDetails.razorpayOrderId': payment.order_id 
+      'paymentDetails.razorpayOrderId': safeOrderId 
     });
 
     if (booking) {
@@ -94,8 +106,11 @@ const handlePaymentCaptured = async (payment) => {
 
 const handlePaymentFailed = async (payment) => {
   try {
+    // CodeQL Fix: Sanitize user input by casting to String
+    const safeOrderId = String(payment.order_id);
+    
     const booking = await Booking.findOne({ 
-      'paymentDetails.razorpayOrderId': payment.order_id 
+      'paymentDetails.razorpayOrderId': safeOrderId 
     });
 
     if (booking) {
@@ -119,8 +134,11 @@ const handlePaymentFailed = async (payment) => {
 
 const handleRefundProcessed = async (refund) => {
   try {
+    // CodeQL Fix: Sanitize user input by casting to String
+    const safePaymentId = String(refund.payment_id);
+    
     const booking = await Booking.findOne({ 
-      'paymentDetails.razorpayPaymentId': refund.payment_id 
+      'paymentDetails.razorpayPaymentId': safePaymentId 
     });
 
     if (booking) {

@@ -11,13 +11,12 @@ dotenv.config(
     path:"../.env"
   }
 );
-// console.log("Loaded RAZORPAY_KEY_ID:", process.env.RAZORPAY_KEY_ID);
-// console.log("Loaded RAZORPAY_KEY_SECRET:", process.env.RAZORPAY_KEY_SECRET);
 
 // Initialize Razorpay
+// SECURITY FIX: Never hardcode secrets. Use environment variables.
 const razorpay = new Razorpay({
-  key_id: "rzp_test_A7v1Yk3gk3bX4M",
-  key_secret: "1fX3Y5eH2b8u3y5z7w9vL0aP",
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
 // Create payment order
@@ -28,7 +27,10 @@ const createPaymentOrder = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Booking ID and payment method are required");
   }
 
-  const booking = await Booking.findById(bookingId).populate("hotelId");
+  // CodeQL Fix: Sanitize user input to prevent NoSQL Injection
+  const safeBookingId = String(bookingId);
+
+  const booking = await Booking.findById(safeBookingId).populate("hotelId");
   if (!booking) {
     throw new ApiError(404, "Booking not found");
   }
@@ -99,19 +101,32 @@ const verifyPayment = asyncHandler(async (req, res) => {
     .update(body)
     .digest("hex");
 
-  if (expectedSignature !== razorpay_signature) {
+  // Proactive Security Fix: Use timingSafeEqual to prevent timing attacks
+  let isValidSignature = false;
+  try {
+    isValidSignature = crypto.timingSafeEqual(
+      Buffer.from(expectedSignature),
+      Buffer.from(razorpay_signature)
+    );
+  } catch (error) {
+    isValidSignature = false;
+  }
+
+  if (!isValidSignature) {
     throw new ApiError(400, "Invalid payment signature");
   }
 
   // Find booking by order ID
-  const order = await razorpay.orders.fetch(razorpay_order_id);
+  const order = await razorpay.orders.fetch(String(razorpay_order_id));
   const bookingId = order.notes?.bookingId;
 
   if (!bookingId) {
     throw new ApiError(404, "Booking not found for this payment");
   }
 
-  const booking = await Booking.findById(bookingId);
+  // Sanitize the bookingId just in case
+  const safeBookingId = String(bookingId);
+  const booking = await Booking.findById(safeBookingId);
   if (!booking) {
     throw new ApiError(404, "Booking not found");
   }
@@ -138,7 +153,10 @@ const getPaymentMethods = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Booking ID is required");
   }
 
-  const booking = await Booking.findById(bookingId).populate("hotelId");
+  // CodeQL Fix: Sanitize user input to prevent NoSQL Injection
+  const safeBookingId = String(bookingId);
+
+  const booking = await Booking.findById(safeBookingId).populate("hotelId");
   if (!booking) {
     throw new ApiError(404, "Booking not found");
   }

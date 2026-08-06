@@ -4,10 +4,14 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Booking } from "../models/booking.models.js";
 import { Room } from "../models/room.models.js";
 import { Hotel } from "../models/hotel.models.js";
-import {escapeRegex} from "../utils/helpers.js";
+import { escapeRegex } from "../utils/helpers.js";
+
 // Helper function to get available room numbers for a specific room type and dates
 const getAvailableRoomNumbers = async (roomId, checkInDate, checkOutDate) => {
-  const room = await Room.findById(roomId);
+  // CodeQL Fix: Sanitize user input
+  const safeRoomId = String(roomId);
+  
+  const room = await Room.findById(safeRoomId);
   if (!room) return [];
 
   const allRoomNumbers = room.roomNumbers;
@@ -57,13 +61,18 @@ const createBooking = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Required booking fields are missing");
   }
 
+  // CodeQL Fixes: Pre-sanitize IDs for database operations
+  const safeHotelId = hotelId ? String(hotelId) : undefined;
+  const safeRoomId = roomId ? String(roomId) : undefined;
+  const safePackageId = packageId ? String(packageId) : undefined;
+
   // Check if room exists for hotel
   if (bookingType === "Hotel") {
-    const room = await Room.findOne({ _id: roomId, hotelId });
+    const room = await Room.findOne({ _id: safeRoomId, hotelId: safeHotelId });
     if (!room) throw new ApiError(404, "Room not found for this hotel");
 
     // Check for available room numbers during the requested dates
-    const availableRoomNumbers = await getAvailableRoomNumbers(roomId, checkInDate, checkOutDate);
+    const availableRoomNumbers = await getAvailableRoomNumbers(safeRoomId, checkInDate, checkOutDate);
     
     if (availableRoomNumbers.length === 0) {
       throw new ApiError(400, "No rooms available for the selected dates");
@@ -73,7 +82,7 @@ const createBooking = asyncHandler(async (req, res) => {
     const assignedRoomNumber = availableRoomNumbers[0];
     
     // Update room with booked room number information
-    await Room.findByIdAndUpdate(roomId, {
+    await Room.findByIdAndUpdate(safeRoomId, {
       $push: {
         bookedRoomNumbers: {
           roomNumber: assignedRoomNumber,
@@ -91,10 +100,10 @@ const createBooking = asyncHandler(async (req, res) => {
   const booking = await Booking.create({
     user: req.user._id,
     bookingType,
-    hotelId: bookingType === "Hotel" ? hotelId : undefined,
-    roomId: bookingType === "Hotel" ? roomId : undefined,
+    hotelId: bookingType === "Hotel" ? safeHotelId : undefined,
+    roomId: bookingType === "Hotel" ? safeRoomId : undefined,
     roomNumbers: bookingType === "Hotel" ? req.body.roomNumbers : [],
-    package: bookingType === "Package" ? packageId : undefined,
+    package: bookingType === "Package" ? safePackageId : undefined,
     checkInDate,
     checkOutDate,
     numberOfAdults,
@@ -106,10 +115,10 @@ const createBooking = asyncHandler(async (req, res) => {
   });
 
   // Update the booked room entry with the actual booking ID
-  if (bookingType === "Hotel" && roomId && req.body.roomNumbers?.length > 0) {
+  if (bookingType === "Hotel" && safeRoomId && req.body.roomNumbers?.length > 0) {
     await Room.findOneAndUpdate(
       {
-        _id: roomId,
+        _id: safeRoomId,
         "bookedRoomNumbers.roomNumber": req.body.roomNumbers[0],
         "bookedRoomNumbers.checkInDate": new Date(checkInDate),
         "bookedRoomNumbers.checkOutDate": new Date(checkOutDate)
@@ -248,13 +257,15 @@ const getAllBookings = asyncHandler(async (req, res) => {
   );
 });
 
-
 // Update booking status
 const updateBookingStatus = asyncHandler(async (req, res) => {
   const { bookingId } = req.params;
   const { bookingStatus, paymentStatus } = req.body;
 
-  const booking = await Booking.findById(bookingId);
+  // CodeQL Fix: Sanitize user input
+  const safeBookingId = String(bookingId);
+
+  const booking = await Booking.findById(safeBookingId);
   if (!booking) throw new ApiError(404, "Booking not found");
 
   if (bookingStatus) booking.bookingStatus = bookingStatus;
