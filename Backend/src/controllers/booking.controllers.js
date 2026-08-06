@@ -116,12 +116,18 @@ const createBooking = asyncHandler(async (req, res) => {
 
   // Update the booked room entry with the actual booking ID
   if (bookingType === "Hotel" && safeRoomId && req.body.roomNumbers?.length > 0) {
+    
+    // CodeQL Fix: Explicitly cast the remaining tainted body properties before using them in the query
+    const safeRoomNumber = Number(req.body.roomNumbers[0]);
+    const safeCheckIn = String(checkInDate);
+    const safeCheckOut = String(checkOutDate);
+
     await Room.findOneAndUpdate(
       {
         _id: safeRoomId,
-        "bookedRoomNumbers.roomNumber": req.body.roomNumbers[0],
-        "bookedRoomNumbers.checkInDate": new Date(checkInDate),
-        "bookedRoomNumbers.checkOutDate": new Date(checkOutDate)
+        "bookedRoomNumbers.roomNumber": safeRoomNumber,
+        "bookedRoomNumbers.checkInDate": new Date(safeCheckIn),
+        "bookedRoomNumbers.checkOutDate": new Date(safeCheckOut)
       },
       {
         $set: {

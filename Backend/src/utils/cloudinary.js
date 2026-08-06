@@ -9,27 +9,34 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET 
 });
 
+const UPLOAD_DIR = path.resolve("public/temp"); 
+
 const uploadOnCloudinary = async (localFilePath) => {
   try {
     if (!localFilePath) return null;
-
-    if (localFilePath.indexOf('\0') !== -1 || localFilePath.includes('..')) {
+    const filename = path.basename(localFilePath);
+    const safePath = path.join(UPLOAD_DIR, filename);
+    if (!safePath.startsWith(UPLOAD_DIR)) {
       throw new ApiError(400, "Invalid file path detected");
     }
-    const safePath = path.normalize(localFilePath);
 
     const response = await cloudinary.uploader.upload(safePath, {
       resource_type: "auto"
     });
 
-    fs.unlinkSync(safePath);
+    if (fs.existsSync(safePath)) {
+      fs.unlinkSync(safePath);
+    }
     return response; 
   } catch (error) {
     console.error("Cloudinary upload error:", error);
 
-    if (localFilePath && localFilePath.indexOf('\0') === -1 && !localFilePath.includes('..')) {
-      const safePath = path.normalize(localFilePath);
-      if (fs.existsSync(safePath)) {
+    // Securely attempt cleanup in the catch block as well
+    if (localFilePath) {
+      const filename = path.basename(localFilePath);
+      const safePath = path.join(UPLOAD_DIR, filename);
+      
+      if (safePath.startsWith(UPLOAD_DIR) && fs.existsSync(safePath)) {
         fs.unlinkSync(safePath);
       }
     }
