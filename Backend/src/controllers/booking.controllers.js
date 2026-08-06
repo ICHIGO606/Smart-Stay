@@ -4,7 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Booking } from "../models/booking.models.js";
 import { Room } from "../models/room.models.js";
 import { Hotel } from "../models/hotel.models.js";
-
+import escapeRegex from "../utils/helpers.js";
 // Helper function to get available room numbers for a specific room type and dates
 const getAvailableRoomNumbers = async (roomId, checkInDate, checkOutDate) => {
   const room = await Room.findById(roomId);
@@ -205,7 +205,8 @@ const getAllBookings = asyncHandler(async (req, res) => {
 
   // Apply search
   if (search) {
-    const regex = new RegExp(search, "i");
+    const sanitizedSearch = escapeRegex(search); 
+    const regex = new RegExp(sanitizedSearch, "i"); 
     pipeline.push({
       $match: {
         $or: [

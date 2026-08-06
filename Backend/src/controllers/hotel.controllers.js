@@ -4,26 +4,24 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Hotel } from "../models/hotel.models.js";
 import { Room } from "../models/room.models.js";
 import { Booking } from "../models/booking.models.js";
+import escapeRegex from "../utils/helpers.js";
 
-// Get location suggestions based on hotel cities
 const getLocationSuggestions = asyncHandler(async (req, res) => {
   const { query } = req.query;
   if (!query) throw new ApiError(400, "Query parameter is required");
   
   const suggestions = await Hotel.distinct("city", {
-    city: new RegExp(query, "i")
+    city: new RegExp(escapeRegex(query), "i")
   });
   
   return res.status(200).json(new ApiResponse(200, suggestions, "Location suggestions fetched successfully"));
 });
 
-// Get all hotels (optionally filter by city)
 const getHotels = asyncHandler(async (req, res) => {
   const { city } = req.query;
-  const query = city ? { city: new RegExp(city, "i") } : {};
+  const query = city ? { city: new RegExp(escapeRegex(city), "i") } : {};
   const hotels = await Hotel.find(query);
   
-  // Calculate lowest price for each hotel
   const hotelsWithPrices = await Promise.all(
     hotels.map(async (hotel) => {
       const rooms = await Room.find({ hotelId: hotel._id });
