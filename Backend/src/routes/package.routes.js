@@ -8,15 +8,16 @@ import {
   getPackageById
 } from "../controllers/package.controllers.js";
 import { upload } from "../middlewares/multer.middleware.js";
+import { apiLimiter, strictLimiter } from "../middlewares/rateLimit.middleware.js";
 
 const router = Router();
 
-// Admin routes
-router.post("/", verifyJWT, isAdmin, upload.array("images"), createPackage);
-router.put("/:packageId", verifyJWT, isAdmin, upload.array("images"), updatePackage);
-router.delete("/:packageId", verifyJWT, isAdmin, deletePackage);
+router.use(apiLimiter);
 
-// User routes
+router.post("/", strictLimiter, verifyJWT, isAdmin, upload.array("images"), createPackage);
+router.put("/:packageId", strictLimiter, verifyJWT, isAdmin, upload.array("images"), updatePackage);
+router.delete("/:packageId", strictLimiter, verifyJWT, isAdmin, deletePackage);
+
 router.get("/", getAllPackages);
 router.get("/:packageId", getPackageById);
 

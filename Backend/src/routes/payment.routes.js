@@ -5,16 +5,16 @@ import {
   getPaymentMethods
 } from "../controllers/payment.controllers.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { apiLimiter, strictLimiter } from "../middlewares/rateLimit.middleware.js";
 
 const router = Router();
 
-// Get available payment methods for a booking
+router.use(apiLimiter);
+
 router.get("/methods", verifyJWT, getPaymentMethods);
 
-// Create payment order
-router.post("/create-order", verifyJWT, createPaymentOrder);
+router.post("/create-order", strictLimiter, verifyJWT, createPaymentOrder);
 
-// Verify payment
-router.post("/verify", verifyJWT, verifyPayment);
+router.post("/verify", strictLimiter, verifyJWT, verifyPayment);
 
 export default router;
