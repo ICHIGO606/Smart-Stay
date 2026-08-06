@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { getAllPackages, deletePackage } from '../../services/adminPackageService';
 import toast from 'react-hot-toast';
 // import AdminLayout from '../../layouts/AdminLayout';

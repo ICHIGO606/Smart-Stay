@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router';
 import { getPackageById, bookPackage } from '../../services/packageService';
 import { useAuth } from '../../context/AuthContext';
 import Spinner from '../../components/common/Spinner';

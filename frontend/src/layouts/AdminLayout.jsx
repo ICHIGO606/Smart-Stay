@@ -1,4 +1,4 @@
-import { Outlet, Navigate } from 'react-router-dom';
+import { Outlet, Navigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import AdminSidebar from '../components/AdminSidebar';

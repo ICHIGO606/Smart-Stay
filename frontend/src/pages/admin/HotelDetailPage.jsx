@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router';
 import adminHotelService from '../../services/adminHotelService';
 import { hotelService } from '../../services/hotelService';
 import HotelForm from '../../components/admin/HotelForm';

@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router';
 import { Home, Users, Calendar, IdCard, Settings } from 'lucide-react';
 
 const UserSidebar = ({ onTabChange, activeTab }) => {

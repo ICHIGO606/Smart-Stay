@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router';
 import toast from 'react-hot-toast';
 import { getPackageById, createPackage, updatePackage } from '../../services/adminPackageService';
 // AdminLayout is provided by the parent route

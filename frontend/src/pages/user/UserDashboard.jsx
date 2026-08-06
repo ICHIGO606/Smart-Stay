@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext } from 'react-router';
 import userService from '../../services/userService';
 import VerificationComponent from '../../components/VerificationComponent';
 import ProfileSettings from '../../components/ProfileSettings';

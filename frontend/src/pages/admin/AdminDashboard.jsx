@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import bookingService from '../../services/bookingService';
 import adminHotelService from '../../services/adminHotelService';
 
