@@ -51,7 +51,7 @@ const HotelDetailPage = () => {
 
   const handleUpdateHotel = async (hotelData) => {
     try {
-      await adminHotelService.updateRoom(hotelId, selectedRoom._id, roomData);
+      await adminHotelService.updateHotel(hotelId, hotelData);
       setSuccess('Hotel updated successfully');
       setViewMode('details');
       fetchHotelDetails();

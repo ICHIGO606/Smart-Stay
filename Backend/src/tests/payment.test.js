@@ -1,238 +1,143 @@
-import mongoose from 'mongoose';
-import { createPaymentOrder, verifyPayment } from '../controllers/payment.controllers.js';
-import {Booking} from '../models/booking.models.js';
-import {Hotel} from '../models/hotel.models.js';
-import {User} from '../models/user.models.js';
-import dotenv from 'dotenv';
-dotenv.config();
-// Mock request and response objects
-const mockRequest = (body = {}, params = {}, headers = {}) => ({
-  body,
-  params,
-  headers,
-  user: { _id: 'test-user-id' }
+import { beforeEach, describe, expect, jest, test } from '@jest/globals';
+
+process.env.RAZORPAY_KEY_ID = 'rzp_test_ci';
+process.env.RAZORPAY_KEY_SECRET = 'ci_test_secret';
+
+const mockFindBookingById = jest.fn();
+const mockFindHotelById = jest.fn();
+const mockCreateOrder = jest.fn();
+
+await jest.unstable_mockModule('../models/booking.models.js', () => ({
+  Booking: { findById: mockFindBookingById },
+}));
+
+await jest.unstable_mockModule('../models/hotel.models.js', () => ({
+  Hotel: { findById: mockFindHotelById },
+}));
+
+await jest.unstable_mockModule('razorpay', () => ({
+  default: jest.fn().mockImplementation(() => ({
+    orders: { create: mockCreateOrder },
+  })),
+}));
+
+const { createPaymentOrder, verifyPayment } = await import(
+  '../controllers/payment.controllers.js'
+);
+
+const makeBooking = () => ({
+  _id: 'booking-id',
+  hotelId: 'hotel-id',
+  totalAmount: 5000,
+  paymentStatus: 'Pending',
+  bookingStatus: 'Pending',
+  save: jest.fn().mockResolvedValue(undefined),
 });
 
-const mockResponse = () => {
-  const res = {};
-  res.status = jest.fn().mockReturnValue(res);
-  res.json = jest.fn().mockReturnValue(res);
-  return res;
+const invokeController = (controller, body) => {
+  let finish;
+  const result = new Promise((resolve) => {
+    finish = resolve;
+  });
+  const response = {
+    status: jest.fn().mockImplementation((statusCode) => {
+      response.statusCode = statusCode;
+      return response;
+    }),
+    json: jest.fn().mockImplementation((payload) => {
+      finish({ response, payload });
+      return response;
+    }),
+  };
+
+  controller({ body }, response, (error) => finish({ response, error }));
+  return result;
 };
 
-// Test data
-const testBookingData = {
-  hotelId: 'test-hotel-id',
-  userId: 'test-user-id',
-  checkInDate: new Date(),
-  checkOutDate: new Date(Date.now() + 86400000), // +1 day
-  guests: { adults: 2, children: 0 },
-  totalAmount: 5000,
-  currency: 'INR',
-  paymentStatus: 'Pending',
-  bookingStatus: 'Pending'
-};
+describe('Payment controller', () => {
+  let booking;
 
-const testHotelData = {
-  name: 'Test Hotel',
-  description: 'A test hotel for payment testing',
-  city: 'Test City',
-  address: '123 Test Street',
-  starRating: 4,
-  currency: 'INR',
-  adminId: 'test-admin-id'
-};
-
-const testUserData = {
-  fullName: 'Test User',
-  email: 'test@example.com',
-  phone: '+1234567890',
-  password: 'testpassword'
-};
-
-describe('Payment Flow Tests', () => {
-  beforeAll(async () => {
-    // Connect to test database
-    await mongoose.connect(process.env.MONGODB_URI_TEST);
+  beforeEach(() => {
+    jest.clearAllMocks();
+    booking = makeBooking();
+    mockFindBookingById.mockReturnValue({
+      populate: jest.fn().mockResolvedValue(booking),
+    });
+    mockFindHotelById.mockResolvedValue({ currency: 'INR' });
+    mockCreateOrder.mockResolvedValue({
+      id: 'order_test_123',
+      amount: 500000,
+      currency: 'INR',
+    });
   });
 
-  afterAll(async () => {
-    await mongoose.connection.close();
-  });
-
-  beforeEach(async () => {
-    // Clear test data
-    await Booking.deleteMany({});
-    await Hotel.deleteMany({});
-    await User.deleteMany({});
-  });
-
-  test('should create payment order successfully', async () => {
-    // Create test hotel and user
-    const hotel = await Hotel.create(testHotelData);
-    const user = await User.create(testUserData);
-    
-    // Create test booking
-    const booking = await Booking.create({
-      ...testBookingData,
-      hotelId: hotel._id,
-      userId: user._id
+  test('creates a payment order', async () => {
+    const { response, payload } = await invokeController(createPaymentOrder, {
+      bookingId: 'booking-id',
+      paymentMethod: 'upi',
     });
 
-    const req = mockRequest({
-      bookingId: booking._id.toString(),
-      paymentMethod: 'upi'
+    expect(response.status).toHaveBeenCalledWith(200);
+    expect(payload.data).toMatchObject({
+      amount: 500000,
+      currency: 'INR',
+      orderId: 'order_test_123',
     });
-
-    const res = mockResponse();
-
-    await createPaymentOrder(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({
-        success: true,
-        data: expect.objectContaining({
-          amount: expect.any(Number),
-          currency: 'INR',
-          orderId: expect.any(String)
-        })
-      })
+    expect(mockCreateOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ amount: 500000, currency: 'inr' }),
     );
   });
 
-  test('should handle pay at hotel option', async () => {
-    const hotel = await Hotel.create(testHotelData);
-    const user = await User.create(testUserData);
-    const booking = await Booking.create({
-      ...testBookingData,
-      hotelId: hotel._id,
-      userId: user._id
+  test('creates a pay-at-hotel booking without an online order', async () => {
+    const { response, payload } = await invokeController(createPaymentOrder, {
+      bookingId: 'booking-id',
+      paymentMethod: 'pay_at_hotel',
     });
 
-    const req = mockRequest({
-      bookingId: booking._id.toString(),
-      paymentMethod: 'pay_at_hotel'
+    expect(response.status).toHaveBeenCalledWith(200);
+    expect(payload.data).toMatchObject({
+      paymentMethod: 'pay_at_hotel',
+      status: 'created',
     });
-
-    const res = mockResponse();
-
-    await createPaymentOrder(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({
-        success: true,
-        data: expect.objectContaining({
-          paymentMethod: 'pay_at_hotel',
-          status: 'pending_payment'
-        })
-      })
-    );
-
-    // Verify booking was updated
-    const updatedBooking = await Booking.findById(booking._id);
-    expect(updatedBooking.paymentStatus).toBe('Pending');
-    expect(updatedBooking.bookingStatus).toBe('Pending');
+    expect(booking.save).toHaveBeenCalled();
+    expect(mockCreateOrder).not.toHaveBeenCalled();
   });
 
-  test('should return error for invalid booking ID', async () => {
-    const req = mockRequest({
+  test('forwards an invalid booking ID error', async () => {
+    mockFindBookingById.mockImplementation(() => {
+      throw new Error('Invalid booking ID');
+    });
+
+    const { error } = await invokeController(createPaymentOrder, {
       bookingId: 'invalid-id',
-      paymentMethod: 'upi'
+      paymentMethod: 'upi',
     });
 
-    const res = mockResponse();
-
-    await createPaymentOrder(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({
-        success: false,
-        message: expect.any(String)
-      })
-    );
+    expect(error).toHaveProperty('message', 'Invalid booking ID');
   });
 
-  test('should return error for non-existent booking', async () => {
-    const req = mockRequest({
-      bookingId: '507f1f77bcf86cd799439011', // Valid but non-existent ObjectId
-      paymentMethod: 'upi'
+  test('returns a not-found error when the booking does not exist', async () => {
+    mockFindBookingById.mockReturnValue({
+      populate: jest.fn().mockResolvedValue(null),
     });
 
-    const res = mockResponse();
+    const { error } = await invokeController(createPaymentOrder, {
+      bookingId: 'missing-booking-id',
+      paymentMethod: 'upi',
+    });
 
-    await createPaymentOrder(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({
-        success: false,
-        message: 'Booking not found'
-      })
-    );
+    expect(error).toHaveProperty('statusCode', 404);
+    expect(error).toHaveProperty('message', 'Booking not found');
   });
 
-  test('should verify payment signature successfully', async () => {
-    // This test would require actual Razorpay integration
-    // For now, we'll test the error handling
-    const req = mockRequest({
+  test('rejects an invalid payment signature', async () => {
+    const { error } = await invokeController(verifyPayment, {
       razorpay_order_id: 'test_order_id',
       razorpay_payment_id: 'test_payment_id',
-      razorpay_signature: 'test_signature'
+      razorpay_signature: 'test_signature',
     });
 
-    const res = mockResponse();
-
-    await verifyPayment(req, res);
-
-    // Should fail due to test environment
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(error).toHaveProperty('statusCode', 400);
+    expect(error).toHaveProperty('message', 'Invalid payment signature');
   });
 });
-
-// Utility function to run tests
-export const runPaymentTests = async () => {
-  console.log('Running payment flow tests...');
-  
-  try {
-    // Test database connection
-    await mongoose.connect(process.env.MONGODB_URI_TEST);
-    
-    // Create test data
-    const hotel = await Hotel.create(testHotelData);
-    const user = await User.create(testUserData);
-    const booking = await Booking.create({
-      ...testBookingData,
-      hotelId: hotel._id,
-      userId: user._id
-    });
-
-    console.log('✅ Test data created successfully');
-    
-    // Test payment order creation
-    const req = mockRequest({
-      bookingId: booking._id.toString(),
-      paymentMethod: 'pay_at_hotel'
-    });
-    
-    const res = mockResponse();
-    await createPaymentOrder(req, res);
-    
-    console.log('✅ Payment order creation test passed');
-    
-    // Cleanup
-    await Booking.deleteMany({});
-    await Hotel.deleteMany({});
-    await User.deleteMany({});
-    
-    console.log('✅ All payment flow tests completed successfully');
-    
-  } catch (error) {
-    console.error('❌ Payment flow tests failed:', error.message);
-    throw error;
-  } finally {
-    await mongoose.connection.close();
-  }
-};

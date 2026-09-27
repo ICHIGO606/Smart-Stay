@@ -12,7 +12,7 @@ const UserDashboard = () => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const { activeTab, setActiveTab } = useOutletContext();
+  const { activeTab } = useOutletContext();
 
   const fetchUserProfile = async () => {
     try {
@@ -132,9 +132,7 @@ const UserDashboard = () => {
       
       case 'family':
         return (
-          <FamilyMembers 
-            user={userData}
-          />
+          <FamilyMembers />
         );
       
       case 'bookings':

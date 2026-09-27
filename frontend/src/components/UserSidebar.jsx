@@ -1,9 +1,6 @@
-import { Link, useLocation } from 'react-router';
 import { Home, Users, Calendar, IdCard, Settings } from 'lucide-react';
 
 const UserSidebar = ({ onTabChange, activeTab }) => {
-  const location = useLocation();
-
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: <Home size={18} /> },
     { id: 'family', label: 'Family Members', icon: <Users size={18} /> },

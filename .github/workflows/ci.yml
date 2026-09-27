@@ -29,18 +29,9 @@ jobs:
 
   backend:
     runs-on: ubuntu-latest
-    services:
-      mongodb:
-        image: mongo:7.0
-        ports:
-          - 27017:27017
     defaults:
       run:
         working-directory: Backend
-    env:
-      MONGODB_URI_TEST: mongodb://127.0.0.1:27017/smartstay_test
-      RAZORPAY_KEY_ID: rzp_test_ci
-      RAZORPAY_KEY_SECRET: ci_test_secret
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

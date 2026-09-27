@@ -102,15 +102,16 @@ const verifyPayment = asyncHandler(async (req, res) => {
     .digest("hex");
 
   // Proactive Security Fix: Use timingSafeEqual to prevent timing attacks
-  let isValidSignature = false;
-  try {
-    isValidSignature = crypto.timingSafeEqual(
-      Buffer.from(expectedSignature),
-      Buffer.from(razorpay_signature)
-    );
-  } catch (error) {
-    isValidSignature = false;
-  }
+  const isValidSignature = (() => {
+    try {
+      return crypto.timingSafeEqual(
+        Buffer.from(expectedSignature),
+        Buffer.from(razorpay_signature)
+      );
+    } catch {
+      return false;
+    }
+  })();
 
   if (!isValidSignature) {
     throw new ApiError(400, "Invalid payment signature");

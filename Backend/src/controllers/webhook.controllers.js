@@ -14,7 +14,7 @@ const verifyWebhookSignature = (body, signature, secret) => {
       Buffer.from(expectedSignature),
       Buffer.from(signature)
     );
-  } catch (error) {
+  } catch {
     // timingSafeEqual throws if buffer lengths don't match
     return false; 
   }
