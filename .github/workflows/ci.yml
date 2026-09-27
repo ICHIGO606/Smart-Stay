@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npm run lint
+
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+    defaults:
+      run:
+        working-directory: Backend
+    env:
+      MONGODB_URI_TEST: mongodb://127.0.0.1:27017/smartstay_test
+      RAZORPAY_KEY_ID: rzp_test_ci
+      RAZORPAY_KEY_SECRET: ci_test_secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Backend/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run lint
