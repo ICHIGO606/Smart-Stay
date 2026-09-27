@@ -10,7 +10,7 @@
     "format": "prettier --write \"src/**/*.{js,jsx,css}\"",
     "format:check": "prettier --check \"src/**/*.{js,jsx,css}\"",
     "install:deps": "npm install",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run --coverage",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -30,6 +30,7 @@
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "@vitest/coverage-v8": "^5.0.2",
     "autoprefixer": "^10.4.16",
     "eslint": "^9.33.0",
     "eslint-plugin-react-hooks": "^5.2.0",
