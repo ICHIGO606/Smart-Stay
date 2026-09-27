@@ -1,12 +1,36 @@
-# React + Vite
+# SmartStay Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The frontend is a React single-page application for browsing hotels and travel packages, making bookings, managing user profiles, and administering hotel, room, package, booking, and verification data.
 
-Currently, two official plugins are available:
+## Requirements
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Node.js 22 or newer
+- npm
+- The SmartStay backend running at `http://localhost:8000`
 
-## Expanding the ESLint configuration
+## Install and run
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+From `frontend/`:
+
+```sh
+npm ci
+npm run dev
+```
+
+Vite serves the application at `http://localhost:3000`. The API client currently uses `http://localhost:8000/api/v1` in `src/services/api.js`; keep the backend URL and its allowed CORS origins aligned when changing local ports.
+
+## Scripts
+
+| Command                | Description                                            |
+| ---------------------- | ------------------------------------------------------ |
+| `npm run dev`          | Start Vite with hot module replacement.                |
+| `npm run build`        | Create a production build in `dist/`.                  |
+| `npm run preview`      | Preview the production build locally.                  |
+| `npm test`             | Run Vitest tests and generate coverage.                |
+| `npm run lint`         | Lint frontend source and tests.                        |
+| `npm run format`       | Format frontend JavaScript, JSX, and CSS under `src/`. |
+| `npm run format:check` | Check formatting without modifying files.              |
+
+The current coverage gate measures the frontend service layer and enforces at least 50% for statements, branches, functions, and lines. It does not measure every React page or component.
+
+## Main areas
