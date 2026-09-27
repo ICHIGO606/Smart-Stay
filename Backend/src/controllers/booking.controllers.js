@@ -1,9 +1,9 @@
+import mongoose from "mongoose";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Booking } from "../models/booking.models.js";
 import { Room } from "../models/room.models.js";
-import { Hotel } from "../models/hotel.models.js";
 import { escapeRegex } from "../utils/helpers.js";
 
 // Helper function to get available room numbers for a specific room type and dates

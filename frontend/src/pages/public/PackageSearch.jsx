@@ -98,7 +98,7 @@ const PackageSearch = () => {
 
     // Remove empty values and map numbers
     const params = Object.entries(searchParams)
-      .filter(([_, value]) => value !== '')
+      .filter(([, value]) => value !== '')
       .reduce((obj, [key, value]) => {
         const numberKeys = ['minPrice', 'maxPrice', 'minDuration', 'maxDuration'];
         obj[key] = numberKeys.includes(key) ? Number(value) : value;

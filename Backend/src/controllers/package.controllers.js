@@ -40,8 +40,8 @@ const createPackage = asyncHandler(async (req, res) => {
   }
 
   let images = [];
-  if (req.files?.images) {
-    const uploadPromises = req.files.images.map((file) =>
+  if (Array.isArray(req.files) && req.files.length > 0) {
+    const uploadPromises = req.files.map((file) =>
       uploadOnCloudinary(file.path)
     );
     images = await Promise.all(uploadPromises);
@@ -81,8 +81,8 @@ const updatePackage = asyncHandler(async (req, res) => {
   if (itinerary) travelPackage.itinerary = itinerary;
 
   // Handle uploaded images
-  if (req.files?.images) {
-    const uploadPromises = req.files.images.map((file) =>
+  if (Array.isArray(req.files) && req.files.length > 0) {
+    const uploadPromises = req.files.map((file) =>
       uploadOnCloudinary(file.path)
     );
     const newImages = await Promise.all(uploadPromises);

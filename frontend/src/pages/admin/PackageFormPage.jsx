@@ -193,16 +193,6 @@ const PackageFormPage = () => {
     try {
       setSubmitting(true);
 
-      // Upload images first (pseudo example - depends on your service)
-      let uploadedImageUrls = formData.images; // keep existing images if editing
-      if (formData.imageFiles.length > 0) {
-        // Example: using a helper that uploads files and returns an array of URLs
-        const uploaded = await Promise.all(
-          formData.imageFiles.map((file) => uploadImageToCloudinary(file)),
-        );
-        uploadedImageUrls = [...uploadedImageUrls, ...uploaded];
-      }
-
       const payload = {
         name: formData.name,
         description: formData.description,
@@ -212,16 +202,15 @@ const PackageFormPage = () => {
           nights: parseInt(formData.duration.nights),
         },
         price: parseFloat(formData.price),
-        images: uploadedImageUrls, // ✅ send URLs only
+        images: formData.imageFiles,
         itinerary: formData.itinerary,
       };
 
-      let response;
       if (isEditMode) {
-        response = await updatePackage(id, payload);
+        await updatePackage(id, payload);
         toast.success("Package updated successfully");
       } else {
-        response = await createPackage(payload);
+        await createPackage(payload);
         toast.success("Package created successfully");
       }
 

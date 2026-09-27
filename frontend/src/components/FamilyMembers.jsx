@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import userService from '../services/userService';
 
-const FamilyMembers = ({ user }) => {
+const FamilyMembers = () => {
   const [familyMembers, setFamilyMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -11,8 +11,6 @@ const FamilyMembers = ({ user }) => {
     age: '',
     relationship: ''
   });
-  const [editingMember, setEditingMember] = useState(null);
-
   useEffect(() => {
     fetchFamilyMembers();
   }, []);
@@ -91,20 +89,6 @@ const FamilyMembers = ({ user }) => {
     } catch (err) {
       setError(err.message || 'Failed to add family member');
       console.error('Error adding family member:', err);
-    }
-  };
-
-  const handleUpdateMember = async (memberId, updatedData) => {
-    try {
-      const response = await userService.updateFamilyMember(memberId, updatedData);
-      setFamilyMembers(prev => prev.map(member => 
-        member._id === memberId ? response.data : member
-      ));
-      setEditingMember(null);
-      setError('');
-    } catch (err) {
-      setError(err.message || 'Failed to update family member');
-      console.error('Error updating family member:', err);
     }
   };
 
