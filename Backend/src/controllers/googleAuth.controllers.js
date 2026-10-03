@@ -10,7 +10,7 @@ const redirectUri = () =>
 
 const stateCookieOptions = () => ({
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
+  secure: true,
   sameSite: "lax",
   path: "/api/v1/auth/google",
 });
