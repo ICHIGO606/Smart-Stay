@@ -73,7 +73,7 @@ const HotelDetailPage = () => {
 
   const handleUpdateRoom = async (roomData) => {
     try {
-      await adminHotelService.updateRoom(selectedRoom._id, roomData);
+      await adminHotelService.updateRoom(hotelId, selectedRoom._id, roomData);
       setSuccess('Room updated successfully');
       setShowRoomForm(false);
       setSelectedRoom(null);

@@ -1,16 +1,43 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
+import authService from '../../services/authService';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, completeGoogleLogin } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const googleError = params.get('googleError');
+    if (googleError) {
+      const messages = {
+        google_auth_failed: 'Google sign-in failed. Please try again.',
+        google_email_not_verified: 'Your Google account must have a verified email address.',
+        google_oauth_not_configured: 'Google sign-in is not configured on the server.',
+      };
+      setError(messages[googleError] || 'Google sign-in failed. Please try again.');
+      window.history.replaceState({}, '', window.location.pathname);
+      return;
+    }
+
+    if (params.get('google') !== 'success') return;
+    window.history.replaceState({}, '', window.location.pathname);
+    setLoading(true);
+    completeGoogleLogin().then((result) => {
+      if (result.success) {
+        navigate('/user');
+      } else {
+        setError(result.error);
+      }
+    }).finally(() => setLoading(false));
+  }, [completeGoogleLogin, navigate]);
 
   const handleChange = (e) => {
     setFormData({
@@ -25,8 +52,12 @@ const Login = () => {
     setLoading(true);
 
     try {
-      await login(formData.email, formData.password);
-      navigate('/dashboard');
+      const result = await login(formData.email, formData.password);
+      if (result.success) {
+        navigate('/user');
+      } else {
+        setError(result.error);
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to login. Please check your credentials.');
     } finally {
@@ -95,6 +126,24 @@ const Login = () => {
             </button>
           </div>
         </form>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center" aria-hidden="true">
+            <div className="w-full border-t border-gray-300" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="bg-white px-2 text-gray-500">or</span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => authService.startGoogleLogin()}
+          disabled={loading}
+          className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50"
+        >
+          Continue with Google
+        </button>
       </div>
     </div>
   );

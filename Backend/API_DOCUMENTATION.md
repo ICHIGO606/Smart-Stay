@@ -10,6 +10,14 @@ All endpoints (except auth endpoints) require JWT authentication via cookies or 
 
 ## Authentication Routes
 
+### Google OAuth
+**Start sign-in:** `GET /auth/google`
+
+Redirects the browser to Google. The configured callback URI is
+`http://localhost:8000/api/v1/auth/google/callback` by default. On success, the API
+sets the authentication cookies and redirects to the frontend login page, which
+completes sign-in using the current-user endpoint.
+
 ### 1. User Registration
 **Endpoint:** `POST /auth/register`
 

@@ -15,6 +15,7 @@ SmartStay is a hotel and travel management application with a React frontend and
 - MongoDB, local or hosted
 - Razorpay test or live credentials for the backend payment integration
 - Cloudinary credentials for image/document upload features
+- A Google OAuth 2.0 Web application client for Google sign-in
 
 ## Run locally
 
@@ -35,6 +36,7 @@ npm run dev
 ```
 
 The frontend is served at `http://localhost:3000`; the API listens at `http://localhost:8000` by default.
+For Google sign-in, set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `Backend/.env`. In Google Cloud Console, add `http://localhost:3000` as an authorized JavaScript origin and `http://localhost:8000/api/v1/auth/google/callback` as an authorized redirect URI. The secret must remain backend-only and must not use a `VITE_` variable.
 
 ## Tests and CI
 

@@ -6,7 +6,9 @@ const RoomForm = ({ hotel, onSubmit, onCancel, initialData }) => {
     pricePerNight: initialData?.pricePerNight || '',
     maxOccupancy: initialData?.maxOccupancy || '',
     description: initialData?.description || '',
-    roomNumbers: initialData?.roomNumbers || [''],
+    roomNumbers: Array.isArray(initialData?.roomNumbers)
+      ? initialData.roomNumbers.map((number) => String(number ?? ''))
+      : [''],
     amenities: initialData?.amenities || [],
     images: []
   });
@@ -84,7 +86,9 @@ const RoomForm = ({ hotel, onSubmit, onCancel, initialData }) => {
     setError('');
 
     // Validate room numbers
-    const validRoomNumbers = formData.roomNumbers.filter(num => num.trim() !== '');
+    const validRoomNumbers = formData.roomNumbers
+      .map((number) => String(number ?? '').trim())
+      .filter(Boolean);
     if (validRoomNumbers.length === 0) {
       setError('Please add at least one room number');
       setLoading(false);

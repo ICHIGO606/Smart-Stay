@@ -32,9 +32,16 @@ RAZORPAY_WEBHOOK_SECRET=replace_me
 CLOUDINARY_CLOUD_NAME=replace_me
 CLOUDINARY_API_KEY=replace_me
 CLOUDINARY_API_SECRET=replace_me
+
+GOOGLE_CLIENT_ID=your-google-oauth-client-id
+GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
+GOOGLE_REDIRECT_URI=http://localhost:8000/api/v1/auth/google/callback
+FRONTEND_URL=http://localhost:3000
 ```
 
 `MONGO_URL`, `RAZORPAY_KEY_ID`, and `RAZORPAY_KEY_SECRET` are needed for the normal server startup path. Token secrets are needed for authenticated user operations. Cloudinary values are needed for uploads, and the webhook secret is needed to verify Razorpay webhooks. The app has a development CSRF fallback, but set a strong `CSRF_SECRET` outside local development.
+
+Google sign-in uses the server-side OAuth authorization-code flow. In Google Cloud Console, configure an OAuth client of type **Web application**, add `http://localhost:3000` as an authorized JavaScript origin, and add the URL in `GOOGLE_REDIRECT_URI` as an authorized redirect URI. Keep `GOOGLE_CLIENT_SECRET` in this backend `.env` only; never place it in frontend environment variables or commit it.
 
 ## Install and run
 

@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import authService from '../services/authService';
 import userService from '../services/userService';
@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // Check if user is logged in and validate token
     const token = localStorage.getItem('accessToken');
-    if (token) {
+    if (token || localStorage.getItem('googleSession')) {
       // Verify token by fetching user profile
       fetchUserProfile();
     } else {
@@ -31,10 +31,27 @@ export const AuthProvider = ({ children }) => {
       console.error('Failed to fetch user profile:', error);
       localStorage.removeItem('accessToken');
       localStorage.removeItem('user');
+      localStorage.removeItem('googleSession');
     } finally {
       setLoading(false);
     }
   };
+
+  const completeGoogleLogin = useCallback(async () => {
+    localStorage.setItem('googleSession', 'true');
+    try {
+      const response = await userService.getProfile();
+      setUser(response.data);
+      localStorage.setItem('user', JSON.stringify(response.data));
+      return { success: true };
+    } catch (error) {
+      localStorage.removeItem('googleSession');
+      return {
+        success: false,
+        error: error.message || 'Google sign-in could not be completed',
+      };
+    }
+  }, []);
 
   const login = async (email, password) => {
     try {
@@ -89,6 +106,7 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       localStorage.removeItem('user');
       localStorage.removeItem('accessToken');
+      localStorage.removeItem('googleSession');
     }
   };
 
@@ -96,6 +114,7 @@ export const AuthProvider = ({ children }) => {
     user,
     loading,
     login,
+    completeGoogleLogin,
     register,
     logout,
     isAuthenticated: !!user,
