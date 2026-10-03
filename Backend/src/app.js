@@ -28,22 +28,23 @@ app.use("/webhooks", webhookRouter);
 
 const {
   doubleCsrfProtection,
-  generateToken
+  generateCsrfToken
 } = doubleCsrf({
   getSecret: () => process.env.CSRF_SECRET || "fallback_secret_for_development_only", 
+  getSessionIdentifier: (req) => req.ip,
   cookieName: "x-csrf-token",
   cookieOptions: {
     sameSite: "lax", 
     path: "/",
     secure: process.env.NODE_ENV === "production", 
   },
-  getTokenFromRequest: (req) => req.headers["x-csrf-token"],
+  getCsrfTokenFromRequest: (req) => req.headers["x-csrf-token"],
 });
 
 app.use(doubleCsrfProtection);
 
 app.get("/api/v1/csrf-token", (req, res) => {
-  const csrfToken = generateToken(req, res);
+  const csrfToken = generateCsrfToken(req, res);
   res.status(200).json({ csrfToken });
 });
 

@@ -363,7 +363,7 @@ const BookingPage = () => {
                 <form onSubmit={handleSubmit}>
                   {/* Step 1: Dates & Guests */}
                   {currentStep === 1 && (
-                    <div className="space-y-8 animate-fadeIn">
+                    <div className="space-y-8 animate-fadeIn-up">
                       <h2 className="text-2xl font-bold text-gray-900 mb-6">When are you staying?</h2>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -456,7 +456,7 @@ const BookingPage = () => {
 
                   {/* Step 2: Guest Details */}
                   {currentStep === 2 && (
-                    <div className="space-y-8 animate-fadeIn">
+                    <div className="space-y-8 animate-fadeIn-up">
                       <div className="flex items-center justify-between">
                         <h2 className="text-2xl font-bold text-gray-900">Guest Information</h2>
                         <button
@@ -616,7 +616,7 @@ const BookingPage = () => {
 
                   {/* Step 3: Review & Special Requests */}
                   {currentStep === 3 && (
-                    <div className="space-y-8 animate-fadeIn">
+                    <div className="space-y-8 animate-fadeIn-up">
                       <div className="flex items-center justify-between">
                         <h2 className="text-2xl font-bold text-gray-900">Review Your Booking</h2>
                         <button
@@ -891,15 +891,6 @@ const BookingPage = () => {
         </div>
       )}
 
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.5s ease-out;
-        }
-      `}</style>
     </div>
   );
 };

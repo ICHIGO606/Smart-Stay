@@ -1,7 +1,11 @@
-import api from './api';
+import api, { API_BASE_URL } from './api';
 
 // Authentication services
 export const authService = {
+  startGoogleLogin: () => {
+    window.location.assign(`${API_BASE_URL}/auth/google`);
+  },
+
   // User registration
   register: async (userData) => {
     try {
