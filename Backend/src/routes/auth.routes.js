@@ -12,8 +12,8 @@ router.route("/login").post(strictLimiter, loginUser);
 
 router.route("/register").post(strictLimiter, registerUser);
 
-router.route("/google").get(googleLogin);
+router.route("/google").get(strictLimiter, googleLogin);
 
-router.route("/google/callback").get(googleLoginCallback);
+router.route("/google/callback").get(strictLimiter, googleLoginCallback);
 
 export default router;
