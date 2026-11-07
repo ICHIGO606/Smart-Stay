@@ -41,12 +41,12 @@ const { doubleCsrfProtection, generateCsrfToken } = doubleCsrf({
   getCsrfTokenFromRequest: (req) => req.headers["x-csrf-token"],
 });
 
-app.use(doubleCsrfProtection);
-
 app.get("/api/v1/csrf-token", (req, res) => {
   const csrfToken = generateCsrfToken(req, res);
   res.status(200).json({ csrfToken });
 });
+
+app.use(doubleCsrfProtection);
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
