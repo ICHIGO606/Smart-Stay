@@ -60,3 +60,4 @@ volumes:
 networks:
   smartstay-network:
     driver: bridge
+
