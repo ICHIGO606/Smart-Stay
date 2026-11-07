@@ -54,3 +54,4 @@ export const calculateNights = (checkInDate, checkOutDate) => {
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   return Math.max(0, diffDays);
 };
+

@@ -259,3 +259,4 @@ const CheckInStationModal = ({ isOpen, onClose, onCheckInComplete }) => {
 };
 
 export default CheckInStationModal;
+
