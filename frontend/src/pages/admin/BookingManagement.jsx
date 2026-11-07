@@ -258,9 +258,9 @@ const BookingManagement = () => {
 
     return (
       <div
-        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${config.bg} ${config.text}`}
+        className={`inline-flex items-center px-2 py-0.5 rounded-tag text-xs font-mono ${config.bg} ${config.text} border border-stone-200/60`}
       >
-        <div className={`w-2 h-2 rounded-full ${config.dot} mr-2`}></div>
+        <div className={`w-1.5 h-1.5 rounded-full ${config.dot} mr-1.5`}></div>
         {status}
       </div>
     );
@@ -334,29 +334,28 @@ const BookingManagement = () => {
   }
 
   return (
-    <div className="h-full bg-gray-50">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Booking Management
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Manage and track all hotel bookings
-              </p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => setViewMode("table")}
-                  className={`p-2 rounded-lg ${
-                    viewMode === "table"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200 text-gray-600"
-                  }`}
-                >
+      <div className="pb-6 border-b border-stone-200/80">
+        <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+              Ledger operations
+            </p>
+            <h1 className="font-serif text-3xl text-ink-primary font-normal">
+              Reservations ledger
+            </h1>
+          </div>
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-1.5 bg-stone-100 p-1 rounded-control border border-stone-200">
+              <button
+                onClick={() => setViewMode("table")}
+                className={`p-1.5 rounded-control text-xs font-mono transition-colors ${
+                  viewMode === "table"
+                    ? "bg-white text-ink-primary font-medium shadow-subtle"
+                    : "text-ink-muted hover:text-ink-primary"
+                }`}
+              >
                   <svg
                     className="w-5 h-5"
                     fill="none"
@@ -373,10 +372,10 @@ const BookingManagement = () => {
                 </button>
                 <button
                   onClick={() => setViewMode("cards")}
-                  className={`p-2 rounded-lg ${
+                  className={`p-1.5 rounded-control text-xs font-mono transition-colors ${
                     viewMode === "cards"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200 text-gray-600"
+                      ? "bg-white text-ink-primary font-medium shadow-subtle"
+                      : "text-ink-muted hover:text-ink-primary"
                   }`}
                 >
                   <svg
@@ -433,7 +432,6 @@ const BookingManagement = () => {
             </div>
           </div>
         </div>
-      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Stats Cards */}

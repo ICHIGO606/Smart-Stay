@@ -6,6 +6,8 @@ import { apiLimiter, strictLimiter } from "../middlewares/rateLimit.middleware.j
 import {
   createHotel,
   updateHotel,
+  deleteHotel,
+  getAdminHotelById,
   addRoom,
   updateRoom,
   deleteRoom,
@@ -27,6 +29,7 @@ const router = Router();
 router.use(apiLimiter);
 
 router.get("/hotels", verifyJWT, isAdmin, getAdminHotels);
+router.get("/hotels/:hotelId", verifyJWT, verifyHotelAdmin, getAdminHotelById);
 
 router.post(
   "/hotels",
@@ -44,6 +47,14 @@ router.put(
   verifyHotelAdmin,
   upload.fields([{ name: "images", maxCount: 10 }]),
   updateHotel
+);
+
+router.delete(
+  "/hotels/:hotelId",
+  strictLimiter,
+  verifyJWT,
+  verifyHotelAdmin,
+  deleteHotel
 );
 
 router.post(

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import  adminHotelService  from '../../services/adminHotelService';
+import adminHotelService from '../../services/adminHotelService';
 import HotelForm from '../../components/admin/HotelForm';
+import { Building2, Plus, Trash2, ArrowRight, AlertCircle, MapPin } from 'lucide-react';
 
 const HotelManagement = () => {
   const navigate = useNavigate();
@@ -17,9 +18,14 @@ const HotelManagement = () => {
   const fetchHotels = async () => {
     try {
       setLoading(true);
+      setError('');
       const response = await adminHotelService.getAdminHotels();
-      if (response.data) {
-        setHotels(response.data);
+      if (response && response.data) {
+        setHotels(Array.isArray(response.data) ? response.data : []);
+      } else if (Array.isArray(response)) {
+        setHotels(response);
+      } else {
+        setHotels([]);
       }
     } catch (err) {
       setError(err.message);
@@ -39,7 +45,7 @@ const HotelManagement = () => {
   };
 
   const handleDeleteHotel = async (hotelId) => {
-    if (window.confirm('Are you sure you want to delete this hotel?')) {
+    if (window.confirm('Delete this hotel property from the directory?')) {
       try {
         await adminHotelService.deleteHotel(hotelId);
         fetchHotels();
@@ -49,7 +55,6 @@ const HotelManagement = () => {
     }
   };
 
-  // Helper function to calculate total room numbers for a hotel
   const calculateTotalRoomNumbers = (hotel) => {
     if (!hotel.rooms) return 0;
     return hotel.rooms.reduce((total, room) => {
@@ -59,15 +64,16 @@ const HotelManagement = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
+      <div className="p-8 flex flex-col justify-center items-center h-64 gap-3">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-stone-900 border-t-transparent"></div>
+        <p className="text-xs font-mono text-ink-muted">Reading property registry...</p>
       </div>
     );
   }
 
   if (showHotelForm) {
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-6">
         <HotelForm
           onSubmit={handleCreateHotel}
           onCancel={() => setShowHotelForm(false)}
@@ -77,91 +83,105 @@ const HotelManagement = () => {
   }
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-primary">Hotel Management</h1>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between pb-6 border-b border-stone-200/80 gap-3">
+        <div>
+          <p className="text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+            Directory management
+          </p>
+          <h1 className="font-serif text-3xl text-ink-primary font-normal">
+            Hotel properties
+          </h1>
+        </div>
+
         <button
           onClick={() => setShowHotelForm(true)}
-          className="btn-primary"
+          className="btn-primary !text-xs !py-1.5 !px-3 inline-flex items-center gap-1.5"
         >
-          + Add New Hotel
+          <Plus size={13} />
+          <span>Add hotel</span>
         </button>
       </div>
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-          {error}
+        <div className="p-3 rounded-control bg-red-50 border border-red-200 text-xs text-red-800 flex items-center gap-2">
+          <AlertCircle size={14} />
+          <span>{error}</span>
         </div>
       )}
 
       {hotels.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-lg text-gray-600 mb-4">No hotels found</p>
+        <div className="card-base text-center py-16 px-6">
+          <Building2 size={24} className="text-stone-300 mx-auto mb-2" />
+          <p className="text-sm font-medium text-ink-primary">No hotel properties cataloged</p>
+          <p className="text-xs text-ink-muted mt-1 mb-4">Register your first boutique property to start receiving reservations.</p>
           <button
             onClick={() => setShowHotelForm(true)}
-            className="btn-primary"
+            className="btn-primary !text-xs !py-1.5 !px-3"
           >
-            Create Your First Hotel
+            Add hotel
           </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {hotels.map((hotel) => (
-            <div key={hotel._id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-              {hotel.images && hotel.images.length > 0 && (
-                <img
-                  src={hotel.images[0]}
-                  alt={hotel.name}
-                  className="w-full h-48 object-cover"
-                />
-              )}
-              <div className="p-6">
-                <h3 className="text-xl font-semibold text-primary mb-2">{hotel.name}</h3>
-                <p className="text-gray-600 mb-2">{hotel.city}</p>
-                <p className="text-sm text-gray-600 mb-4">{hotel.address}</p>
-                
-                <div className="mb-4">
-                  <h4 className="font-medium text-primary mb-2">Amenities:</h4>
-                  <div className="flex flex-wrap gap-1">
-                    {hotel.amenities?.slice(0, 3).map((amenity, index) => (
-                      <span
-                        key={index}
-                        className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded"
-                      >
-                        {amenity}
-                      </span>
-                    ))}
-                    {hotel.amenities?.length > 3 && (
-                      <span className="text-xs text-gray-500">
-                        +{hotel.amenities.length - 3} more
-                      </span>
-                    )}
+            <div 
+              key={hotel._id} 
+              className="card-base overflow-hidden flex flex-col justify-between hover:border-stone-300 transition-colors"
+            >
+              <div>
+                <div className="h-44 bg-stone-100 overflow-hidden relative">
+                  {hotel.images && hotel.images.length > 0 ? (
+                    <img
+                      src={hotel.images[0]}
+                      alt={hotel.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-xs font-mono text-ink-muted">
+                      No photo on ledger
+                    </div>
+                  )}
+                  <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2 py-0.5 rounded-tag text-[10px] font-mono text-ink-primary">
+                    № {hotel._id ? hotel._id.slice(-4).toUpperCase() : 'HOTEL'}
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-accent font-semibold">
-                    {calculateTotalRoomNumbers(hotel)} Rooms
-                  </span>
-                  <span className="text-sm text-gray-600">
-                    {hotel.rooms?.length || 0} Room Types
-                  </span>
-                </div>
+                <div className="p-5">
+                  <h3 className="text-base font-semibold text-ink-primary mb-1">{hotel.name}</h3>
+                  <div className="flex items-center gap-1.5 text-xs text-ink-muted font-mono mb-3">
+                    <MapPin size={12} className="text-ink-secondary" />
+                    <span>{hotel.city}</span>
+                    {hotel.address && <span className="truncate">· {hotel.address}</span>}
+                  </div>
 
-                <div className="flex justify-between items-center">
-                  <button
-                    onClick={() => navigate(`/admin/hotels/${hotel._id}`)}
-                    className="btn-primary text-sm"
-                  >
-                    View Details
-                  </button>
-                  <button
-                    onClick={() => handleDeleteHotel(hotel._id)}
-                    className="btn-danger text-sm"
-                  >
-                    Delete
-                  </button>
+                  <div className="flex items-center justify-between py-2 border-y border-stone-100 text-xs font-mono mb-4">
+                    <span className="text-ink-secondary tabular-nums">
+                      {calculateTotalRoomNumbers(hotel)} total rooms
+                    </span>
+                    <span className="text-ink-muted tabular-nums">
+                      {hotel.rooms?.length || 0} room tiers
+                    </span>
+                  </div>
                 </div>
+              </div>
+
+              <div className="p-5 pt-0 flex items-center justify-between">
+                <button
+                  onClick={() => navigate(`/admin/hotels/${hotel._id}`)}
+                  className="btn-secondary !text-xs !py-1.5 !px-3 inline-flex items-center gap-1"
+                >
+                  <span>Manage rooms</span>
+                  <ArrowRight size={12} />
+                </button>
+                <button
+                  onClick={() => handleDeleteHotel(hotel._id)}
+                  className="text-xs text-stone-400 hover:text-red-700 p-1.5 rounded-control transition-colors"
+                  aria-label="Delete hotel"
+                >
+                  <Trash2 size={14} />
+                </button>
               </div>
             </div>
           ))}

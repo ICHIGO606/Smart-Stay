@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { getAllPackages, deletePackage } from '../../services/adminPackageService';
 import toast from 'react-hot-toast';
-// import AdminLayout from '../../layouts/AdminLayout';
-import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
-import Spinner from '../../components/common/Spinner';
+import { Plus, Edit3, Trash2, Package } from 'lucide-react';
 import ConfirmModal from '../../components/common/ConfirmModal';
 
 const PackageListPage = () => {
@@ -52,132 +50,135 @@ const PackageListPage = () => {
   };
 
   return (
-    <>
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Manage Packages</h1>
-          <Link
-            to="/admin/packages/new"
-            className="bg-primary hover:bg-primary-dark text-white py-2 px-4 rounded-md flex items-center"
-          >
-            <FaPlus className="mr-2" /> Add New Package
-          </Link>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between pb-6 border-b border-stone-200/80 gap-3">
+        <div>
+          <p className="text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+            Itinerary management
+          </p>
+          <h1 className="font-serif text-3xl text-ink-primary font-normal">
+            Curated travel packages
+          </h1>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center my-12">
-            <Spinner size="lg" />
-          </div>
-        ) : packages.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-md p-6 text-center">
-            <p className="text-gray-600 mb-4">No packages found</p>
-            <Link
-              to="/admin/packages/new"
-              className="bg-primary hover:bg-primary-dark text-white py-2 px-4 rounded-md inline-flex items-center"
-            >
-              <FaPlus className="mr-2" /> Create Your First Package
-            </Link>
-          </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Package
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Duration
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Price
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {packages.map((pkg) => (
-                    <tr key={pkg._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          {pkg.images && pkg.images.length > 0 ? (
-                            <img
-                              className="h-10 w-10 rounded-md object-cover mr-3"
-                              src={pkg.images[0]}
-                              alt={pkg.name}
-                            />
-                          ) : (
-                            <div className="h-10 w-10 rounded-md bg-gray-200 mr-3 flex items-center justify-center text-gray-500">
-                              No img
-                            </div>
-                          )}
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">{pkg.name}</div>
-                            <div className="text-sm text-gray-500 truncate max-w-xs">
-                              {pkg.description?.substring(0, 60) || 'No description'}...
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {pkg.duration?.days || 0} Days / {pkg.duration?.nights || 0} Nights
-                        </div>
-                        {pkg.destinations && pkg.destinations.length > 0 && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            {pkg.destinations.join(', ')}
+        <Link
+          to="/admin/packages/new"
+          className="btn-primary !text-xs !py-1.5 !px-3 inline-flex items-center gap-1.5"
+        >
+          <Plus size={13} />
+          <span>New package</span>
+        </Link>
+      </div>
+
+      {loading ? (
+        <div className="flex flex-col justify-center items-center h-64 gap-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-stone-900 border-t-transparent"></div>
+          <p className="text-xs font-mono text-ink-muted">Reading package ledger...</p>
+        </div>
+      ) : packages.length === 0 ? (
+        <div className="card-base text-center py-16 px-6">
+          <Package size={24} className="text-stone-300 mx-auto mb-2" />
+          <p className="text-sm font-medium text-ink-primary">No travel packages cataloged</p>
+          <p className="text-xs text-ink-muted mt-1 mb-4">Create your first multi-day route and lodging itinerary.</p>
+          <Link
+            to="/admin/packages/new"
+            className="btn-primary !text-xs !py-1.5 !px-3 inline-flex items-center gap-1.5"
+          >
+            <Plus size={13} />
+            <span>Create package</span>
+          </Link>
+        </div>
+      ) : (
+        <div className="card-base overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-stone-200/80 bg-stone-50/60 text-[10px] font-mono uppercase tracking-wider text-ink-muted">
+                  <th className="px-5 py-3">Package title</th>
+                  <th className="px-5 py-3">Duration</th>
+                  <th className="px-5 py-3">Price</th>
+                  <th className="px-5 py-3">Status</th>
+                  <th className="px-5 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-stone-100 text-xs">
+                {packages.map((pkg) => (
+                  <tr key={pkg._id} className="hover:bg-stone-50/50 transition-colors">
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-3">
+                        {pkg.images && pkg.images.length > 0 ? (
+                          <img
+                            src={pkg.images[0]}
+                            alt={pkg.name}
+                            className="w-10 h-10 object-cover rounded-control flex-shrink-0 bg-stone-100"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-control bg-stone-100 flex items-center justify-center text-[10px] font-mono text-ink-muted">
+                            DOC
                           </div>
                         )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">₹{pkg.price?.toFixed(2) || '0.00'}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800`}
-                        >
-                          Active
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div>
+                          <div className="font-medium text-ink-primary">{pkg.name}</div>
+                          <div className="text-[11px] font-mono text-ink-muted truncate max-w-xs">
+                            {pkg.destinations?.join(', ') || 'No destinations cataloged'}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3.5 font-mono text-ink-secondary tabular-nums">
+                      {pkg.duration?.days || 0}D / {pkg.duration?.nights || 0}N
+                    </td>
+                    <td className="px-5 py-3.5 font-mono font-medium text-ink-primary tabular-nums">
+                      ${Math.round(pkg.price || 0).toLocaleString()}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-tag text-xs font-mono ${
+                        pkg.isActive !== false
+                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                          : 'bg-stone-100 text-stone-600 border border-stone-200'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${pkg.isActive !== false ? 'bg-emerald-600' : 'bg-stone-400'}`}></span>
+                        <span>{pkg.isActive !== false ? 'Active' : 'Archived'}</span>
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <div className="flex items-center justify-end gap-1">
                         <Link
                           to={`/admin/packages/edit/${pkg._id}`}
-                          className="text-indigo-600 hover:text-indigo-900 mr-4 flex items-center"
+                          className="text-stone-500 hover:text-stone-900 p-1.5 rounded-control transition-colors"
+                          title="Edit package"
                         >
-                          <FaEdit className="inline mr-1" /> Edit
+                          <Edit3 size={14} />
                         </Link>
                         <button
                           onClick={() => handleDeleteClick(pkg)}
-                          className="text-red-600 hover:text-red-900 flex items-center"
+                          className="text-stone-400 hover:text-red-700 p-1.5 rounded-control transition-colors"
+                          title="Delete package"
                         >
-                          <FaTrash className="inline mr-1" /> Delete
+                          <Trash2 size={14} />
                         </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        )}
+        </div>
+      )}
 
+      {showDeleteModal && (
         <ConfirmModal
           isOpen={showDeleteModal}
           onClose={() => setShowDeleteModal(false)}
           onConfirm={handleDeleteConfirm}
-          title="Delete Package"
-          message={`Are you sure you want to delete "${packageToDelete?.name}"? This action cannot be undone.`}
+          title="Delete package"
+          message={`Are you sure you want to remove "${packageToDelete?.name}" from the active travel catalog?`}
           confirmText="Delete"
-          confirmButtonClass="bg-red-600 hover:bg-red-700"
         />
-      </div>
-    </>
+      )}
+    </div>
   );
 };
 

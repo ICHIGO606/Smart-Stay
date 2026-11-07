@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 
 const HotelForm = ({ onSubmit, onCancel, initialData }) => {
   const [formData, setFormData] = useState({
@@ -61,30 +62,34 @@ const HotelForm = ({ onSubmit, onCancel, initialData }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex items-center mb-6">
+    <div className="max-w-3xl mx-auto space-y-6">
+      <div className="flex items-center gap-3 pb-4 border-b border-stone-200/80">
         <button
           onClick={onCancel}
-          className="text-gray-600 hover:text-primary mr-4"
+          className="btn-secondary !text-xs !py-1.5 !px-2.5 inline-flex items-center gap-1"
         >
-          ← Back
+          <ArrowLeft size={13} />
+          <span>Back</span>
         </button>
-        <h2 className="text-2xl font-bold text-primary">
-          {initialData ? 'Edit Hotel' : 'Create New Hotel'}
-        </h2>
+        <div>
+          <h2 className="font-serif text-2xl text-ink-primary font-normal">
+            {initialData ? 'Edit hotel dossier' : 'Add new hotel property'}
+          </h2>
+        </div>
       </div>
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-          {error}
+        <div className="p-3.5 rounded-control bg-red-50 border border-red-200 text-xs text-red-800 flex items-center gap-2">
+          <AlertCircle size={14} className="flex-shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <form onSubmit={handleSubmit} className="card-base p-6 sm:p-8 space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Hotel Name *
+            <label className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+              Property name *
             </label>
             <input
               type="text"
@@ -92,14 +97,14 @@ const HotelForm = ({ onSubmit, onCancel, initialData }) => {
               value={formData.name}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
-              placeholder="Enter hotel name"
+              className="input-base"
+              placeholder="e.g. Villa Beatrice Heritage Suites"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              City *
+            <label className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+              City or municipality *
             </label>
             <input
               type="text"
@@ -107,15 +112,15 @@ const HotelForm = ({ onSubmit, onCancel, initialData }) => {
               value={formData.city}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
-              placeholder="Enter city"
+              className="input-base"
+              placeholder="e.g. Florence"
             />
           </div>
         </div>
 
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Address *
+        <div>
+          <label className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+            Street address *
           </label>
           <input
             type="text"
@@ -123,14 +128,14 @@ const HotelForm = ({ onSubmit, onCancel, initialData }) => {
             value={formData.address}
             onChange={handleInputChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
-            placeholder="Enter full address"
+            className="input-base"
+            placeholder="e.g. Via Santo Spirito 14"
           />
         </div>
 
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Description *
+        <div>
+          <label className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+            Architectural & service description *
           </label>
           <textarea
             name="description"
@@ -138,62 +143,69 @@ const HotelForm = ({ onSubmit, onCancel, initialData }) => {
             onChange={handleInputChange}
             required
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
-            placeholder="Describe the hotel facilities and services"
+            className="input-base resize-none"
+            placeholder="Describe the architectural history, materials, room acoustic properties, and guest amenities..."
           />
         </div>
 
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Amenities
+        <div>
+          <label className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-2">
+            Cataloged amenities
           </label>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             {amenitiesOptions.map((amenity) => (
-              <label key={amenity} className="flex items-center">
+              <label 
+                key={amenity} 
+                className={`flex items-center gap-2 p-2 rounded-control border text-xs cursor-pointer transition-colors ${
+                  formData.amenities.includes(amenity)
+                    ? 'border-stone-900 bg-stone-50 font-medium text-ink-primary'
+                    : 'border-stone-200 text-ink-secondary hover:border-stone-300'
+                }`}
+              >
                 <input
                   type="checkbox"
                   checked={formData.amenities.includes(amenity)}
                   onChange={() => handleAmenityChange(amenity)}
-                  className="mr-2"
+                  className="rounded border-stone-300 text-stone-900 focus:ring-0"
                 />
-                <span className="text-sm">{amenity}</span>
+                <span>{amenity}</span>
               </label>
             ))}
           </div>
         </div>
 
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Hotel Images
+        <div>
+          <label className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+            Property photography
           </label>
           <input
             type="file"
             multiple
             accept="image/*"
             onChange={handleImageChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
+            className="block w-full text-xs text-ink-secondary file:mr-3 file:py-1.5 file:px-3 file:rounded-control file:border file:border-stone-300 file:text-xs file:font-mono file:bg-white file:text-ink-primary hover:file:bg-stone-50 cursor-pointer"
           />
           {selectedImages.length > 0 && (
-            <p className="text-sm text-gray-600 mt-2">
-              {selectedImages.length} image(s) selected
+            <p className="text-[11px] font-mono text-ink-muted mt-1 tabular-nums">
+              {selectedImages.length} image file(s) selected for upload
             </p>
           )}
         </div>
 
-        <div className="flex justify-end space-x-4">
+        <div className="flex justify-end gap-3 pt-4 border-t border-stone-100">
           <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            className="btn-secondary !text-xs !py-2 !px-4"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary disabled:opacity-50"
+            className="btn-primary !text-xs !py-2 !px-5 font-mono uppercase tracking-wider"
           >
-            {loading ? 'Creating...' : (initialData ? 'Update Hotel' : 'Create Hotel')}
+            {loading ? 'Submitting to ledger...' : (initialData ? 'Update hotel' : 'Create hotel')}
           </button>
         </div>
       </form>

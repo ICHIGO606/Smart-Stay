@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { paymentService } from '../services/paymentService';
+import { ShieldCheck, AlertCircle, Check } from 'lucide-react';
 
 const PaymentGateway = ({ booking, onSuccess, onCancel }) => {
   const [paymentMethods, setPaymentMethods] = useState([]);
@@ -30,7 +31,7 @@ const PaymentGateway = ({ booking, onSuccess, onCancel }) => {
 
   const handlePayment = async () => {
     if (!selectedMethod) {
-      setError('Please select a payment method');
+      setError('Please select a payment option');
       return;
     }
 
@@ -38,28 +39,21 @@ const PaymentGateway = ({ booking, onSuccess, onCancel }) => {
       setLoading(true);
       setError('');
 
-      // For pay at hotel, no payment processing needed
       if (selectedMethod === 'pay_at_hotel') {
         try {
           const response = await paymentService.createPaymentOrder(booking._id, 'pay_at_hotel');
-          console.log('Pay at hotel response:', response.data);
           if (onSuccess) {
             onSuccess(response.data);
           } else {
-            console.error('onSuccess callback is not defined');
             setError('Payment completed but navigation failed. Please check your bookings.');
           }
         } catch (err) {
-          console.error('Pay at hotel error:', err);
-          setError(err.message || 'Failed to process pay at hotel option');
+          setError(err.message || 'Failed to process on-site settlement');
         }
         return;
       }
 
-      // For online payments, create order and process payment
       const orderResponse = await paymentService.createPaymentOrder(booking._id, selectedMethod);
-
-      // Load Razorpay SDK and process payment
       await paymentService.loadRazorpayScript();
 
       const options = {
@@ -87,7 +81,7 @@ const PaymentGateway = ({ booking, onSuccess, onCancel }) => {
           contact: booking.user?.phone || ''
         },
         theme: {
-          color: '#2563eb'
+          color: '#14171F'
         }
       };
 
@@ -95,7 +89,7 @@ const PaymentGateway = ({ booking, onSuccess, onCancel }) => {
       razorpay.open();
       
       razorpay.on('payment.failed', function (response) {
-        setError(`Payment failed: ${response.error.description}`);
+        setError(`Payment settlement failed: ${response.error.description}`);
       });
 
     } catch (err) {
@@ -105,89 +99,92 @@ const PaymentGateway = ({ booking, onSuccess, onCancel }) => {
     }
   };
 
-  const formatAmount = (amount, currency) => {
-    const formatter = new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: currency || 'INR',
-      minimumFractionDigits: 2
-    });
-    return formatter.format(amount);
+  const formatAmount = (amount) => {
+    return `$${amount ? Math.round(amount).toLocaleString() : 0}`;
   };
 
   if (loading && paymentMethods.length === 0) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-3 text-gray-600">Loading payment methods...</span>
+      <div className="flex flex-col items-center justify-center p-12 gap-3">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-stone-900 border-t-transparent"></div>
+        <span className="text-xs font-mono text-ink-muted">Connecting payment channels...</span>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Complete Your Payment</h2>
-        <p className="text-gray-600 mt-2">
-          Booking for {booking.hotelId?.name || 'Hotel'}
+    <div className="space-y-6">
+      <div className="text-center pb-4 border-b border-stone-100">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-tag bg-stone-100 text-[11px] font-mono text-ink-secondary mb-2">
+          <span>SECURE SETTLEMENT</span>
+        </div>
+        <h2 className="font-serif text-2xl text-ink-primary font-normal">
+          Complete reservation payment
+        </h2>
+        <p className="text-xs text-ink-muted mt-1">
+          Stay at {booking.hotelId?.name || 'Hotel Property'}
         </p>
+
         {paymentInfo && (
-          <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-            <p className="text-lg font-semibold text-blue-800">
-              Total Amount: {formatAmount(paymentInfo.amount, paymentInfo.currency)}
-            </p>
+          <div className="mt-4 p-3 bg-stone-50 rounded-control border border-stone-200/60 inline-block">
+            <span className="text-xs font-mono text-ink-muted block uppercase">Amount to settle</span>
+            <span className="text-2xl font-semibold text-ink-primary tabular-nums">
+              {formatAmount(paymentInfo.amount)}
+            </span>
           </div>
         )}
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-          {error}
+        <div className="p-3 rounded-control bg-red-50 border border-red-200 text-xs text-red-800 flex items-center gap-2">
+          <AlertCircle size={14} className="flex-shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-700">Select Payment Method</h3>
+      <div className="space-y-2.5">
+        <h3 className="text-xs font-mono uppercase tracking-wider text-ink-muted mb-2">
+          Select settlement method
+        </h3>
         
-        {paymentMethods.map((method) => (
-          <div
-            key={method.id}
-            className={`p-4 border rounded-lg cursor-pointer transition-all ${
-              selectedMethod === method.id
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-300 hover:border-blue-300'
-            }`}
-            onClick={() => setSelectedMethod(method.id)}
-          >
-            <div className="flex items-center">
-              <div className="text-2xl mr-3">{method.icon}</div>
-              <div className="flex-1">
-                <h4 className="font-medium text-gray-800">{method.name}</h4>
-                <p className="text-sm text-gray-600">{method.description}</p>
-              </div>
-              <div className={`w-5 h-5 rounded-full border-2 ${
-                selectedMethod === method.id
-                  ? 'bg-blue-500 border-blue-500'
-                  : 'border-gray-400'
-              }`}>
-                {selectedMethod === method.id && (
-                  <div className="w-3 h-3 bg-white rounded-full mx-auto mt-0.5"></div>
-                )}
+        {paymentMethods.map((method) => {
+          const isSelected = selectedMethod === method.id;
+          return (
+            <div
+              key={method.id}
+              className={`p-3.5 rounded-control border cursor-pointer transition-colors ${
+                isSelected
+                  ? 'border-stone-900 bg-stone-50/80 shadow-subtle'
+                  : 'border-stone-200 hover:border-stone-300'
+              }`}
+              onClick={() => setSelectedMethod(method.id)}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-medium text-ink-primary">{method.name}</h4>
+                  <p className="text-[11px] text-ink-muted mt-0.5">{method.description}</p>
+                </div>
+                <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                  isSelected ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300'
+                }`}>
+                  {isSelected && <Check size={10} />}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {paymentMethods.length === 0 && !loading && (
-          <div className="text-center text-gray-500 py-8">
-            No payment methods available for this booking.
+          <div className="text-center text-xs font-mono text-ink-muted py-6">
+            No active payment gateways configured for this reservation.
           </div>
         )}
       </div>
 
-      <div className="mt-6 flex space-x-4">
+      <div className="pt-4 border-t border-stone-100 flex items-center gap-3">
         <button
           onClick={onCancel}
-          className="flex-1 px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+          className="btn-secondary flex-1 !text-xs !py-2.5"
           disabled={loading}
         >
           Cancel
@@ -195,14 +192,15 @@ const PaymentGateway = ({ booking, onSuccess, onCancel }) => {
         <button
           onClick={handlePayment}
           disabled={!selectedMethod || loading}
-          className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="btn-primary flex-1 !text-xs !py-2.5 font-mono uppercase tracking-wider"
         >
-          {loading ? 'Processing...' : 'Proceed to Pay'}
+          {loading ? 'Processing...' : 'Confirm settlement'}
         </button>
       </div>
 
-      <div className="mt-4 text-center text-xs text-gray-500">
-        Your payment is secure and encrypted
+      <div className="text-center text-[11px] font-mono text-ink-muted flex items-center justify-center gap-1.5 pt-1">
+        <ShieldCheck size={13} className="text-ink-secondary" />
+        <span>256-bit encrypted ledger verification</span>
       </div>
     </div>
   );

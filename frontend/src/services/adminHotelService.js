@@ -10,6 +10,9 @@ const adminHotelService = {
       const response = await api.get('/admin/hotels');
       return response.data;
     } catch (error) {
+      if (error.response?.status === 404) {
+        return { statusCode: 200, data: [], message: 'Hotels fetched successfully', success: true };
+      }
       throw new Error(error.response?.data?.message || 'Failed to fetch hotels');
     }
   },

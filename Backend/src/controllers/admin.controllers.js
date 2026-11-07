@@ -74,6 +74,43 @@ const updateHotel = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedHotel, "Hotel updated successfully"));
 });
 
+// Delete hotel
+const deleteHotel = asyncHandler(async (req, res) => {
+  const { hotelId } = req.params;
+  const safeHotelId = String(hotelId);
+
+  const hotel = await Hotel.findById(safeHotelId);
+  if (!hotel) throw new ApiError(404, "Hotel not found");
+
+  await Room.deleteMany({ hotelId: safeHotelId });
+  await hotel.deleteOne();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Hotel deleted successfully"));
+});
+
+// Get admin hotel by ID
+const getAdminHotelById = asyncHandler(async (req, res) => {
+  const { hotelId } = req.params;
+  const safeHotelId = String(hotelId);
+
+  const hotel = await Hotel.findById(safeHotelId);
+  if (!hotel) throw new ApiError(404, "Hotel not found");
+
+  const rooms = await Room.find({ hotelId: safeHotelId });
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        ...hotel.toObject(),
+        rooms,
+      },
+      "Hotel fetched successfully"
+    )
+  );
+});
+
 // ------------------- ROOM CONTROLLERS ------------------- //
 
 // Utility to parse room numbers
@@ -202,9 +239,22 @@ const deleteRoom = asyncHandler(async (req, res) => {
 const getAdminHotels = asyncHandler(async (req, res) => {
   const adminId = req.user._id;
 
-  const hotels = await Hotel.find({ adminId });
+  // Find hotels belonging to this admin
+  let hotels = await Hotel.find({ adminId });
+
+  // If none found for this specific adminId, and user has admin role (or sadmin/admin), check for all hotels
+  if ((!hotels || hotels.length === 0) && (req.user.username === "sadmin" || req.user.username === "admin" || req.user.role === "admin")) {
+    const allHotels = await Hotel.find({});
+    if (allHotels && allHotels.length > 0) {
+      hotels = allHotels;
+    }
+  }
+
+  // If no hotels found, return 200 with empty array (NOT 404!)
   if (!hotels || hotels.length === 0) {
-    throw new ApiError(404, "No hotels found for this admin");
+    return res
+      .status(200)
+      .json(new ApiResponse(200, [], "Hotels fetched successfully"));
   }
 
   // Populate rooms for each hotel
@@ -230,9 +280,17 @@ const getHotelBookings = asyncHandler(async (req, res) => {
   // CodeQL Fix: Sanitize user input
   const safeHotelId = String(hotelId);
 
-  // Check if hotel belongs to this admin
-  const hotel = await Hotel.findOne({ _id: safeHotelId, adminId: req.user._id });
-  if (!hotel) throw new ApiError(404, "Hotel not found or not accessible by this admin");
+  // Check if hotel exists and belongs to this admin or admin is superadmin
+  const hotel = await Hotel.findById(safeHotelId);
+  if (!hotel) throw new ApiError(404, "Hotel not found");
+
+  if (
+    hotel.adminId?.toString() !== req.user._id?.toString() &&
+    req.user.username !== "sadmin" &&
+    req.user.username !== "admin"
+  ) {
+    throw new ApiError(403, "Hotel not accessible by this admin");
+  }
 
   // Fetch all bookings for this hotel
   const bookings = await Booking.find({ hotelId: safeHotelId })
@@ -258,7 +316,10 @@ const getHotelRoomsStatus = asyncHandler(async (req, res) => {
   const rooms = await Room.find({ hotelId: safeHotelId }).lean();
 
   if (!rooms.length) {
-    return res.status(404).json({ message: "No rooms found for this hotel." });
+    return res.status(200).json({
+      hotelId: safeHotelId,
+      floors: {},
+    });
   }
 
   // Fetch bookings for these rooms that are active or future
@@ -330,4 +391,16 @@ const getHotelRooms = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, rooms, "Rooms fetched successfully"));
 });
 
-export { createHotel, updateHotel, addRoom, updateRoom, deleteRoom, getAdminHotels, getHotelBookings, getHotelRoomsStatus, getHotelRooms };
+export {
+  createHotel,
+  updateHotel,
+  deleteHotel,
+  getAdminHotelById,
+  addRoom,
+  updateRoom,
+  deleteRoom,
+  getAdminHotels,
+  getHotelBookings,
+  getHotelRoomsStatus,
+  getHotelRooms
+};

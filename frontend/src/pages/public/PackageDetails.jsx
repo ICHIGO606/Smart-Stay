@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router';
+import { useParams, useNavigate, Link } from 'react-router';
 import { getPackageById, bookPackage } from '../../services/packageService';
 import { useAuth } from '../../context/AuthContext';
-import Spinner from '../../components/common/Spinner';
+import { ArrowLeft, MapPin, Calendar, Users, ShieldCheck, Check, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const PackageDetails = () => {
@@ -39,13 +39,13 @@ const PackageDetails = () => {
     e.preventDefault();
     
     if (!isAuthenticated) {
-      toast.error('Please login to book this package');
+      toast.error('Please sign in to confirm this itinerary');
       navigate('/login', { state: { from: `/packages/${id}` } });
       return;
     }
     
     if (!bookingDate) {
-      toast.error('Please select a start date');
+      toast.error('Please select an itinerary departure date');
       return;
     }
     
@@ -59,10 +59,10 @@ const PackageDetails = () => {
       };
       
       await bookPackage(id, bookingData);
-      toast.success('Package booked successfully!');
-      navigate('/user/bookings');
+      toast.success('Itinerary reserved successfully');
+      navigate('/user');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to book package');
+      toast.error(err.response?.data?.message || 'Failed to complete package booking');
       console.error('Error booking package:', err);
     } finally {
       setSubmitting(false);
@@ -71,184 +71,204 @@ const PackageDetails = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-20">
-        <Spinner size="lg" />
+      <div className="container-custom py-20 flex flex-col justify-center items-center min-h-[50vh] gap-3">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-stone-900 border-t-transparent"></div>
+        <p className="text-xs font-mono text-ink-muted">Reading itinerary dossier...</p>
       </div>
     );
   }
 
   if (error || !packageData) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-          {error || 'Package not found'}
+      <div className="container-custom py-16 max-w-lg">
+        <div className="card-base p-6 text-center">
+          <p className="text-sm font-medium text-ink-primary mb-2">{error || 'Package not found'}</p>
+          <Link to="/packages" className="btn-secondary text-xs inline-flex items-center gap-1.5">
+            <ArrowLeft size={13} />
+            <span>Return to packages</span>
+          </Link>
         </div>
-        <button
-          onClick={() => navigate('/packages')}
-          className="mt-4 px-4 py-2 bg-primary text-white rounded-md"
-        >
-          Back to Packages
-        </button>
       </div>
     );
   }
 
-  // Calculate minimum date (today)
   const today = new Date();
   const minDate = today.toISOString().split('T')[0];
+  const totalPrice = Math.round(packageData.price * participants);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        {/* Package Header */}
-        <div className="relative h-64 bg-gray-200">
-          {packageData.images && packageData.images.length > 0 ? (
-            <img 
-              src={packageData.images[0]} 
-              alt={packageData.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-200">
-              <span className="text-gray-400">No image available</span>
+    <div className="container-custom py-8">
+      {/* Breadcrumbs */}
+      <div className="flex items-center gap-2 text-xs text-ink-muted mb-6 font-mono">
+        <Link to="/packages" className="hover:text-ink-primary transition-colors flex items-center gap-1">
+          <ArrowLeft size={12} />
+          <span>Curated journeys</span>
+        </Link>
+        <span>/</span>
+        <span className="text-ink-primary truncate max-w-[240px]">{packageData.name}</span>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+        {/* Main Content */}
+        <div className="lg:col-span-8 space-y-8">
+          {/* Main Visual */}
+          <div className="relative aspect-[16/9] md:aspect-[21/9] rounded-card overflow-hidden bg-stone-100 border border-stone-200 shadow-subtle">
+            {packageData.images?.length ? (
+              <img 
+                src={packageData.images[0]} 
+                alt={packageData.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-xs font-mono text-ink-muted">
+                Archival documentation
+              </div>
+            )}
+            <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm text-ink-primary px-2.5 py-1 rounded-tag text-xs font-mono">
+              {packageData.duration?.days || 0} Days · {packageData.duration?.nights || 0} Nights
             </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
-            <div className="p-6 text-white">
-              <h1 className="text-3xl font-bold">{packageData.name}</h1>
-              <p className="text-lg">{packageData.duration?.days || 0} Days / {packageData.duration?.nights || 0} Nights</p>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {packageData.destinations?.map((destination, index) => (
-                  <span key={index} className="bg-primary/80 text-white text-xs px-2 py-1 rounded-full">
-                    {destination}
-                  </span>
+          </div>
+
+          {/* Title & Overview */}
+          <div className="space-y-3 pb-6 border-b border-stone-200/80">
+            <div className="flex items-center gap-2">
+              <span className="tag-signature">JOURNEY № {packageData._id ? packageData._id.slice(-4).toUpperCase() : '01'}</span>
+            </div>
+
+            <h1 className="font-serif text-3xl sm:text-4xl text-ink-primary font-normal">
+              {packageData.name}
+            </h1>
+
+            {packageData.destinations?.length > 0 && (
+              <div className="flex items-center gap-2 text-xs text-ink-muted font-mono pt-1">
+                <MapPin size={13} className="text-ink-secondary" />
+                <span>Territory: {packageData.destinations.join(' → ')}</span>
+              </div>
+            )}
+
+            <p className="text-sm text-ink-secondary leading-relaxed pt-2">
+              {packageData.description}
+            </p>
+          </div>
+
+          {/* Daily Itinerary */}
+          {packageData.itinerary && packageData.itinerary.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="font-serif text-2xl text-ink-primary font-normal">
+                Structured route schedule
+              </h2>
+              <div className="space-y-3">
+                {packageData.itinerary.map((day, index) => (
+                  <div key={index} className="card-base p-4 border-l-4 border-l-stone-900">
+                    <div className="flex items-center gap-2 text-xs font-mono text-ink-muted mb-1">
+                      <span>DAY {day.day}</span>
+                    </div>
+                    <h3 className="text-sm font-semibold text-ink-primary mb-1">
+                      {day.title}
+                    </h3>
+                    <p className="text-xs text-ink-secondary leading-relaxed">
+                      {day.description}
+                    </p>
+                  </div>
                 ))}
               </div>
             </div>
-          </div>
+          )}
+
+          {/* Image Gallery */}
+          {packageData.images && packageData.images.length > 1 && (
+            <div className="space-y-3 pt-4">
+              <h3 className="text-xs font-mono uppercase tracking-wider text-ink-muted">
+                Territory photography
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {packageData.images.slice(1).map((image, index) => (
+                  <div key={index} className="aspect-[4/3] rounded-control overflow-hidden bg-stone-100 border border-stone-200">
+                    <img 
+                      src={image} 
+                      alt={`${packageData.name} view ${index + 2}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-        
-        {/* Package Content */}
-        <div className="p-6">
-          <div className="flex flex-col md:flex-row gap-8">
-            {/* Left Column - Package Details */}
-            <div className="flex-grow">
-              <div className="mb-8">
-                <h2 className="text-2xl font-semibold text-primary mb-4">About This Package</h2>
-                <p className="text-gray-700">{packageData.description}</p>
+
+        {/* Right Sticky Booking Console */}
+        <div className="lg:col-span-4">
+          <div className="card-base p-6 sticky top-20 shadow-elevated space-y-6">
+            <div>
+              <p className="text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+                Itinerary enrollment
+              </p>
+              <div className="flex items-baseline gap-1.5 tabular-nums">
+                <span className="text-3xl font-semibold text-ink-primary">
+                  ${Math.round(packageData.price).toLocaleString()}
+                </span>
+                <span className="text-xs text-ink-muted font-mono">/ guest</span>
+              </div>
+            </div>
+
+            <form onSubmit={handleBooking} className="space-y-4">
+              <div>
+                <label htmlFor="bookingDate" className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+                  Departure date
+                </label>
+                <input
+                  type="date"
+                  id="bookingDate"
+                  value={bookingDate}
+                  onChange={(e) => setBookingDate(e.target.value)}
+                  min={minDate}
+                  className="input-base"
+                  required
+                />
               </div>
               
-              {/* Image Gallery */}
-              {packageData.images && packageData.images.length > 1 && (
-                <div className="mb-8">
-                  <h3 className="text-xl font-semibold text-primary mb-3">Gallery</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {packageData.images.slice(1).map((image, index) => (
-                      <img 
-                        key={index} 
-                        src={image} 
-                        alt={`${packageData.name} - Image ${index + 2}`}
-                        className="w-full h-40 object-cover rounded-lg"
-                      />
-                    ))}
-                  </div>
+              <div>
+                <label htmlFor="participants" className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+                  Number of travelers
+                </label>
+                <input
+                  type="number"
+                  id="participants"
+                  value={participants}
+                  onChange={(e) => setParticipants(Math.max(1, parseInt(e.target.value) || 1))}
+                  min="1"
+                  max="10"
+                  className="input-base tabular-nums"
+                  required
+                />
+              </div>
+
+              <div className="pt-3 border-t border-stone-100">
+                <div className="flex justify-between items-center text-xs mb-3 font-mono">
+                  <span className="text-ink-secondary">Total investment</span>
+                  <span className="text-base font-semibold text-ink-primary tabular-nums">
+                    ${totalPrice.toLocaleString()}
+                  </span>
                 </div>
-              )}
-              
-              {/* Itinerary */}
-              {packageData.itinerary && packageData.itinerary.length > 0 && (
-                <div className="mb-8">
-                  <h3 className="text-xl font-semibold text-primary mb-3">Itinerary</h3>
-                  <div className="space-y-4">
-                    {packageData.itinerary.map((day, index) => (
-                      <div key={index} className="border-l-2 border-primary pl-4 pb-4">
-                        <h4 className="font-semibold text-lg">Day {day.day}: {day.title}</h4>
-                        <p className="text-gray-700 mt-1">{day.description}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {/* Reviews */}
-              {packageData.reviews && packageData.reviews.length > 0 && (
-                <div className="mb-8">
-                  <h3 className="text-xl font-semibold text-primary mb-3">Reviews</h3>
-                  <div className="space-y-4">
-                    {packageData.reviews.map((review, index) => (
-                      <div key={index} className="bg-gray-50 p-4 rounded-lg">
-                        <div className="flex items-center mb-2">
-                          <div className="font-medium">{review.user?.fullName || 'Anonymous'}</div>
-                          <div className="ml-2 text-yellow-500">{'★'.repeat(review.rating)}</div>
-                        </div>
-                        <p className="text-gray-700">{review.comment}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            {/* Right Column - Booking Form */}
-            <div className="w-full md:w-80 flex-shrink-0">
-              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 sticky top-6">
-                <h3 className="text-xl font-semibold text-primary mb-4">Book This Package</h3>
-                <div className="mb-4">
-                  <div className="text-3xl font-bold text-primary">₹{packageData.price}</div>
-                  <div className="text-sm text-gray-600">per person</div>
-                </div>
-                
-                <form onSubmit={handleBooking} className="space-y-4">
-                  <div>
-                    <label htmlFor="bookingDate" className="block text-sm font-medium text-gray-700 mb-1">
-                      Start Date
-                    </label>
-                    <input
-                      type="date"
-                      id="bookingDate"
-                      value={bookingDate}
-                      onChange={(e) => setBookingDate(e.target.value)}
-                      min={minDate}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="participants" className="block text-sm font-medium text-gray-700 mb-1">
-                      Number of Participants
-                    </label>
-                    <input
-                      type="number"
-                      id="participants"
-                      value={participants}
-                      onChange={(e) => setParticipants(Math.max(1, parseInt(e.target.value)))}
-                      min="1"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="pt-2">
-                    <p className="text-lg font-semibold text-gray-800 mb-2">
-                      Total: ${(packageData.price * participants).toFixed(2)}
-                    </p>
-                    <button
-                      type="submit"
-                      className="w-full px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-                      disabled={submitting}
-                    >
-                      {submitting ? (
-                        <span className="flex items-center justify-center">
-                          <Spinner size="sm" className="mr-2" />
-                          Booking...
-                        </span>
-                      ) : (
-                        'Book Now'
-                      )}
-                    </button>
-                  </div>
-                </form>
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="btn-primary w-full !py-2.5 text-xs font-mono uppercase tracking-wider"
+                >
+                  {submitting ? 'Confirming with ledger...' : 'Reserve journey'}
+                </button>
+              </div>
+            </form>
+
+            <div className="pt-3 border-t border-stone-100 space-y-2 text-xs text-ink-muted">
+              <div className="flex items-center gap-2">
+                <ShieldCheck size={14} className="text-ink-secondary flex-shrink-0" />
+                <span>Comprehensive host insurance & travel protection</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check size={14} className="text-ink-secondary flex-shrink-0" />
+                <span>Boutique lodging accommodations included</span>
               </div>
             </div>
           </div>

@@ -10,16 +10,19 @@ const UserLayout = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Check if navigation state contains activeTab and set it
     if (location.state?.activeTab) {
       setActiveTab(location.state.activeTab);
-      // Clear the state to prevent it from being used again on re-renders
       window.history.replaceState({}, '');
     }
   }, [location.state]);
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    return (
+      <div className="flex flex-col justify-center items-center h-screen gap-3 bg-[#FBF9F5]">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-stone-900 border-t-transparent"></div>
+        <p className="text-xs font-mono text-ink-muted">Loading guest session...</p>
+      </div>
+    );
   }
 
   if (!user) {
@@ -31,11 +34,11 @@ const UserLayout = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-[#FBF9F5]">
       <Navbar />
       <div className="flex flex-grow">
         <UserSidebar onTabChange={handleTabChange} activeTab={activeTab} />
-        <main className="flex-grow p-6">
+        <main className="flex-grow p-6 lg:p-8 max-w-[1400px] overflow-x-hidden">
           <Outlet context={{ activeTab, setActiveTab }} />
         </main>
       </div>

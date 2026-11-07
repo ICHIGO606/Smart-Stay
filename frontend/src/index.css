@@ -2,42 +2,95 @@
 @tailwind components;
 @tailwind utilities;
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
+@layer base {
+  body {
+    @apply bg-background text-ink-primary font-sans antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-out;
-}
-
-.animate-fadeIn-up {
-  animation: fadeInUp 0.5s ease-out;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  /* Universal tabular figures for numeric consistency */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }
 
 @layer components {
   .container-custom {
-    @apply container mx-auto px-4;
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
-  
+
   .btn-primary {
-    @apply bg-accent text-white px-4 py-2 rounded-md hover:bg-opacity-90 transition-colors;
+    @apply inline-flex items-center justify-center bg-primary text-white px-4 py-2 rounded-control text-sm font-medium hover:bg-black active:scale-[0.98] transition-[background-color,transform] duration-150 shadow-subtle disabled:opacity-50 disabled:cursor-not-allowed;
   }
+
+  .btn-accent {
+    @apply inline-flex items-center justify-center bg-accent text-white px-4 py-2 rounded-control text-sm font-medium hover:bg-accent-dark active:scale-[0.98] transition-[background-color,transform] duration-150 shadow-subtle disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center bg-white border border-stone-200/80 text-ink-primary px-4 py-2 rounded-control text-sm font-medium hover:bg-stone-50 hover:border-stone-300 active:scale-[0.98] transition-[background-color,border-color,transform] duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .card-base {
+    @apply bg-white rounded-card border border-stone-200/70 shadow-subtle;
+  }
+
+  .input-base {
+    @apply w-full bg-white border border-stone-200/90 rounded-control px-3.5 py-2 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors;
+  }
+
+  .tag-signature {
+    @apply inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-ink-secondary bg-stone-100 border border-stone-200/70 px-2 py-0.5 rounded-tag;
+  }
+}
+
+/* React Datepicker styling */
+.react-datepicker-wrapper {
+  width: 100%;
+}
+.react-datepicker__input-container input {
+  width: 100%;
+  background-color: #FFFFFF;
+  border: 1px solid rgba(229, 225, 216, 0.9);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  color: #1F1B16;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.react-datepicker__input-container input:focus {
+  border-color: #14171F;
+}
+.react-datepicker {
+  font-family: inherit !important;
+  border: 1px solid rgba(229, 225, 216, 0.9) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px -5px rgba(31, 27, 22, 0.08) !important;
+  background-color: #FFFFFF !important;
+  overflow: hidden;
+}
+.react-datepicker__header {
+  background-color: #FBF9F5 !important;
+  border-bottom: 1px solid rgba(229, 225, 216, 0.9) !important;
+  padding-top: 12px !important;
+}
+.react-datepicker__current-month {
+  font-weight: 500 !important;
+  font-size: 14px !important;
+  color: #1F1B16 !important;
+}
+.react-datepicker__day-name {
+  color: #8C8275 !important;
+  font-size: 12px !important;
+}
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+  background-color: #14171F !important;
+  color: #FFFFFF !important;
+  border-radius: 6px !important;
+}
+.react-datepicker__day:hover {
+  border-radius: 6px !important;
+  background-color: #F4F0E8 !important;
 }

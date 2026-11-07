@@ -95,31 +95,23 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
           <div
             key={room.roomNumber}
             onClick={() => handleRoomClick(room)}
-            className={`relative group w-24 h-24 rounded-xl border-2 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+            className={`relative group w-24 h-20 rounded-control border p-2 flex flex-col items-center justify-center cursor-pointer transition-colors ${
               room.status === "Booked"
-                ? "bg-gradient-to-br from-red-50 to-red-100 border-red-300 hover:border-red-400"
-                : "bg-gradient-to-br from-green-50 to-green-100 border-green-300 hover:border-green-400"
+                ? "bg-stone-100 border-stone-200 text-ink-muted"
+                : "bg-white border-stone-200 hover:border-stone-400 text-ink-primary shadow-subtle"
             }`}
           >
-            <div
-              className={`text-lg font-bold ${
-                room.status === "Booked" ? "text-red-700" : "text-green-700"
-              }`}
-            >
-              {room.roomNumber}
+            <div className="text-sm font-semibold font-mono tabular-nums">
+              № {room.roomNumber}
             </div>
 
-            <div
-              className={`text-xs font-medium mt-1 ${
-                room.status === "Booked" ? "text-red-600" : "text-green-600"
-              }`}
-            >
+            <div className="text-[10px] font-mono text-ink-muted truncate max-w-[80px] mt-0.5">
               {room.roomType}
             </div>
 
             <div
-              className={`absolute top-2 right-2 w-3 h-3 rounded-full ${
-                room.status === "Booked" ? "bg-red-500" : "bg-green-500"
+              className={`absolute top-2 right-2 w-1.5 h-1.5 rounded-full ${
+                room.status === "Booked" ? "bg-amber-600" : "bg-emerald-600"
               }`}
             ></div>
 

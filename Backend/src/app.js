@@ -56,4 +56,18 @@ app.use("/api/reviews", reviewRouter);
 app.use("/api/v1/hotels", hotelRouter);
 app.use("/api/v1/payments", paymentRouter);
 app.use("/api/v1/packages", packageRouter);
+
+// Global error handling middleware
+app.use((err, req, res, next) => {
+  const statusCode = err.statusCode || err.status || 500;
+  const message = err.message || "Internal Server Error";
+  return res.status(statusCode).json({
+    statusCode,
+    success: false,
+    message,
+    errors: err.errors || [],
+    data: null,
+  });
+});
+
 export  {app};

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
+import { AlertCircle } from 'lucide-react';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -32,96 +33,113 @@ const Register = () => {
       await register(formData);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      setError(err.response?.data?.message || 'Registration failed. Please check the details and try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-primary">Create your account</h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link to="/login" className="font-medium text-accent hover:text-accent-dark">
-              sign in to your existing account
-            </Link>
+    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center py-12 px-4 sm:px-6">
+      <div className="card-base max-w-md w-full p-8 shadow-elevated">
+        <div className="text-center mb-6">
+          <div className="w-8 h-8 rounded-[6px] bg-stone-900 text-white flex items-center justify-center text-xs font-semibold mx-auto mb-3">
+            SS
+          </div>
+          <h1 className="font-serif text-2xl text-ink-primary font-normal">
+            Create guest profile
+          </h1>
+          <p className="text-xs text-ink-muted mt-1">
+            Register to manage boutique reservations and verified itineraries
           </p>
         </div>
         
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-            <span className="block sm:inline">{error}</span>
+          <div className="mb-5 p-3 rounded-control bg-red-50 border border-red-200/80 flex items-start gap-2.5 text-xs text-red-800">
+            <AlertCircle size={15} className="mt-0.5 flex-shrink-0" />
+            <span>{error}</span>
           </div>
         )}
         
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <div>
+            <label htmlFor="fullName" className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+              Full name
+            </label>
+            <input
+              id="fullName"
+              name="fullName"
+              type="text"
+              autoComplete="name"
+              required
+              className="input-base"
+              placeholder="Eleanor Vance"
+              value={formData.fullName}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="email" className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+              Email address
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              className="input-base"
+              placeholder="eleanor@example.com"
+              value={formData.email}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="password" className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+              Password
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              required
+              className="input-base"
+              placeholder="Minimum 8 characters"
+              value={formData.password}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="fullName" className="sr-only">Full Name</label>
-              <input
-                id="fullName"
-                name="fullName"
-                type="text"
-                autoComplete="name"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-accent focus:border-accent focus:z-10 sm:text-sm"
-                placeholder="Full Name"
-                value={formData.fullName}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="sr-only">Email address</label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-accent focus:border-accent focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">Password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-accent focus:border-accent focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={formData.password}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="age" className="sr-only">Age</label>
+              <label htmlFor="age" className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+                Age
+              </label>
               <input
                 id="age"
                 name="age"
                 type="number"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-accent focus:border-accent focus:z-10 sm:text-sm"
-                placeholder="Age"
+                min="18"
+                className="input-base tabular-nums"
+                placeholder="28"
                 value={formData.age}
                 onChange={handleChange}
-                min="18"
               />
             </div>
+
             <div>
-              <label htmlFor="gender" className="sr-only">Gender</label>
+              <label htmlFor="gender" className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+                Gender
+              </label>
               <select
                 id="gender"
                 name="gender"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-accent focus:border-accent focus:z-10 sm:text-sm"
+                className="input-base bg-white"
                 value={formData.gender}
                 onChange={handleChange}
               >
@@ -130,32 +148,23 @@ const Register = () => {
                 <option value="other">Other</option>
               </select>
             </div>
-            <div>
-              <label htmlFor="role" className="sr-only">Role</label>
-              <select
-                id="role"
-                name="role"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-accent focus:border-accent focus:z-10 sm:text-sm"
-                value={formData.role}
-                onChange={handleChange}
-              >
-                <option value="user">Regular User</option>
-                <option value="admin">Administrator</option>
-              </select>
-            </div>
           </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-accent hover:bg-accent-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
-            >
-              {loading ? 'Creating account...' : 'Sign up'}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary w-full !py-2.5 text-xs font-mono uppercase tracking-wider mt-2"
+          >
+            {loading ? 'Creating profile...' : 'Create account'}
+          </button>
         </form>
+
+        <p className="mt-6 text-center text-xs text-ink-muted">
+          Already registered?{' '}
+          <Link to="/login" className="text-ink-primary font-medium hover:underline">
+            Sign in
+          </Link>
+        </p>
       </div>
     </div>
   );
