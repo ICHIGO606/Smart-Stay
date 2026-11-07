@@ -467,3 +467,4 @@ export function generateQRCodePath(text) {
     return { path: "", count: 0 };
   }
 }
+
