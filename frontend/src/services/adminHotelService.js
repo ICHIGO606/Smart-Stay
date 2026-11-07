@@ -164,6 +164,39 @@ const adminHotelService = {
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to delete room');
     }
+  },
+
+  // Update operational status of a room (Pillar 3)
+  updateRoomOperationalStatus: async (hotelId, roomId, statusData) => {
+    try {
+      const response = await api.patch(`/admin/hotels/${hotelId}/rooms/${roomId}/status`, statusData);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to update room operational status');
+    }
+  },
+
+  // Export bookings CSV (Pillar 5)
+  exportBookingsCsv: async (hotelId) => {
+    try {
+      const response = await api.get('/admin/bookings/export-csv', {
+        params: hotelId ? { hotelId } : {},
+        responseType: 'blob',
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to export bookings CSV');
+    }
+  },
+
+  // Get administrative hospitality statistics (Pillar 5)
+  getAdminAnalyticsStats: async () => {
+    try {
+      const response = await api.get('/admin/stats');
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to fetch admin stats');
+    }
   }
 };
 

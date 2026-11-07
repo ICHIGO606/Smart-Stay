@@ -51,6 +51,18 @@ export const bookingService = {
     }
   },
 
+  // Get booking voucher pass (Pillar 2)
+  getBookingVoucher: async (bookingId, format = 'json') => {
+    try {
+      const response = await api.get(`/bookings/${bookingId}/voucher`, {
+        params: { format }
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
   // Get all bookings (Admin only) with pagination, sorting, and filtering
   getAllBookings: async (params = {}) => {
     try {

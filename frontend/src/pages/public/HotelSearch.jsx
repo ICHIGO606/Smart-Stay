@@ -19,12 +19,16 @@ const HotelSearch = () => {
     const fetchHotels = async () => {
       try {
         setLoading(true);
-        let response;
-        if (searchParams.location) {
-          response = await hotelService.searchHotels(searchParams.location);
-        } else {
-          response = await hotelService.searchHotels('');
-        }
+        const queryParams = {};
+        if (searchParams.checkIn) queryParams.checkIn = searchParams.checkIn;
+        if (searchParams.checkOut) queryParams.checkOut = searchParams.checkOut;
+        if (searchParams.adults) queryParams.adults = searchParams.adults;
+        if (searchParams.children) queryParams.children = searchParams.children;
+
+        const response = await hotelService.searchHotels(
+          searchParams.location || '',
+          queryParams
+        );
         
         if (response && response.data) {
           setHotels(response.data);
@@ -291,22 +295,37 @@ const HotelSearch = () => {
                         {/* Price & Action Row */}
                         <div className="flex items-center justify-between pt-3 border-t border-stone-100">
                           <div className="tabular-nums">
-                            <span className="text-xs text-ink-muted block leading-none mb-1">From</span>
-                            <div className="flex items-baseline gap-1">
+                            <span className="text-xs text-ink-muted block leading-none mb-1">
+                              {hotel.nights > 1 ? `Stay for ${hotel.nights} nights` : 'From'}
+                            </span>
+                            <div className="flex items-baseline gap-1.5">
                               <span className="text-lg font-semibold text-ink-primary">
                                 {lowestPrice ? `$${lowestPrice}` : 'Inquire'}
                               </span>
                               {lowestPrice && <span className="text-xs text-ink-muted font-mono">/ night</span>}
+                              {hotel.totalStayPrice && hotel.nights > 1 && (
+                                <span className="text-xs text-ink-muted font-mono">
+                                  (${hotel.totalStayPrice} total)
+                                </span>
+                              )}
                             </div>
                           </div>
 
-                          <Link 
-                            to={`/hotels/${hotel._id}`} 
-                            className="btn-primary !text-xs !py-1.5 !px-3.5 inline-flex items-center gap-1.5"
-                          >
-                            <span>Inspect rooms</span>
-                            <ArrowRight size={13} />
-                          </Link>
+                          <div className="flex items-center gap-2">
+                            {hotel.isAvailableForDates && searchParams.checkIn && (
+                              <span className="hidden sm:inline-block text-[11px] font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-tag border border-emerald-200">
+                                Available
+                              </span>
+                            )}
+                            <Link 
+                              to={`/hotels/${hotel._id}`} 
+                              state={searchParams}
+                              className="btn-primary !text-xs !py-1.5 !px-3.5 inline-flex items-center gap-1.5"
+                            >
+                              <span>Inspect rooms</span>
+                              <ArrowRight size={13} />
+                            </Link>
+                          </div>
                         </div>
                       </div>
                     </div>

@@ -2,6 +2,7 @@ import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.models.js";
+import { notificationService } from "../services/notificationService.js";
 
 // Get all users with pending verification
 const getPendingVerifications = asyncHandler(async (req, res) => {
@@ -59,6 +60,13 @@ const verifyUser = asyncHandler(async (req, res) => {
   }
 
   await user.save({validateBeforeSave:false});
+
+  // Dispatch KYC notification
+  await notificationService.sendKycStatusUpdate({
+    user,
+    status,
+    reason: remarks || "",
+  });
 
   return res
     .status(200)

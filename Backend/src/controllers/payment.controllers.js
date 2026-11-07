@@ -4,6 +4,8 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Booking } from "../models/booking.models.js";
 import { Hotel } from "../models/hotel.models.js";
 import youpiService from "../services/youpiService.js";
+import { notificationService } from "../services/notificationService.js";
+import { sseService } from "../services/sseService.js";
 import crypto from "crypto";
 import dotenv from "dotenv";
 
@@ -196,6 +198,20 @@ const verifyPayment = asyncHandler(async (req, res) => {
     paymentStatus: "Completed",
   };
   await booking.save();
+
+  // Dispatch payment notification & live SSE event
+  notificationService.sendPaymentReceipt({
+    booking,
+    payment: { utr: utr || effectivePaymentId },
+  }).catch((err) => console.error("Notification dispatch error:", err));
+
+  if (booking.hotelId) {
+    sseService.broadcast(booking.hotelId, "payment_confirmed", {
+      bookingId: booking._id,
+      paymentStatus: "Completed",
+      bookingStatus: "Confirmed",
+    });
+  }
 
   return res.status(200).json(
     new ApiResponse(

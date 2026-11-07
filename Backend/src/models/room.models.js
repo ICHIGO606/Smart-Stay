@@ -52,6 +52,18 @@ const roomSchema = new mongoose.Schema(
         bookingId: { type: mongoose.Schema.Types.ObjectId, ref: "Booking" }
       }
     ],
+    operationalStatuses: [
+      {
+        roomNumber: { type: Number, required: true },
+        status: {
+          type: String,
+          enum: ["Available", "Reserved", "Occupied", "Dirty", "Cleaning", "Maintenance"],
+          default: "Available",
+        },
+        notes: { type: String, default: "" },
+        updatedAt: { type: Date, default: Date.now },
+      }
+    ],
     amenities: {
       type: [String],
       default: [],

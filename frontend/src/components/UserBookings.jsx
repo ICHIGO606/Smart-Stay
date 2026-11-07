@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { bookingService } from '../services/bookingService';
-import { Calendar, Users, RefreshCw, ArrowRight, BedDouble, AlertCircle } from 'lucide-react';
+import { API_BASE_URL } from '../services/api';
+import { Calendar, Users, RefreshCw, ArrowRight, BedDouble, AlertCircle, Ticket } from 'lucide-react';
 
 const UserBookings = () => {
   const [bookings, setBookings] = useState([]);
@@ -87,7 +88,8 @@ const UserBookings = () => {
     const bookingDate = new Date(booking.checkInDate);
     const today = new Date();
     const daysUntilBooking = Math.ceil((bookingDate - today) / (1000 * 60 * 60 * 24));
-    return booking.status === 'confirmed' && daysUntilBooking > 1;
+    const s = (booking.bookingStatus || booking.status || '').toLowerCase();
+    return (s === 'confirmed' || s === 'pending') && daysUntilBooking > 1;
   };
 
   useEffect(() => {
@@ -184,7 +186,7 @@ const UserBookings = () => {
                 <div>
                   <span className="text-[10px] uppercase text-ink-muted block mb-0.5">Amount billed</span>
                   <span className="text-ink-primary font-semibold tabular-nums">
-                    ${booking.totalAmount?.toLocaleString()}
+                    ₹{booking.totalAmount?.toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -197,16 +199,32 @@ const UserBookings = () => {
               )}
 
               {/* Action row */}
-              <div className="flex justify-end pt-3 border-t border-stone-100">
-                {canCancelBooking(booking) && (
-                  <button
-                    onClick={() => handleCancelBooking(booking._id)}
-                    disabled={cancellingId === booking._id}
-                    className="btn-secondary !text-xs !py-1 text-red-700 hover:bg-red-50 hover:border-red-200"
-                  >
-                    {cancellingId === booking._id ? 'Processing...' : 'Cancel reservation'}
-                  </button>
-                )}
+              <div className="flex items-center justify-between pt-3 border-t border-stone-100">
+                <button
+                  type="button"
+                  onClick={() =>
+                    window.open(
+                      `${API_BASE_URL}/bookings/${booking._id}/voucher?format=html&token=${localStorage.getItem('accessToken') || ''}`,
+                      '_blank'
+                    )
+                  }
+                  className="btn-secondary !text-xs !py-1 inline-flex items-center gap-1.5 text-ink-primary hover:border-ink-primary"
+                >
+                  <Ticket size={13} className="text-stone-500" />
+                  <span>Voucher Pass</span>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  {canCancelBooking(booking) && (
+                    <button
+                      onClick={() => handleCancelBooking(booking._id)}
+                      disabled={cancellingId === booking._id}
+                      className="btn-secondary !text-xs !py-1 text-red-700 hover:bg-red-50 hover:border-red-200"
+                    >
+                      {cancellingId === booking._id ? 'Processing...' : 'Cancel reservation'}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))}

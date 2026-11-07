@@ -18,26 +18,89 @@ const getLocationSuggestions = asyncHandler(async (req, res) => {
 });
 
 const getHotels = asyncHandler(async (req, res) => {
-  const { city } = req.query;
+  const {
+    city,
+    checkIn,
+    checkOut,
+    guests,
+    adults = 1,
+    children = 0,
+    minPrice,
+    maxPrice,
+  } = req.query;
+
   const query = city ? { city: new RegExp(escapeRegex(city), "i") } : {};
   const hotels = await Hotel.find(query);
-  
+
+  const checkInDate = checkIn ? new Date(checkIn) : null;
+  const checkOutDate = checkOut ? new Date(checkOut) : null;
+  const totalGuests = parseInt(guests) || (parseInt(adults) + parseInt(children)) || 1;
+
   const hotelsWithPrices = await Promise.all(
     hotels.map(async (hotel) => {
-      const rooms = await Room.find({ hotelId: hotel._id });
-      const lowestPrice = rooms.length > 0 
-        ? Math.min(...rooms.map(room => room.pricePerNight || 0))
-        : 0;
-      
+      let rooms = await Room.find({ hotelId: hotel._id });
+
+      // If dates provided, calculate available rooms during requested window
+      let availableRooms = rooms;
+      if (checkInDate && checkOutDate) {
+        availableRooms = rooms.filter((room) => {
+          const allNumbers = room.roomNumbers || [];
+          const bookedNumbers = (room.bookedRoomNumbers || [])
+            .filter((booking) => {
+              const bCheckIn = new Date(booking.checkInDate);
+              const bCheckOut = new Date(booking.checkOutDate);
+              return (checkInDate < bCheckOut && checkOutDate > bCheckIn);
+            })
+            .map((b) => b.roomNumber);
+
+          const freeNumbers = allNumbers.filter((num) => !bookedNumbers.includes(num));
+          return freeNumbers.length > 0 && (room.maxOccupancy ? room.maxOccupancy >= totalGuests : true);
+        });
+      }
+
+      // Filter by minPrice / maxPrice if provided
+      if (minPrice || maxPrice) {
+        availableRooms = availableRooms.filter((r) => {
+          const price = r.pricePerNight || 0;
+          if (minPrice && price < parseFloat(minPrice)) return false;
+          if (maxPrice && price > parseFloat(maxPrice)) return false;
+          return true;
+        });
+      }
+
+      const lowestPrice =
+        availableRooms.length > 0
+          ? Math.min(...availableRooms.map((room) => room.pricePerNight || 0))
+          : (rooms.length > 0 ? Math.min(...rooms.map((r) => r.pricePerNight || 0)) : 0);
+
+      // Nights calculation for total estimated trip price
+      let totalStayPrice = lowestPrice;
+      let nights = 1;
+      if (checkInDate && checkOutDate) {
+        const diffTime = Math.abs(checkOutDate - checkInDate);
+        nights = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+        totalStayPrice = lowestPrice * nights;
+      }
+
       return {
         ...hotel.toObject(),
-        lowestPrice: lowestPrice,
-        hasRooms: rooms.length > 0
+        lowestPrice,
+        totalStayPrice,
+        nights,
+        hasRooms: rooms.length > 0,
+        availableRoomsCount: availableRooms.length,
+        isAvailableForDates: checkInDate && checkOutDate ? availableRooms.length > 0 : true,
       };
     })
   );
-  
-  return res.status(200).json(new ApiResponse(200, hotelsWithPrices, "Hotels fetched successfully"));
+
+  // If specific dates were searched, filter out hotels with zero vacancy
+  let filteredHotels = hotelsWithPrices;
+  if (checkInDate && checkOutDate) {
+    filteredHotels = hotelsWithPrices.filter((h) => h.isAvailableForDates);
+  }
+
+  return res.status(200).json(new ApiResponse(200, filteredHotels, "Hotels fetched successfully"));
 });
 
 // Get rooms for a hotel

@@ -12,10 +12,26 @@ export const hotelService = {
     }
   },
 
-  // Search hotels by city
-  searchHotels: async (city) => {
+  // Search hotels by city and dates/occupancy
+  searchHotels: async (city, params = {}) => {
     try {
-      const response = await api.get(`/hotels/hotels?city=${encodeURIComponent(city)}`);
+      const searchParams = new URLSearchParams();
+      if (typeof city === 'string' && city) {
+        searchParams.append('city', city);
+      } else if (typeof city === 'object' && city !== null) {
+        Object.entries(city).forEach(([k, v]) => {
+          if (v !== undefined && v !== null && v !== '') searchParams.append(k, v);
+        });
+      }
+
+      if (typeof params === 'object' && params !== null) {
+        Object.entries(params).forEach(([k, v]) => {
+          if (v !== undefined && v !== null && v !== '') searchParams.append(k, v);
+        });
+      }
+
+      const qs = searchParams.toString().replace(/\+/g, '%20');
+      const response = await api.get(`/hotels/hotels${qs ? `?${qs}` : ''}`);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

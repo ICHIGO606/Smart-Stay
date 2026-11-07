@@ -14,7 +14,11 @@ import {
   getAdminHotels,
   getHotelRoomsStatus,
   getHotelBookings,
-  getHotelRooms
+  getHotelRooms,
+  updateRoomOperationalStatus,
+  streamHotelLiveUpdates,
+  exportBookingsCsv,
+  getAdminAnalyticsStats
 } from "../controllers/admin.controllers.js";
 import {
   getPendingVerifications,
@@ -84,10 +88,13 @@ router.delete(
 );
 
 router.get("/hotels/:hotelId/bookings", verifyJWT, verifyHotelAdmin, getHotelBookings);
-
+router.get("/bookings/export-csv", verifyJWT, isAdmin, exportBookingsCsv);
+router.get("/stats", verifyJWT, isAdmin, getAdminAnalyticsStats);
 
 router.get("/hotels/:hotelId/rooms-status", verifyJWT, verifyHotelAdmin, getHotelRoomsStatus);
 router.get("/hotels/:hotelId/rooms", verifyJWT, verifyHotelAdmin, getHotelRooms);
+router.patch("/hotels/:hotelId/rooms/:roomId/status", strictLimiter, verifyJWT, verifyHotelAdmin, updateRoomOperationalStatus);
+router.get("/hotels/:hotelId/live-stream", verifyJWT, verifyHotelAdmin, streamHotelLiveUpdates);
 
 router.get("/verifications/pending", verifyJWT, isAdmin, getPendingVerifications);
 router.get("/verifications/verified", verifyJWT, isAdmin, getVerifiedUsers);

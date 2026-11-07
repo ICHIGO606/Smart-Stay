@@ -5,6 +5,7 @@ import { Hotel } from "../models/hotel.models.js";
 import { Room } from "../models/room.models.js";
 import { Booking } from "../models/booking.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { sseService } from "../services/sseService.js";
 import mongoose from "mongoose";
 
 // ------------------- HOTEL CONTROLLERS ------------------- //
@@ -350,11 +351,23 @@ const getHotelRoomsStatus = asyncHandler(async (req, res) => {
           b.roomNumbers.includes(roomNumber)
       );
 
+      // Check operational lifecycle status
+      const opEntry = (room.operationalStatuses || []).find(
+        (op) => Number(op.roomNumber) === Number(roomNumber)
+      );
+
+      const operationalStatus = opEntry?.status || (booking ? "Reserved" : "Available");
+
       floorWiseRooms[floor].push({
         roomId: room._id,
         roomType: room.type,
+        pricePerNight: room.pricePerNight,
+        maxOccupancy: room.maxOccupancy,
         roomNumber,
-        status: booking ? "Booked" : "Available",
+        status: booking ? "Booked" : (operationalStatus === "Available" ? "Available" : operationalStatus),
+        operationalStatus,
+        notes: opEntry?.notes || "",
+        updatedAt: opEntry?.updatedAt || null,
         bookingDetails: booking
           ? {
               bookingId: booking._id,
@@ -391,6 +404,195 @@ const getHotelRooms = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, rooms, "Rooms fetched successfully"));
 });
 
+// Update operational lifecycle status of a room (Pillar 3)
+const updateRoomOperationalStatus = asyncHandler(async (req, res) => {
+  const { hotelId, roomId } = req.params;
+  const { roomNumber, status, notes } = req.body;
+
+  if (!roomNumber || !status) {
+    throw new ApiError(400, "Room number and operational status are required");
+  }
+
+  const validStatuses = ["Available", "Reserved", "Occupied", "Dirty", "Cleaning", "Maintenance"];
+  if (!validStatuses.includes(status)) {
+    throw new ApiError(400, `Invalid operational status. Must be one of: ${validStatuses.join(", ")}`);
+  }
+
+  const safeHotelId = String(hotelId);
+  const safeRoomId = String(roomId);
+
+  const room = await Room.findOne({ _id: safeRoomId, hotelId: safeHotelId });
+  if (!room) throw new ApiError(404, "Room not found for this hotel");
+
+  if (!room.roomNumbers.includes(Number(roomNumber))) {
+    throw new ApiError(400, `Room number ${roomNumber} does not exist in room type ${room.type}`);
+  }
+
+  // Update or append operational status
+  if (!room.operationalStatuses) room.operationalStatuses = [];
+
+  const opIndex = room.operationalStatuses.findIndex(
+    (item) => Number(item.roomNumber) === Number(roomNumber)
+  );
+
+  const updatedEntry = {
+    roomNumber: Number(roomNumber),
+    status,
+    notes: notes !== undefined ? notes : (opIndex >= 0 ? room.operationalStatuses[opIndex].notes : ""),
+    updatedAt: new Date(),
+  };
+
+  if (opIndex >= 0) {
+    room.operationalStatuses[opIndex] = updatedEntry;
+  } else {
+    room.operationalStatuses.push(updatedEntry);
+  }
+
+  await room.save();
+
+  // Broadcast real-time SSE event to all front-desk staff watching this property
+  sseService.broadcast(safeHotelId, "room_status_changed", {
+    hotelId: safeHotelId,
+    roomId: safeRoomId,
+    roomNumber: Number(roomNumber),
+    operationalStatus: status,
+    notes: updatedEntry.notes,
+    updatedAt: updatedEntry.updatedAt,
+  });
+
+  return res.status(200).json(
+    new ApiResponse(200, updatedEntry, `Room ${roomNumber} status updated to ${status}`)
+  );
+});
+
+// Stream real-time events via Server-Sent Events (SSE) (Pillar 4)
+const streamHotelLiveUpdates = asyncHandler(async (req, res) => {
+  const { hotelId } = req.params;
+  const safeHotelId = String(hotelId);
+
+  // Check if hotel exists
+  const hotel = await Hotel.findById(safeHotelId);
+  if (!hotel) throw new ApiError(404, "Hotel not found");
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
+  res.flushHeaders?.();
+
+  sseService.registerClient(safeHotelId, res);
+});
+
+// Export bookings CSV (Pillar 5)
+const exportBookingsCsv = asyncHandler(async (req, res) => {
+  const { hotelId } = req.query;
+  const query = {};
+  if (hotelId) query.hotelId = String(hotelId);
+
+  const bookings = await Booking.find(query)
+    .populate("hotelId", "name city")
+    .populate("roomId", "type pricePerNight")
+    .populate("user", "fullName email")
+    .sort({ createdAt: -1 });
+
+  const headers = [
+    "Booking ID",
+    "Guest Name",
+    "Guest Email",
+    "Property Name",
+    "Room Type",
+    "Room Numbers",
+    "Check-In Date",
+    "Check-Out Date",
+    "Total Amount (INR)",
+    "Payment Status",
+    "Booking Status",
+    "Created At",
+  ];
+
+  const escapeCsv = (val) => {
+    if (val === null || val === undefined) return '""';
+    const str = String(val).replace(/"/g, '""');
+    return `"${str}"`;
+  };
+
+  const rows = bookings.map((b) => [
+    b._id,
+    b.user?.fullName || "Guest",
+    b.user?.email || "N/A",
+    b.hotelId?.name || "SmartStay Property",
+    b.roomId?.type || "Standard Suite",
+    (b.roomNumbers || []).join("; "),
+    b.checkInDate ? new Date(b.checkInDate).toISOString().split("T")[0] : "",
+    b.checkOutDate ? new Date(b.checkOutDate).toISOString().split("T")[0] : "",
+    b.totalAmount || 0,
+    b.paymentStatus || "Pending",
+    b.bookingStatus || "Pending",
+    b.createdAt ? new Date(b.createdAt).toISOString() : "",
+  ]);
+
+  const csvContent = [headers.map(escapeCsv).join(","), ...rows.map((row) => row.map(escapeCsv).join(","))].join("\n");
+
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename="smartstay-bookings-${Date.now()}.csv"`);
+  return res.status(200).send(csvContent);
+});
+
+// Admin Platform & Hospitality Analytics with ADR & RevPAR (Pillar 5)
+const getAdminAnalyticsStats = asyncHandler(async (req, res) => {
+  const adminId = req.user._id;
+  const isSuper = req.user.username === "sadmin" || req.user.username === "admin";
+
+  let hotelFilter = {};
+  if (!isSuper) {
+    const hotels = await Hotel.find({ adminId }).select("_id");
+    hotelFilter = { hotelId: { $in: hotels.map((h) => h._id) } };
+  }
+
+  const allBookings = await Booking.find(hotelFilter).lean();
+  const confirmedBookings = allBookings.filter(
+    (b) => b.bookingStatus === "Confirmed" || b.paymentStatus === "Completed"
+  );
+
+  const totalRevenue = confirmedBookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+
+  // Calculate occupied room nights
+  let totalOccupiedNights = 0;
+  confirmedBookings.forEach((b) => {
+    const checkIn = new Date(b.checkInDate);
+    const checkOut = new Date(b.checkOutDate);
+    const nights = Math.max(1, Math.round((checkOut - checkIn) / (1000 * 60 * 60 * 24)));
+    const roomsCount = b.roomNumbers?.length || 1;
+    totalOccupiedNights += nights * roomsCount;
+  });
+
+  // ADR: Average Daily Rate = Total Room Revenue / Occupied Room Nights
+  const adr = totalOccupiedNights > 0 ? Math.round(totalRevenue / totalOccupiedNights) : 0;
+
+  // RevPAR: Revenue Per Available Room = Total Revenue / Total Room Inventory
+  const rooms = await Room.find(isSuper ? {} : hotelFilter).lean();
+  const totalRoomUnits = rooms.reduce((sum, r) => sum + (r.roomNumbers?.length || 1), 0);
+  const revPar = totalRoomUnits > 0 ? Math.round(totalRevenue / totalRoomUnits) : 0;
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        totalBookings: allBookings.length,
+        confirmedBookings: confirmedBookings.length,
+        pendingBookings: allBookings.filter((b) => b.bookingStatus === "Pending").length,
+        cancelledBookings: allBookings.filter((b) => b.bookingStatus === "Cancelled").length,
+        totalRevenue,
+        totalOccupiedNights,
+        adr,
+        revPar,
+        totalRoomUnits,
+      },
+      "Hospitality analytics metrics calculated successfully"
+    )
+  );
+});
+
 export {
   createHotel,
   updateHotel,
@@ -402,5 +604,9 @@ export {
   getAdminHotels,
   getHotelBookings,
   getHotelRoomsStatus,
-  getHotelRooms
+  getHotelRooms,
+  updateRoomOperationalStatus,
+  streamHotelLiveUpdates,
+  exportBookingsCsv,
+  getAdminAnalyticsStats
 };
