@@ -2,7 +2,10 @@ import { Router } from "express";
 import { isAdmin, verifyJWT } from "../middlewares/auth.middleware.js";
 import { verifyHotelAdmin } from "../middlewares/verifyHotelAdmin.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
-import { apiLimiter, strictLimiter } from "../middlewares/rateLimit.middleware.js";
+import {
+  apiLimiter,
+  strictLimiter,
+} from "../middlewares/rateLimit.middleware.js";
 import {
   createHotel,
   updateHotel,
@@ -19,14 +22,14 @@ import {
   streamHotelLiveUpdates,
   exportBookingsCsv,
   getAdminAnalyticsStats,
-  checkInGuestByToken
+  checkInGuestByToken,
 } from "../controllers/admin.controllers.js";
 import {
   getPendingVerifications,
   getUserVerification,
   verifyUser,
   getVerifiedUsers,
-  getVerificationStats
+  getVerificationStats,
 } from "../controllers/adminVerification.controllers.js";
 
 const router = Router();
@@ -42,7 +45,7 @@ router.post(
   verifyJWT,
   isAdmin,
   upload.fields([{ name: "images", maxCount: 10 }]),
-  createHotel
+  createHotel,
 );
 
 router.put(
@@ -51,7 +54,7 @@ router.put(
   verifyJWT,
   verifyHotelAdmin,
   upload.fields([{ name: "images", maxCount: 10 }]),
-  updateHotel
+  updateHotel,
 );
 
 router.delete(
@@ -59,7 +62,7 @@ router.delete(
   strictLimiter,
   verifyJWT,
   verifyHotelAdmin,
-  deleteHotel
+  deleteHotel,
 );
 
 router.post(
@@ -68,7 +71,7 @@ router.post(
   verifyJWT,
   verifyHotelAdmin,
   upload.fields([{ name: "images", maxCount: 10 }]),
-  addRoom
+  addRoom,
 );
 
 router.put(
@@ -77,7 +80,7 @@ router.put(
   verifyJWT,
   verifyHotelAdmin,
   upload.fields([{ name: "images", maxCount: 10 }]),
-  updateRoom
+  updateRoom,
 );
 
 router.delete(
@@ -85,24 +88,72 @@ router.delete(
   strictLimiter,
   verifyJWT,
   verifyHotelAdmin,
-  deleteRoom
+  deleteRoom,
 );
 
-router.get("/hotels/:hotelId/bookings", verifyJWT, verifyHotelAdmin, getHotelBookings);
-router.post("/bookings/check-in", strictLimiter, verifyJWT, isAdmin, checkInGuestByToken);
+router.get(
+  "/hotels/:hotelId/bookings",
+  verifyJWT,
+  verifyHotelAdmin,
+  getHotelBookings,
+);
+router.post(
+  "/bookings/check-in",
+  strictLimiter,
+  verifyJWT,
+  isAdmin,
+  checkInGuestByToken,
+);
 router.get("/bookings/export-csv", verifyJWT, isAdmin, exportBookingsCsv);
 router.get("/stats", verifyJWT, isAdmin, getAdminAnalyticsStats);
 
-router.get("/hotels/:hotelId/rooms-status", verifyJWT, verifyHotelAdmin, getHotelRoomsStatus);
-router.get("/hotels/:hotelId/rooms", verifyJWT, verifyHotelAdmin, getHotelRooms);
-router.patch("/hotels/:hotelId/rooms/:roomId/status", strictLimiter, verifyJWT, verifyHotelAdmin, updateRoomOperationalStatus);
-router.get("/hotels/:hotelId/live-stream", verifyJWT, verifyHotelAdmin, streamHotelLiveUpdates);
+router.get(
+  "/hotels/:hotelId/rooms-status",
+  verifyJWT,
+  verifyHotelAdmin,
+  getHotelRoomsStatus,
+);
+router.get(
+  "/hotels/:hotelId/rooms",
+  verifyJWT,
+  verifyHotelAdmin,
+  getHotelRooms,
+);
+router.patch(
+  "/hotels/:hotelId/rooms/:roomId/status",
+  strictLimiter,
+  verifyJWT,
+  verifyHotelAdmin,
+  updateRoomOperationalStatus,
+);
+router.get(
+  "/hotels/:hotelId/live-stream",
+  verifyJWT,
+  verifyHotelAdmin,
+  streamHotelLiveUpdates,
+);
 
-router.get("/verifications/pending", verifyJWT, isAdmin, getPendingVerifications);
+router.get(
+  "/verifications/pending",
+  verifyJWT,
+  isAdmin,
+  getPendingVerifications,
+);
 router.get("/verifications/verified", verifyJWT, isAdmin, getVerifiedUsers);
 router.get("/verifications/stats", verifyJWT, isAdmin, getVerificationStats);
-router.get("/verifications/user/:userId", verifyJWT, isAdmin, getUserVerification);
+router.get(
+  "/verifications/user/:userId",
+  verifyJWT,
+  isAdmin,
+  getUserVerification,
+);
 
-router.put("/verifications/verify/:userId", strictLimiter, verifyJWT, isAdmin, verifyUser);
+router.put(
+  "/verifications/verify/:userId",
+  strictLimiter,
+  verifyJWT,
+  isAdmin,
+  verifyUser,
+);
 
 export default router;

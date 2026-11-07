@@ -22,7 +22,7 @@ export const handlePaymentWebhook = async (req, res) => {
     // Verify webhook HMAC signature
     const isValidSignature = youpiService.verifyWebhookSignature(
       req.body,
-      signature
+      signature,
     );
 
     if (!isValidSignature) {
@@ -34,9 +34,7 @@ export const handlePaymentWebhook = async (req, res) => {
 
     // Determine event type (supports YouPI X-Gateway-Event and payload event)
     const event =
-      req.headers["x-gateway-event"] ||
-      req.body?.event ||
-      req.body?.status;
+      req.headers["x-gateway-event"] || req.body?.event || req.body?.status;
 
     const payload = req.body?.payload || req.body;
 
@@ -78,7 +76,9 @@ export const handlePaymentWebhook = async (req, res) => {
         console.log(`Unhandled webhook event: ${event}`);
     }
 
-    return res.status(200).json({ success: true, message: "Webhook processed" });
+    return res
+      .status(200)
+      .json({ success: true, message: "Webhook processed" });
   } catch (error) {
     console.error("Webhook processing error:", error);
     return res.status(500).json({
@@ -91,9 +91,12 @@ export const handlePaymentWebhook = async (req, res) => {
 const handlePaymentCaptured = async (payment) => {
   try {
     const safeOrderId = String(payment.order_id || payment.orderId || "");
-    const safePaymentId = String(payment.id || payment.payment_id || payment.paymentId || "");
+    const safePaymentId = String(
+      payment.id || payment.payment_id || payment.paymentId || "",
+    );
 
-    const isRazorpayEvent = payment.order_id && String(payment.order_id).startsWith("order-");
+    const isRazorpayEvent =
+      payment.order_id && String(payment.order_id).startsWith("order-");
     const query = isRazorpayEvent
       ? { "paymentDetails.razorpayOrderId": safeOrderId }
       : {
@@ -137,7 +140,8 @@ const handlePaymentFailed = async (payment) => {
   try {
     const safeOrderId = String(payment.order_id || payment.orderId || "");
 
-    const isRazorpayEvent = payment.order_id && String(payment.order_id).startsWith("order-");
+    const isRazorpayEvent =
+      payment.order_id && String(payment.order_id).startsWith("order-");
     const query = isRazorpayEvent
       ? { "paymentDetails.razorpayOrderId": safeOrderId }
       : {
@@ -154,7 +158,10 @@ const handlePaymentFailed = async (payment) => {
       booking.paymentDetails = {
         ...booking.paymentDetails,
         gateway: payment.gateway || "youpi",
-        errorDescription: payment.error_description || payment.reason || "Payment declined/failed",
+        errorDescription:
+          payment.error_description ||
+          payment.reason ||
+          "Payment declined/failed",
         paymentDate: new Date(),
         paymentStatus: "Failed",
       };
@@ -169,9 +176,12 @@ const handlePaymentFailed = async (payment) => {
 
 const handleRefundProcessed = async (refund) => {
   try {
-    const safePaymentId = String(refund.payment_id || refund.paymentId || refund.id || "");
+    const safePaymentId = String(
+      refund.payment_id || refund.paymentId || refund.id || "",
+    );
 
-    const isRazorpayEvent = refund.payment_id && String(refund.payment_id).startsWith("payment-");
+    const isRazorpayEvent =
+      refund.payment_id && String(refund.payment_id).startsWith("payment-");
     const query = isRazorpayEvent
       ? { "paymentDetails.razorpayPaymentId": safePaymentId }
       : {

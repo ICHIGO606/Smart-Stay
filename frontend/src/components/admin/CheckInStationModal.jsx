@@ -1,38 +1,53 @@
-import React, { useState } from 'react';
-import adminHotelService from '../../services/adminHotelService';
-import { formatCurrency, formatDate } from '../../utils/formatters';
-import { API_BASE_URL } from '../../services/api';
-import { QrCode, Search, CheckCircle2, AlertCircle, BedDouble, Calendar, User, ShieldCheck, Ticket, X } from 'lucide-react';
+import React, { useState } from "react";
+import adminHotelService from "../../services/adminHotelService";
+import { formatCurrency, formatDate } from "../../utils/formatters";
+import { API_BASE_URL } from "../../services/api";
+import {
+  QrCode,
+  Search,
+  CheckCircle2,
+  AlertCircle,
+  BedDouble,
+  Calendar,
+  User,
+  ShieldCheck,
+  Ticket,
+  X,
+} from "lucide-react";
 
 const CheckInStationModal = ({ isOpen, onClose, onCheckInComplete }) => {
-  const [tokenInput, setTokenInput] = useState('');
+  const [tokenInput, setTokenInput] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [checkingIn, setCheckingIn] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [verifiedVoucher, setVerifiedVoucher] = useState(null);
-  const [notes, setNotes] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [notes, setNotes] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   if (!isOpen) return null;
 
   const handleVerify = async (e) => {
     e?.preventDefault();
     if (!tokenInput.trim()) {
-      setError('Please enter a voucher verification token or check-in code');
+      setError("Please enter a voucher verification token or check-in code");
       return;
     }
 
     try {
       setVerifying(true);
-      setError('');
-      setSuccessMessage('');
+      setError("");
+      setSuccessMessage("");
       setVerifiedVoucher(null);
 
-      const response = await adminHotelService.verifyCheckInToken(tokenInput.trim());
+      const response = await adminHotelService.verifyCheckInToken(
+        tokenInput.trim(),
+      );
       const data = response.data || response;
       setVerifiedVoucher(data);
     } catch (err) {
-      setError(err.message || 'No active reservation matches this check-in token');
+      setError(
+        err.message || "No active reservation matches this check-in token",
+      );
     } finally {
       setVerifying(false);
     }
@@ -42,31 +57,35 @@ const CheckInStationModal = ({ isOpen, onClose, onCheckInComplete }) => {
     if (!verifiedVoucher) return;
     try {
       setCheckingIn(true);
-      setError('');
+      setError("");
 
-      const token = verifiedVoucher.verificationToken || verifiedVoucher.checkInCode || tokenInput.trim();
+      const token =
+        verifiedVoucher.verificationToken ||
+        verifiedVoucher.checkInCode ||
+        tokenInput.trim();
       const result = await adminHotelService.checkInGuest(token, notes);
 
       setSuccessMessage(
-        result.message || `Guest ${verifiedVoucher.guest?.name} checked in. Room allocated.`
+        result.message ||
+          `Guest ${verifiedVoucher.guest?.name} checked in. Room allocated.`,
       );
 
       if (onCheckInComplete) {
         onCheckInComplete(result);
       }
     } catch (err) {
-      setError(err.message || 'Failed to complete guest check-in');
+      setError(err.message || "Failed to complete guest check-in");
     } finally {
       setCheckingIn(false);
     }
   };
 
   const handleReset = () => {
-    setTokenInput('');
+    setTokenInput("");
     setVerifiedVoucher(null);
-    setNotes('');
-    setError('');
-    setSuccessMessage('');
+    setNotes("");
+    setError("");
+    setSuccessMessage("");
   };
 
   return (
@@ -79,8 +98,12 @@ const CheckInStationModal = ({ isOpen, onClose, onCheckInComplete }) => {
               <QrCode size={18} />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-ink-primary font-serif">Front-Desk Arrival & Check-In</h2>
-              <p className="text-xs text-ink-muted font-mono">Voucher verification & instant room allocation</p>
+              <h2 className="text-base font-semibold text-ink-primary font-serif">
+                Front-Desk Arrival & Check-In
+              </h2>
+              <p className="text-xs text-ink-muted font-mono">
+                Voucher verification & instant room allocation
+              </p>
             </div>
           </div>
           <button
@@ -107,32 +130,44 @@ const CheckInStationModal = ({ isOpen, onClose, onCheckInComplete }) => {
                 className="input-base !text-xs font-mono uppercase tracking-wider pl-8 w-full"
                 autoFocus
               />
-              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-muted" />
+              <Search
+                size={14}
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-muted"
+              />
             </div>
             <button
               type="submit"
               disabled={verifying || !tokenInput.trim()}
               className="btn-primary !text-xs !py-2 !px-4 inline-flex items-center gap-1.5 flex-shrink-0"
             >
-              {verifying ? 'Verifying...' : 'Verify Pass'}
+              {verifying ? "Verifying..." : "Verify Pass"}
             </button>
           </div>
         </form>
 
         {error && (
           <div className="card-base p-3.5 mb-5 border-red-200 bg-red-50/70 text-xs text-red-800 flex items-start gap-2.5">
-            <AlertCircle size={15} className="mt-0.5 flex-shrink-0 text-red-600" />
+            <AlertCircle
+              size={15}
+              className="mt-0.5 flex-shrink-0 text-red-600"
+            />
             <span>{error}</span>
           </div>
         )}
 
         {successMessage && (
           <div className="card-base p-4 mb-5 border-emerald-200 bg-emerald-50/70 text-xs text-emerald-900 flex items-start gap-2.5">
-            <CheckCircle2 size={16} className="mt-0.5 flex-shrink-0 text-emerald-700" />
+            <CheckCircle2
+              size={16}
+              className="mt-0.5 flex-shrink-0 text-emerald-700"
+            />
             <div>
-              <p className="font-semibold text-emerald-950 mb-0.5">{successMessage}</p>
+              <p className="font-semibold text-emerald-950 mb-0.5">
+                {successMessage}
+              </p>
               <p className="text-[11px] text-emerald-800">
-                Floor map updated in real time via Server-Sent Events. Room status is now marked Occupied.
+                Floor map updated in real time via Server-Sent Events. Room
+                status is now marked Occupied.
               </p>
             </div>
           </div>
@@ -145,7 +180,9 @@ const CheckInStationModal = ({ isOpen, onClose, onCheckInComplete }) => {
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-stone-200/70">
                 <div className="flex items-center gap-2">
                   <span className="tag-signature">
-                    № {verifiedVoucher.checkInCode || verifiedVoucher.verificationToken}
+                    №{" "}
+                    {verifiedVoucher.checkInCode ||
+                      verifiedVoucher.verificationToken}
                   </span>
                   <span className="text-xs font-medium text-ink-primary">
                     {verifiedVoucher.hotel?.name}
@@ -160,43 +197,59 @@ const CheckInStationModal = ({ isOpen, onClose, onCheckInComplete }) => {
               {/* Grid Metadata */}
               <div className="grid grid-cols-2 gap-3 text-xs mb-3 font-mono">
                 <div>
-                  <span className="text-[10px] text-ink-muted uppercase block">Guest Name</span>
+                  <span className="text-[10px] text-ink-muted uppercase block">
+                    Guest Name
+                  </span>
                   <span className="font-semibold text-ink-primary text-sm">
-                    {verifiedVoucher.guest?.name || 'Guest'}
+                    {verifiedVoucher.guest?.name || "Guest"}
                   </span>
                   <span className="text-[11px] text-ink-secondary block font-sans">
-                    {verifiedVoucher.guest?.email || 'N/A'}
+                    {verifiedVoucher.guest?.email || "N/A"}
                   </span>
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-ink-muted uppercase block">Room Allocation</span>
+                  <span className="text-[10px] text-ink-muted uppercase block">
+                    Room Allocation
+                  </span>
                   <span className="font-semibold text-ink-primary text-sm">
-                    Key № {verifiedVoucher.room?.roomNumbers?.join(', ') || 'Unassigned'}
+                    Key №{" "}
+                    {verifiedVoucher.room?.roomNumbers?.join(", ") ||
+                      "Unassigned"}
                   </span>
                   <span className="text-[11px] text-ink-secondary block font-sans">
-                    {verifiedVoucher.room?.type || 'Standard Suite'}
+                    {verifiedVoucher.room?.type || "Standard Suite"}
                   </span>
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-ink-muted uppercase block">Stay Window</span>
+                  <span className="text-[10px] text-ink-muted uppercase block">
+                    Stay Window
+                  </span>
                   <span className="text-ink-primary tabular-nums">
-                    {formatDate(verifiedVoucher.dates?.checkIn)} — {formatDate(verifiedVoucher.dates?.checkOut)}
+                    {formatDate(verifiedVoucher.dates?.checkIn)} —{" "}
+                    {formatDate(verifiedVoucher.dates?.checkOut)}
                   </span>
                   <span className="text-[11px] text-ink-muted block">
-                    ({verifiedVoucher.dates?.nights || 1} nights · {verifiedVoucher.guest?.guestsCount || 1} guests)
+                    ({verifiedVoucher.dates?.nights || 1} nights ·{" "}
+                    {verifiedVoucher.guest?.guestsCount || 1} guests)
                   </span>
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-ink-muted uppercase block">Settlement & Gateway</span>
+                  <span className="text-[10px] text-ink-muted uppercase block">
+                    Settlement & Gateway
+                  </span>
                   <span className="font-semibold text-ink-primary tabular-nums">
                     {formatCurrency(verifiedVoucher.payment?.totalAmount)}
                   </span>
                   <span className="text-[11px] text-ink-secondary block">
-                    Status: <strong className="text-ink-primary">{verifiedVoucher.payment?.status}</strong>
-                    {verifiedVoucher.payment?.utr && ` (UTR: ${verifiedVoucher.payment.utr.slice(-6)})`}
+                    Status:{" "}
+                    <strong className="text-ink-primary">
+                      {verifiedVoucher.payment?.status}
+                    </strong>
+                    {verifiedVoucher.payment?.utr &&
+                      ` (UTR: ${verifiedVoucher.payment.utr.slice(-6)})`}
                   </span>
                 </div>
               </div>
@@ -222,8 +275,8 @@ const CheckInStationModal = ({ isOpen, onClose, onCheckInComplete }) => {
                 type="button"
                 onClick={() =>
                   window.open(
-                    `${API_BASE_URL}/bookings/${verifiedVoucher.bookingId}/voucher?format=html&token=${localStorage.getItem('accessToken') || ''}`,
-                    '_blank'
+                    `${API_BASE_URL}/bookings/${verifiedVoucher.bookingId}/voucher?format=html&token=${localStorage.getItem("accessToken") || ""}`,
+                    "_blank",
                   )
                 }
                 className="btn-secondary !text-xs !py-2 w-full sm:w-auto inline-flex items-center justify-center gap-1.5"
@@ -247,7 +300,11 @@ const CheckInStationModal = ({ isOpen, onClose, onCheckInComplete }) => {
                   className="btn-primary !text-xs !py-2 !px-4 flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5"
                 >
                   <CheckCircle2 size={13} />
-                  <span>{checkingIn ? 'Occupying Room...' : 'Confirm Arrival & Occupy'}</span>
+                  <span>
+                    {checkingIn
+                      ? "Occupying Room..."
+                      : "Confirm Arrival & Occupy"}
+                  </span>
                 </button>
               </div>
             </div>
@@ -259,4 +316,3 @@ const CheckInStationModal = ({ isOpen, onClose, onCheckInComplete }) => {
 };
 
 export default CheckInStationModal;
-

@@ -31,14 +31,16 @@ const googleLogin = asyncHandler(async (_req, res) => {
   const { clientId } = googleCredentials();
   if (!clientId || !process.env.GOOGLE_CLIENT_SECRET) {
     return res.redirect(
-      `${frontendUrl()}/login?googleError=google_oauth_not_configured`
+      `${frontendUrl()}/login?googleError=google_oauth_not_configured`,
     );
   }
 
   const state = randomBytes(32).toString("hex");
   res.cookie(stateCookieName, state, stateCookieOptions());
 
-  const authorizationUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+  const authorizationUrl = new URL(
+    "https://accounts.google.com/o/oauth2/v2/auth",
+  );
   authorizationUrl.search = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri(),
@@ -55,7 +57,7 @@ const googleLoginCallback = asyncHandler(async (req, res) => {
   const fail = (reason) => {
     res.clearCookie(stateCookieName, stateCookieOptions());
     return res.redirect(
-      `${frontendUrl()}/login?googleError=${encodeURIComponent(reason)}`
+      `${frontendUrl()}/login?googleError=${encodeURIComponent(reason)}`,
     );
   };
 
@@ -106,10 +108,12 @@ const googleLoginCallback = asyncHandler(async (req, res) => {
 
     const profileResponse = await fetch(
       "https://www.googleapis.com/oauth2/v2/userinfo",
-      { headers: { Authorization: `Bearer ${tokenData.access_token}` } }
+      { headers: { Authorization: `Bearer ${tokenData.access_token}` } },
     );
     if (!profileResponse.ok) {
-      throw new Error(`Google profile request failed (${profileResponse.status})`);
+      throw new Error(
+        `Google profile request failed (${profileResponse.status})`,
+      );
     }
 
     const profile = await profileResponse.json();
@@ -120,7 +124,8 @@ const googleLoginCallback = asyncHandler(async (req, res) => {
 
     let user = await User.findOne({ email });
     if (!user) {
-      const usernameBase = email.split("@")[0].replace(/[^a-z0-9_-]/g, "") || "google";
+      const usernameBase =
+        email.split("@")[0].replace(/[^a-z0-9_-]/g, "") || "google";
       user = await User.create({
         fullName: profile.name.trim(),
         age: 18,

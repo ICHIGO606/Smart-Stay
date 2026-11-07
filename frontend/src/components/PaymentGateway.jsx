@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { paymentService } from '../services/paymentService';
-import { generateQRCodePath } from '../utils/qrCode';
+import React, { useState, useEffect } from "react";
+import { paymentService } from "../services/paymentService";
+import { generateQRCodePath } from "../utils/qrCode";
 import {
   ShieldCheck,
   AlertCircle,
@@ -13,20 +13,20 @@ import {
   CheckCircle2,
   Clock,
   Building2,
-  Landmark
-} from 'lucide-react';
+  Landmark,
+} from "lucide-react";
 
 const PaymentGateway = ({ booking, onSuccess, onCancel }) => {
   const [paymentMethods, setPaymentMethods] = useState([]);
-  const [selectedMethod, setSelectedMethod] = useState('upi');
+  const [selectedMethod, setSelectedMethod] = useState("upi");
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [paymentInfo, setPaymentInfo] = useState(null);
 
   // YouPI-PG session state
   const [youpiSession, setYoupiSession] = useState(null);
-  const [utrNumber, setUtrNumber] = useState('');
+  const [utrNumber, setUtrNumber] = useState("");
   const [copied, setCopied] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutes
 
@@ -62,13 +62,13 @@ const PaymentGateway = ({ booking, onSuccess, onCancel }) => {
       }
 
       setPaymentInfo({
-        currency: response.data.currency || 'INR',
+        currency: response.data.currency || "INR",
         amount: response.data.amount,
         upiId: response.data.upiId,
-        merchantName: response.data.merchantName
+        merchantName: response.data.merchantName,
       });
     } catch (err) {
-      setError(err.message || 'Failed to fetch payment channels');
+      setError(err.message || "Failed to fetch payment channels");
     } finally {
       setLoading(false);
     }
@@ -76,17 +76,20 @@ const PaymentGateway = ({ booking, onSuccess, onCancel }) => {
 
   const handleInitiatePayment = async () => {
     if (!selectedMethod) {
-      setError('Please select a settlement option');
+      setError("Please select a settlement option");
       return;
     }
 
     try {
       setLoading(true);
-      setError('');
+      setError("");
 
       // Pay at hotel / Cash on delivery
-      if (selectedMethod === 'pay_at_hotel') {
-        const response = await paymentService.createPaymentOrder(booking._id, 'pay_at_hotel');
+      if (selectedMethod === "pay_at_hotel") {
+        const response = await paymentService.createPaymentOrder(
+          booking._id,
+          "pay_at_hotel",
+        );
         if (onSuccess) {
           onSuccess(response.data);
         }
@@ -94,13 +97,16 @@ const PaymentGateway = ({ booking, onSuccess, onCancel }) => {
       }
 
       // Online payment via YouPI-PG Open-Source Gateway
-      const orderResponse = await paymentService.createPaymentOrder(booking._id, selectedMethod);
+      const orderResponse = await paymentService.createPaymentOrder(
+        booking._id,
+        selectedMethod,
+      );
       const sessionData = orderResponse.data;
 
       setYoupiSession(sessionData);
       setTimeRemaining(600); // Reset 10-minute window
     } catch (err) {
-      setError(err.message || 'Payment initiation failed');
+      setError(err.message || "Payment initiation failed");
     } finally {
       setLoading(false);
     }
@@ -109,26 +115,28 @@ const PaymentGateway = ({ booking, onSuccess, onCancel }) => {
   const handleVerifyUTR = async (e) => {
     if (e) e.preventDefault();
     if (!utrNumber || utrNumber.trim().length < 6) {
-      setError('Please enter a valid 12-digit UPI Reference Number (UTR)');
+      setError("Please enter a valid 12-digit UPI Reference Number (UTR)");
       return;
     }
 
     try {
       setVerifying(true);
-      setError('');
+      setError("");
 
       const verification = await paymentService.verifyPayment({
         bookingId: booking._id,
         orderId: youpiSession.orderId,
         paymentId: youpiSession.paymentId,
-        utr: utrNumber.trim()
+        utr: utrNumber.trim(),
       });
 
       if (onSuccess) {
         onSuccess(verification.data);
       }
     } catch (err) {
-      setError(err.message || 'Payment verification failed. Please check your UTR.');
+      setError(
+        err.message || "Payment verification failed. Please check your UTR.",
+      );
     } finally {
       setVerifying(false);
     }
@@ -144,21 +152,25 @@ const PaymentGateway = ({ booking, onSuccess, onCancel }) => {
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
   };
 
   const formatAmount = (amount) => {
-    return `₹${amount ? Math.round(amount).toLocaleString('en-IN') : 0}`;
+    return `₹${amount ? Math.round(amount).toLocaleString("en-IN") : 0}`;
   };
 
   // Render QR Code SVG vector
-  const qrData = youpiSession ? generateQRCodePath(youpiSession.upiString) : null;
+  const qrData = youpiSession
+    ? generateQRCodePath(youpiSession.upiString)
+    : null;
 
   if (loading && paymentMethods.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-12 gap-3">
         <div className="animate-spin rounded-full h-8 w-8 border-2 border-stone-900 border-t-transparent"></div>
-        <span className="text-xs font-mono text-ink-muted">Connecting payment channels...</span>
+        <span className="text-xs font-mono text-ink-muted">
+          Connecting payment channels...
+        </span>
       </div>
     );
   }
@@ -181,7 +193,9 @@ const PaymentGateway = ({ booking, onSuccess, onCancel }) => {
           </button>
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-tag bg-stone-100 text-[11px] font-mono text-ink-secondary">
             <Clock size={12} className="text-terracotta" />
-            <span className="tabular-nums font-semibold">{formatTime(timeRemaining)}</span>
+            <span className="tabular-nums font-semibold">
+              {formatTime(timeRemaining)}
+            </span>
           </div>
         </div>
 
@@ -225,23 +239,33 @@ const PaymentGateway = ({ booking, onSuccess, onCancel }) => {
 
           {/* Amount Badge */}
           <div className="mt-4 text-center">
-            <span className="text-[11px] font-mono text-ink-muted block uppercase">Payable Total</span>
+            <span className="text-[11px] font-mono text-ink-muted block uppercase">
+              Payable Total
+            </span>
             <span className="text-2xl font-serif font-medium text-ink-primary tabular-nums">
-              {formatAmount(youpiSession.amountInRupees || youpiSession.amount / 100)}
+              {formatAmount(
+                youpiSession.amountInRupees || youpiSession.amount / 100,
+              )}
             </span>
           </div>
 
           {/* UPI ID Row */}
           <div className="mt-3 flex items-center gap-2 px-3 py-1.5 rounded-control bg-white border border-stone-200 text-xs font-mono">
             <span className="text-ink-muted">UPI VPA:</span>
-            <span className="font-semibold text-ink-primary">{youpiSession.upiId}</span>
+            <span className="font-semibold text-ink-primary">
+              {youpiSession.upiId}
+            </span>
             <button
               type="button"
               onClick={() => handleCopyUPI(youpiSession.upiId)}
               className="ml-1 p-1 hover:bg-stone-100 rounded text-ink-secondary transition-colors"
               title="Copy UPI ID"
             >
-              {copied ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
+              {copied ? (
+                <Check size={12} className="text-emerald-600" />
+              ) : (
+                <Copy size={12} />
+              )}
             </button>
           </div>
         </div>
@@ -284,13 +308,17 @@ const PaymentGateway = ({ booking, onSuccess, onCancel }) => {
         </div>
 
         {/* UTR Verification Input */}
-        <form onSubmit={handleVerifyUTR} className="p-4 rounded-card bg-stone-50 border border-stone-200 max-w-sm mx-auto space-y-3">
+        <form
+          onSubmit={handleVerifyUTR}
+          className="p-4 rounded-card bg-stone-50 border border-stone-200 max-w-sm mx-auto space-y-3"
+        >
           <div>
             <label className="block text-xs font-medium text-ink-primary mb-1">
               Confirm with 12-digit UPI Reference (UTR)
             </label>
             <p className="text-[11px] text-ink-muted mb-2">
-              Found under transaction details in your UPI app after completing payment.
+              Found under transaction details in your UPI app after completing
+              payment.
             </p>
             <input
               type="text"
@@ -357,12 +385,14 @@ const PaymentGateway = ({ booking, onSuccess, onCancel }) => {
           Complete reservation payment
         </h2>
         <p className="text-xs text-ink-muted mt-1">
-          Stay at {booking.hotelId?.name || 'Hotel Property'}
+          Stay at {booking.hotelId?.name || "Hotel Property"}
         </p>
 
         {paymentInfo && (
           <div className="mt-4 p-3 bg-stone-50 rounded-control border border-stone-200/60 inline-block">
-            <span className="text-xs font-mono text-ink-muted block uppercase">Amount to settle</span>
+            <span className="text-xs font-mono text-ink-muted block uppercase">
+              Amount to settle
+            </span>
             <span className="text-2xl font-serif font-medium text-ink-primary tabular-nums">
               {formatAmount(paymentInfo.amount)}
             </span>
@@ -389,30 +419,36 @@ const PaymentGateway = ({ booking, onSuccess, onCancel }) => {
               key={method.id}
               className={`p-3.5 rounded-control border cursor-pointer transition-colors ${
                 isSelected
-                  ? 'border-stone-900 bg-stone-50/80 shadow-subtle'
-                  : 'border-stone-200 hover:border-stone-300'
+                  ? "border-stone-900 bg-stone-50/80 shadow-subtle"
+                  : "border-stone-200 hover:border-stone-300"
               }`}
               onClick={() => setSelectedMethod(method.id)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-control bg-stone-100 flex items-center justify-center text-ink-primary">
-                    {method.id === 'upi' ? (
+                    {method.id === "upi" ? (
                       <QrCode size={16} />
-                    ) : method.id === 'pay_at_hotel' ? (
+                    ) : method.id === "pay_at_hotel" ? (
                       <Building2 size={16} />
                     ) : (
                       <Landmark size={16} />
                     )}
                   </div>
                   <div>
-                    <h4 className="text-xs font-medium text-ink-primary">{method.name}</h4>
-                    <p className="text-[11px] text-ink-muted mt-0.5">{method.description}</p>
+                    <h4 className="text-xs font-medium text-ink-primary">
+                      {method.name}
+                    </h4>
+                    <p className="text-[11px] text-ink-muted mt-0.5">
+                      {method.description}
+                    </p>
                   </div>
                 </div>
                 <div
                   className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                    isSelected ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300'
+                    isSelected
+                      ? "border-stone-900 bg-stone-900 text-white"
+                      : "border-stone-300"
                   }`}
                 >
                   {isSelected && <Check size={10} />}
@@ -444,7 +480,11 @@ const PaymentGateway = ({ booking, onSuccess, onCancel }) => {
           disabled={!selectedMethod || loading}
           className="btn-primary flex-1 !text-xs !py-2.5 font-mono uppercase tracking-wider"
         >
-          {loading ? 'Processing...' : selectedMethod === 'pay_at_hotel' ? 'Reserve & Pay at Property' : 'Proceed to UPI Checkout'}
+          {loading
+            ? "Processing..."
+            : selectedMethod === "pay_at_hotel"
+              ? "Reserve & Pay at Property"
+              : "Proceed to UPI Checkout"}
         </button>
       </div>
 

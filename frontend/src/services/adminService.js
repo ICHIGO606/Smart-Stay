@@ -1,17 +1,17 @@
-import api from './api';
+import api from "./api";
 
 const adminService = {
   // Verification Management
   getPendingVerifications: () => {
-    return api.get('/admin/verifications/pending');
+    return api.get("/admin/verifications/pending");
   },
 
   getVerifiedUsers: () => {
-    return api.get('/admin/verifications/verified');
+    return api.get("/admin/verifications/verified");
   },
 
   getVerificationStats: () => {
-    return api.get('/admin/verifications/stats');
+    return api.get("/admin/verifications/stats");
   },
 
   getUserVerification: (userId) => {
@@ -24,7 +24,7 @@ const adminService = {
 
   // Hotel Management (existing functions)
   createHotel: (hotelData) => {
-    return api.post('/admin/hotels', hotelData);
+    return api.post("/admin/hotels", hotelData);
   },
 
   updateHotel: (hotelId, hotelData) => {
@@ -36,7 +36,7 @@ const adminService = {
   },
 
   getHotels: () => {
-    return api.get('/admin/hotels');
+    return api.get("/admin/hotels");
   },
 
   getHotel: (hotelId) => {
@@ -79,16 +79,16 @@ const adminService = {
 
   // Dashboard Stats (existing functions)
   getDashboardStats: () => {
-    return api.get('/admin/dashboard/stats');
+    return api.get("/admin/dashboard/stats");
   },
 
   getRecentBookings: () => {
-    return api.get('/admin/dashboard/recent-bookings');
+    return api.get("/admin/dashboard/recent-bookings");
   },
 
   getRevenueStats: () => {
-    return api.get('/admin/dashboard/revenue');
-  }
+    return api.get("/admin/dashboard/revenue");
+  },
 };
 
 export default adminService;

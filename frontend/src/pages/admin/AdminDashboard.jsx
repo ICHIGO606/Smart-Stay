@@ -1,8 +1,19 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router';
-import bookingService from '../../services/bookingService';
-import adminHotelService from '../../services/adminHotelService';
-import { Building2, Calendar, DollarSign, Percent, ArrowUpRight, Plus, RefreshCw, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Link } from "react-router";
+import bookingService from "../../services/bookingService";
+import adminHotelService from "../../services/adminHotelService";
+import {
+  Building2,
+  Calendar,
+  DollarSign,
+  Percent,
+  ArrowUpRight,
+  Plus,
+  RefreshCw,
+  CheckCircle,
+  Clock,
+  XCircle,
+} from "lucide-react";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -16,10 +27,10 @@ const AdminDashboard = () => {
     cancelledBookings: 0,
     totalRevenue: 0,
     monthlyRevenue: 0,
-    occupancyRate: 0
+    occupancyRate: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetchDashboardStats();
@@ -28,20 +39,39 @@ const AdminDashboard = () => {
   const fetchDashboardStats = async () => {
     try {
       setLoading(true);
-      
-      const hotelsResponse = await adminHotelService.getAdminHotels().catch(() => ({ data: [] }));
+
+      const hotelsResponse = await adminHotelService
+        .getAdminHotels()
+        .catch(() => ({ data: [] }));
       const hotels = Array.isArray(hotelsResponse?.data)
         ? hotelsResponse.data
-        : (Array.isArray(hotelsResponse) ? hotelsResponse : []);
-      
+        : Array.isArray(hotelsResponse)
+          ? hotelsResponse
+          : [];
+
       const totalHotels = hotels.length;
-      const totalRooms = hotels.reduce((sum, hotel) => sum + (hotel.rooms?.reduce((roomSum, room) => roomSum + (room.roomNumbers?.length || 0), 0) || 0), 0);
+      const totalRooms = hotels.reduce(
+        (sum, hotel) =>
+          sum +
+          (hotel.rooms?.reduce(
+            (roomSum, room) => roomSum + (room.roomNumbers?.length || 0),
+            0,
+          ) || 0),
+        0,
+      );
       const bookedRooms = hotels.reduce((sum, hotel) => {
-        const hotelBookedRooms = hotel.rooms?.filter(room => room.status === 'booked').reduce((roomSum, room) => roomSum + (room.roomNumbers?.length || 0), 0) || 0;
+        const hotelBookedRooms =
+          hotel.rooms
+            ?.filter((room) => room.status === "booked")
+            .reduce(
+              (roomSum, room) => roomSum + (room.roomNumbers?.length || 0),
+              0,
+            ) || 0;
         return sum + hotelBookedRooms;
       }, 0);
       const availableRooms = totalRooms - bookedRooms;
-      const occupancyRate = totalRooms > 0 ? (bookedRooms / totalRooms) * 100 : 0;
+      const occupancyRate =
+        totalRooms > 0 ? (bookedRooms / totalRooms) * 100 : 0;
 
       let allBookings = [];
       let page = 1;
@@ -49,7 +79,10 @@ const AdminDashboard = () => {
       let hasMore = true;
 
       while (hasMore) {
-        const bookingsResponse = await bookingService.getAllBookings({ page, limit });
+        const bookingsResponse = await bookingService.getAllBookings({
+          page,
+          limit,
+        });
         const bookingsPage = bookingsResponse.data?.bookings || [];
         allBookings = allBookings.concat(bookingsPage);
         hasMore = bookingsPage.length === limit;
@@ -57,19 +90,32 @@ const AdminDashboard = () => {
       }
 
       const totalBookings = allBookings.length;
-      const pendingBookings = allBookings.filter(b => b.bookingStatus === 'Pending').length;
-      const confirmedBookings = allBookings.filter(b => b.bookingStatus === 'Confirmed').length;
-      const cancelledBookings = allBookings.filter(b => b.bookingStatus === 'Cancelled').length;
+      const pendingBookings = allBookings.filter(
+        (b) => b.bookingStatus === "Pending",
+      ).length;
+      const confirmedBookings = allBookings.filter(
+        (b) => b.bookingStatus === "Confirmed",
+      ).length;
+      const cancelledBookings = allBookings.filter(
+        (b) => b.bookingStatus === "Cancelled",
+      ).length;
       const totalRevenue = allBookings
-        .filter(b => b.bookingStatus === 'Confirmed' || b.bookingStatus === 'Completed')
+        .filter(
+          (b) =>
+            b.bookingStatus === "Confirmed" || b.bookingStatus === "Completed",
+        )
         .reduce((sum, booking) => sum + (booking.totalAmount || 0), 0);
-      
+
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
+
       const monthlyRevenue = allBookings
-        .filter(b => (b.bookingStatus === 'Confirmed' || b.bookingStatus === 'Completed') && 
-                    new Date(b.createdAt) >= thirtyDaysAgo)
+        .filter(
+          (b) =>
+            (b.bookingStatus === "Confirmed" ||
+              b.bookingStatus === "Completed") &&
+            new Date(b.createdAt) >= thirtyDaysAgo,
+        )
         .reduce((sum, booking) => sum + (booking.totalAmount || 0), 0);
 
       setStats({
@@ -83,11 +129,10 @@ const AdminDashboard = () => {
         cancelledBookings,
         totalRevenue,
         monthlyRevenue,
-        occupancyRate: Math.round(occupancyRate)
+        occupancyRate: Math.round(occupancyRate),
       });
-
     } catch (err) {
-      setError(err.message || 'Failed to fetch dashboard statistics');
+      setError(err.message || "Failed to fetch dashboard statistics");
     } finally {
       setLoading(false);
     }
@@ -97,7 +142,9 @@ const AdminDashboard = () => {
     return (
       <div className="p-8 flex flex-col justify-center items-center h-64 gap-3">
         <div className="animate-spin rounded-full h-8 w-8 border-2 border-stone-900 border-t-transparent"></div>
-        <p className="text-xs font-mono text-ink-muted">Compiling portfolio metrics...</p>
+        <p className="text-xs font-mono text-ink-muted">
+          Compiling portfolio metrics...
+        </p>
       </div>
     );
   }
@@ -107,7 +154,7 @@ const AdminDashboard = () => {
       <div className="p-8">
         <div className="card-base p-6 border-red-200 bg-red-50/50">
           <p className="text-sm font-medium text-red-800">{error}</p>
-          <button 
+          <button
             onClick={fetchDashboardStats}
             className="mt-3 btn-secondary !text-xs inline-flex items-center gap-1.5"
           >
@@ -162,11 +209,13 @@ const AdminDashboard = () => {
             <span className="text-3xl font-semibold text-ink-primary tabular-nums">
               {stats.occupancyRate}%
             </span>
-            <span className="text-xs text-ink-muted font-mono">portfolio average</span>
+            <span className="text-xs text-ink-muted font-mono">
+              portfolio average
+            </span>
           </div>
           <div className="w-full bg-stone-100 h-1.5 rounded-full overflow-hidden mt-3">
-            <div 
-              className="bg-stone-900 h-full rounded-full transition-all duration-500" 
+            <div
+              className="bg-stone-900 h-full rounded-full transition-all duration-500"
               style={{ width: `${Math.min(stats.occupancyRate, 100)}%` }}
             ></div>
           </div>
@@ -201,12 +250,18 @@ const AdminDashboard = () => {
             <span className="text-3xl font-semibold text-ink-primary tabular-nums">
               {stats.totalBookings}
             </span>
-            <span className="text-xs text-ink-muted font-mono">reservations</span>
+            <span className="text-xs text-ink-muted font-mono">
+              reservations
+            </span>
           </div>
           <div className="flex items-center gap-3 text-[11px] text-ink-muted mt-4 font-mono">
-            <span className="text-emerald-700">{stats.confirmedBookings} confirmed</span>
+            <span className="text-emerald-700">
+              {stats.confirmedBookings} confirmed
+            </span>
             <span>·</span>
-            <span className="text-amber-700">{stats.pendingBookings} pending</span>
+            <span className="text-amber-700">
+              {stats.pendingBookings} pending
+            </span>
           </div>
         </div>
 
@@ -220,7 +275,9 @@ const AdminDashboard = () => {
             <span className="text-3xl font-semibold text-ink-primary tabular-nums">
               {stats.totalHotels}
             </span>
-            <span className="text-xs text-ink-muted font-mono">hotels cataloged</span>
+            <span className="text-xs text-ink-muted font-mono">
+              hotels cataloged
+            </span>
           </div>
           <p className="text-[11px] text-ink-muted mt-4 font-mono tabular-nums">
             {stats.availableRooms} rooms currently vacant
@@ -234,10 +291,17 @@ const AdminDashboard = () => {
         <div className="lg:col-span-8 card-base p-6">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-stone-100">
             <div>
-              <h2 className="text-sm font-semibold text-ink-primary">Booking lifecycle breakdown</h2>
-              <p className="text-xs text-ink-muted">Status distribution across all active and archived stays</p>
+              <h2 className="text-sm font-semibold text-ink-primary">
+                Booking lifecycle breakdown
+              </h2>
+              <p className="text-xs text-ink-muted">
+                Status distribution across all active and archived stays
+              </p>
             </div>
-            <Link to="/admin/bookings" className="text-xs font-mono text-ink-secondary hover:text-ink-primary flex items-center gap-1">
+            <Link
+              to="/admin/bookings"
+              className="text-xs font-mono text-ink-secondary hover:text-ink-primary flex items-center gap-1"
+            >
               <span>View all</span>
               <ArrowUpRight size={13} />
             </Link>
@@ -249,14 +313,25 @@ const AdminDashboard = () => {
               <div className="flex items-center gap-3">
                 <CheckCircle size={16} className="text-emerald-700" />
                 <div>
-                  <p className="text-xs font-medium text-ink-primary">Confirmed reservations</p>
-                  <p className="text-[11px] text-ink-muted">Deposited and verified guests</p>
+                  <p className="text-xs font-medium text-ink-primary">
+                    Confirmed reservations
+                  </p>
+                  <p className="text-[11px] text-ink-muted">
+                    Deposited and verified guests
+                  </p>
                 </div>
               </div>
               <div className="text-right tabular-nums">
-                <span className="text-sm font-semibold text-ink-primary">{stats.confirmedBookings}</span>
+                <span className="text-sm font-semibold text-ink-primary">
+                  {stats.confirmedBookings}
+                </span>
                 <span className="text-[10px] text-ink-muted block font-mono">
-                  {stats.totalBookings > 0 ? Math.round((stats.confirmedBookings / stats.totalBookings) * 100) : 0}% of total
+                  {stats.totalBookings > 0
+                    ? Math.round(
+                        (stats.confirmedBookings / stats.totalBookings) * 100,
+                      )
+                    : 0}
+                  % of total
                 </span>
               </div>
             </div>
@@ -266,14 +341,25 @@ const AdminDashboard = () => {
               <div className="flex items-center gap-3">
                 <Clock size={16} className="text-amber-700" />
                 <div>
-                  <p className="text-xs font-medium text-ink-primary">Pending verification & approvals</p>
-                  <p className="text-[11px] text-ink-muted">Awaiting room confirmation</p>
+                  <p className="text-xs font-medium text-ink-primary">
+                    Pending verification & approvals
+                  </p>
+                  <p className="text-[11px] text-ink-muted">
+                    Awaiting room confirmation
+                  </p>
                 </div>
               </div>
               <div className="text-right tabular-nums">
-                <span className="text-sm font-semibold text-ink-primary">{stats.pendingBookings}</span>
+                <span className="text-sm font-semibold text-ink-primary">
+                  {stats.pendingBookings}
+                </span>
                 <span className="text-[10px] text-ink-muted block font-mono">
-                  {stats.totalBookings > 0 ? Math.round((stats.pendingBookings / stats.totalBookings) * 100) : 0}% of total
+                  {stats.totalBookings > 0
+                    ? Math.round(
+                        (stats.pendingBookings / stats.totalBookings) * 100,
+                      )
+                    : 0}
+                  % of total
                 </span>
               </div>
             </div>
@@ -283,14 +369,25 @@ const AdminDashboard = () => {
               <div className="flex items-center gap-3">
                 <XCircle size={16} className="text-stone-400" />
                 <div>
-                  <p className="text-xs font-medium text-ink-primary">Cancelled stays</p>
-                  <p className="text-[11px] text-ink-muted">Voided by guest or operator</p>
+                  <p className="text-xs font-medium text-ink-primary">
+                    Cancelled stays
+                  </p>
+                  <p className="text-[11px] text-ink-muted">
+                    Voided by guest or operator
+                  </p>
                 </div>
               </div>
               <div className="text-right tabular-nums">
-                <span className="text-sm font-semibold text-ink-primary">{stats.cancelledBookings}</span>
+                <span className="text-sm font-semibold text-ink-primary">
+                  {stats.cancelledBookings}
+                </span>
                 <span className="text-[10px] text-ink-muted block font-mono">
-                  {stats.totalBookings > 0 ? Math.round((stats.cancelledBookings / stats.totalBookings) * 100) : 0}% of total
+                  {stats.totalBookings > 0
+                    ? Math.round(
+                        (stats.cancelledBookings / stats.totalBookings) * 100,
+                      )
+                    : 0}
+                  % of total
                 </span>
               </div>
             </div>
@@ -300,8 +397,12 @@ const AdminDashboard = () => {
         {/* Quick Operations Console */}
         <div className="lg:col-span-4 card-base p-6 flex flex-col justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-ink-primary mb-1">Direct management</h2>
-            <p className="text-xs text-ink-muted mb-4">Fast actions for property updates</p>
+            <h2 className="text-sm font-semibold text-ink-primary mb-1">
+              Direct management
+            </h2>
+            <p className="text-xs text-ink-muted mb-4">
+              Fast actions for property updates
+            </p>
 
             <div className="space-y-2">
               <Link

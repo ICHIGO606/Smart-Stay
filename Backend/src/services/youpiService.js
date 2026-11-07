@@ -42,21 +42,21 @@ class YoupiService {
 
     // Build standard NPCI-compliant UPI Intent String
     const upiString = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(
-      merchantName
+      merchantName,
     )}&am=${amount.toFixed(2)}&tr=${orderId}&tn=${encodeURIComponent(
-      `SmartStay Booking ${booking._id}`
+      `SmartStay Booking ${booking._id}`,
     )}&cu=INR`;
 
     // Deep links for Indian UPI apps
     const deepLinks = {
       gpay: `gpay://upi/pay?pa=${upiId}&pn=${encodeURIComponent(
-        merchantName
+        merchantName,
       )}&am=${amount.toFixed(2)}&tr=${orderId}&cu=INR`,
       phonepe: `phonepe://pay?pa=${upiId}&pn=${encodeURIComponent(
-        merchantName
+        merchantName,
       )}&am=${amount.toFixed(2)}&tr=${orderId}&cu=INR`,
       paytm: `paytmmp://pay?pa=${upiId}&pn=${encodeURIComponent(
-        merchantName
+        merchantName,
       )}&am=${amount.toFixed(2)}&tr=${orderId}&cu=INR`,
       bhim: upiString,
       generic: upiString,
@@ -76,7 +76,7 @@ class YoupiService {
         headers: {
           "Content-Type": "application/json",
           "X-Merchant-Id": this.getMerchantId(),
-          "Authorization": `Bearer ${this.getApiKey()}`,
+          Authorization: `Bearer ${this.getApiKey()}`,
           "Idempotency-Key": orderId,
         },
         body: JSON.stringify({
@@ -154,7 +154,7 @@ class YoupiService {
           if (
             crypto.timingSafeEqual(
               Buffer.from(expectedSig),
-              Buffer.from(signature)
+              Buffer.from(signature),
             )
           ) {
             isValidSig = true;
@@ -177,13 +177,16 @@ class YoupiService {
         const controller = new AbortController();
         timeoutId = setTimeout(() => controller.abort(), 1500);
 
-        const response = await fetch(`${this.getBaseUrl()}/api/v1/payments/${paymentId}`, {
-          headers: {
-            "X-Merchant-Id": this.getMerchantId(),
-            "Authorization": `Bearer ${this.getApiKey()}`,
+        const response = await fetch(
+          `${this.getBaseUrl()}/api/v1/payments/${paymentId}`,
+          {
+            headers: {
+              "X-Merchant-Id": this.getMerchantId(),
+              Authorization: `Bearer ${this.getApiKey()}`,
+            },
+            signal: controller.signal,
           },
-          signal: controller.signal,
-        });
+        );
 
         if (response.ok) {
           const data = await response.json();
@@ -233,7 +236,7 @@ class YoupiService {
         if (
           crypto.timingSafeEqual(
             Buffer.from(expectedSig),
-            Buffer.from(signature)
+            Buffer.from(signature),
           )
         ) {
           return true;
@@ -254,7 +257,8 @@ class YoupiService {
       {
         id: "upi",
         name: "UPI / Dynamic QR",
-        description: "Zero transaction fee via Google Pay, PhonePe, Paytm, CRED or BHIM",
+        description:
+          "Zero transaction fee via Google Pay, PhonePe, Paytm, CRED or BHIM",
         supported: currency === "INR",
         icon: "QrCode",
         isDefault: true,
@@ -262,7 +266,8 @@ class YoupiService {
       {
         id: "pay_at_hotel",
         name: "Pay at Hotel",
-        description: "Counter settlement upon property check-in (Cash on Delivery)",
+        description:
+          "Counter settlement upon property check-in (Cash on Delivery)",
         supported: true,
         icon: "Building2",
         isDefault: false,

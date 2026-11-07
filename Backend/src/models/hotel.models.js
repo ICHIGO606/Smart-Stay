@@ -4,13 +4,13 @@ const hotelSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     description: { type: String, required: true },
-    city: { type: String, required: true, index: true }, 
+    city: { type: String, required: true, index: true },
     address: { type: String, required: true },
-    amenities: [String], 
+    amenities: [String],
     starRating: { type: Number, min: 1, max: 5 },
-    images: [String], 
-    rooms: [{ type: mongoose.Schema.Types.ObjectId, ref: "Room" }], 
-    reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review" }], 
+    images: [String],
+    rooms: [{ type: mongoose.Schema.Types.ObjectId, ref: "Room" }],
+    reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review" }],
     adminId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -22,7 +22,7 @@ const hotelSchema = new mongoose.Schema(
       enum: ["INR", "USD", "EUR", "GBP", "CAD", "AUD", "JPY", "CNY"],
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 hotelSchema.virtual("averageRating").get(function () {
   if (!this.reviews || this.reviews.length === 0) return 0;

@@ -58,8 +58,8 @@ const createPaymentOrder = asyncHandler(async (req, res) => {
           currency,
           amount: booking.totalAmount,
         },
-        "Pay at hotel booking created successfully"
-      )
+        "Pay at hotel booking created successfully",
+      ),
     );
   }
 
@@ -97,10 +97,13 @@ const createPaymentOrder = asyncHandler(async (req, res) => {
           deepLinks: session.deepLinks,
           checkoutUrl: session.checkoutUrl,
           gateway: "youpi",
-          key: youpiService.merchantId || process.env.YOUPI_MERCHANT_ID || process.env.RAZORPAY_KEY_ID,
+          key:
+            youpiService.merchantId ||
+            process.env.YOUPI_MERCHANT_ID ||
+            process.env.RAZORPAY_KEY_ID,
         },
-        "Payment order created successfully"
-      )
+        "Payment order created successfully",
+      ),
     );
   } catch (error) {
     console.error("YouPI order creation error:", error);
@@ -145,7 +148,7 @@ const verifyPayment = asyncHandler(async (req, res) => {
       try {
         return crypto.timingSafeEqual(
           Buffer.from(expectedSignature),
-          Buffer.from(effectiveSignature)
+          Buffer.from(effectiveSignature),
         );
       } catch {
         return false;
@@ -200,10 +203,12 @@ const verifyPayment = asyncHandler(async (req, res) => {
   await booking.save();
 
   // Dispatch payment notification & live SSE event
-  notificationService.sendPaymentReceipt({
-    booking,
-    payment: { utr: utr || effectivePaymentId },
-  }).catch((err) => console.error("Notification dispatch error:", err));
+  notificationService
+    .sendPaymentReceipt({
+      booking,
+      payment: { utr: utr || effectivePaymentId },
+    })
+    .catch((err) => console.error("Notification dispatch error:", err));
 
   if (booking.hotelId) {
     sseService.broadcast(booking.hotelId, "payment_confirmed", {
@@ -223,8 +228,8 @@ const verifyPayment = asyncHandler(async (req, res) => {
         status: "success",
         gateway: "youpi",
       },
-      "Payment verified successfully"
-    )
+      "Payment verified successfully",
+    ),
   );
 });
 
@@ -260,8 +265,8 @@ const getPaymentMethods = asyncHandler(async (req, res) => {
         merchantName: youpiService.merchantName,
         methods: paymentMethods.filter((method) => method.supported),
       },
-      "Payment methods fetched successfully"
-    )
+      "Payment methods fetched successfully",
+    ),
   );
 });
 

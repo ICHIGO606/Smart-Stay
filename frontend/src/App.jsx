@@ -1,34 +1,38 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router';
-import { AuthProvider } from './context/AuthContext';
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router";
+import { AuthProvider } from "./context/AuthContext";
 
 // Layouts
-import PublicLayout from './layouts/PublicLayout';
-import UserLayout from './layouts/UserLayout';
-import AdminLayout from './layouts/AdminLayout';
+import PublicLayout from "./layouts/PublicLayout";
+import UserLayout from "./layouts/UserLayout";
+import AdminLayout from "./layouts/AdminLayout";
 
 // Public Pages
-import Home from './pages/public/Home';
-import Login from './pages/public/Login';
-import Register from './pages/public/Register';
-import HotelSearch from './pages/public/HotelSearch';
-import HotelDetails from './pages/public/HotelDetails';
-import PackageSearch from './pages/public/PackageSearch';
-import PackageDetails from './pages/public/PackageDetails';
+import Home from "./pages/public/Home";
+import Login from "./pages/public/Login";
+import Register from "./pages/public/Register";
+import HotelSearch from "./pages/public/HotelSearch";
+import HotelDetails from "./pages/public/HotelDetails";
+import PackageSearch from "./pages/public/PackageSearch";
+import PackageDetails from "./pages/public/PackageDetails";
 
 // User Pages
-import UserDashboard from './pages/user/UserDashboard';
-import BookingPage from './pages/user/BookingPage';
-const UserBookings = () => <div className="p-8"><h1 className="text-2xl font-bold">My Bookings</h1></div>;
+import UserDashboard from "./pages/user/UserDashboard";
+import BookingPage from "./pages/user/BookingPage";
+const UserBookings = () => (
+  <div className="p-8">
+    <h1 className="text-2xl font-bold">My Bookings</h1>
+  </div>
+);
 
 // Admin Pages
-import HotelManagement from './pages/admin/HotelManagement';
-import HotelDetailPage from './pages/admin/HotelDetailPage';
-import BookingManagement from './pages/admin/BookingManagement';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminProfile from './pages/admin/AdminProfile';
-import AdminVerifications from './pages/admin/AdminVerifications';
-import PackageListPage from './pages/admin/PackageListPage';
-import PackageFormPage from './pages/admin/PackageFormPage';
+import HotelManagement from "./pages/admin/HotelManagement";
+import HotelDetailPage from "./pages/admin/HotelDetailPage";
+import BookingManagement from "./pages/admin/BookingManagement";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminProfile from "./pages/admin/AdminProfile";
+import AdminVerifications from "./pages/admin/AdminVerifications";
+import PackageListPage from "./pages/admin/PackageListPage";
+import PackageFormPage from "./pages/admin/PackageFormPage";
 // const AdminUsers = () => <div className="p-8"><h1 className="text-2xl font-bold">User Management</h1></div>;
 
 function App() {
@@ -43,7 +47,10 @@ function App() {
             <Route path="register" element={<Register />} />
             <Route path="hotels" element={<HotelSearch />} />
             <Route path="hotels/:id" element={<HotelDetails />} />
-            <Route path="hotels/:hotelId/book/:roomId" element={<BookingPage />} />
+            <Route
+              path="hotels/:hotelId/book/:roomId"
+              element={<BookingPage />}
+            />
             <Route path="packages" element={<PackageSearch />} />
             <Route path="packages/:id" element={<PackageDetails />} />
           </Route>

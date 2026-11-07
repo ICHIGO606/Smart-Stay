@@ -6,21 +6,21 @@
  * Format monetary amount with currency symbol
  * Defaults to Indian Rupee (₹) matching sovereign YouPI-PG settlement
  */
-export const formatCurrency = (amount, currency = 'INR') => {
+export const formatCurrency = (amount, currency = "INR") => {
   if (amount === null || amount === undefined || isNaN(amount)) {
-    return '₹0';
+    return "₹0";
   }
 
   const num = Number(amount);
 
   try {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: currency || 'INR',
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: currency || "INR",
       maximumFractionDigits: 0,
     }).format(num);
   } catch {
-    return `₹${Math.round(num).toLocaleString('en-IN')}`;
+    return `₹${Math.round(num).toLocaleString("en-IN")}`;
   }
 };
 
@@ -29,18 +29,18 @@ export const formatCurrency = (amount, currency = 'INR') => {
  * e.g., "12 Nov 2026"
  */
 export const formatDate = (dateString, options = {}) => {
-  if (!dateString) return 'N/A';
+  if (!dateString) return "N/A";
   const d = new Date(dateString);
-  if (isNaN(d.getTime())) return 'Invalid date';
+  if (isNaN(d.getTime())) return "Invalid date";
 
   const defaultOptions = {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
+    day: "numeric",
+    month: "short",
+    year: "numeric",
     ...options,
   };
 
-  return d.toLocaleDateString('en-IN', defaultOptions);
+  return d.toLocaleDateString("en-IN", defaultOptions);
 };
 
 /**
@@ -54,4 +54,3 @@ export const calculateNights = (checkInDate, checkOutDate) => {
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   return Math.max(0, diffDays);
 };
-

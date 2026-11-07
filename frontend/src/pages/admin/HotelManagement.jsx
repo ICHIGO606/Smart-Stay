@@ -1,14 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
-import adminHotelService from '../../services/adminHotelService';
-import HotelForm from '../../components/admin/HotelForm';
-import { Building2, Plus, Trash2, ArrowRight, AlertCircle, MapPin } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
+import adminHotelService from "../../services/adminHotelService";
+import HotelForm from "../../components/admin/HotelForm";
+import {
+  Building2,
+  Plus,
+  Trash2,
+  ArrowRight,
+  AlertCircle,
+  MapPin,
+} from "lucide-react";
 
 const HotelManagement = () => {
   const navigate = useNavigate();
   const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [showHotelForm, setShowHotelForm] = useState(false);
 
   useEffect(() => {
@@ -18,7 +25,7 @@ const HotelManagement = () => {
   const fetchHotels = async () => {
     try {
       setLoading(true);
-      setError('');
+      setError("");
       const response = await adminHotelService.getAdminHotels();
       if (response && response.data) {
         setHotels(Array.isArray(response.data) ? response.data : []);
@@ -45,7 +52,7 @@ const HotelManagement = () => {
   };
 
   const handleDeleteHotel = async (hotelId) => {
-    if (window.confirm('Delete this hotel property from the directory?')) {
+    if (window.confirm("Delete this hotel property from the directory?")) {
       try {
         await adminHotelService.deleteHotel(hotelId);
         fetchHotels();
@@ -66,7 +73,9 @@ const HotelManagement = () => {
     return (
       <div className="p-8 flex flex-col justify-center items-center h-64 gap-3">
         <div className="animate-spin rounded-full h-8 w-8 border-2 border-stone-900 border-t-transparent"></div>
-        <p className="text-xs font-mono text-ink-muted">Reading property registry...</p>
+        <p className="text-xs font-mono text-ink-muted">
+          Reading property registry...
+        </p>
       </div>
     );
   }
@@ -114,8 +123,13 @@ const HotelManagement = () => {
       {hotels.length === 0 ? (
         <div className="card-base text-center py-16 px-6">
           <Building2 size={24} className="text-stone-300 mx-auto mb-2" />
-          <p className="text-sm font-medium text-ink-primary">No hotel properties cataloged</p>
-          <p className="text-xs text-ink-muted mt-1 mb-4">Register your first boutique property to start receiving reservations.</p>
+          <p className="text-sm font-medium text-ink-primary">
+            No hotel properties cataloged
+          </p>
+          <p className="text-xs text-ink-muted mt-1 mb-4">
+            Register your first boutique property to start receiving
+            reservations.
+          </p>
           <button
             onClick={() => setShowHotelForm(true)}
             className="btn-primary !text-xs !py-1.5 !px-3"
@@ -126,8 +140,8 @@ const HotelManagement = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {hotels.map((hotel) => (
-            <div 
-              key={hotel._id} 
+            <div
+              key={hotel._id}
               className="card-base overflow-hidden flex flex-col justify-between hover:border-stone-300 transition-colors"
             >
               <div>
@@ -144,16 +158,20 @@ const HotelManagement = () => {
                     </div>
                   )}
                   <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2 py-0.5 rounded-tag text-[10px] font-mono text-ink-primary">
-                    № {hotel._id ? hotel._id.slice(-4).toUpperCase() : 'HOTEL'}
+                    № {hotel._id ? hotel._id.slice(-4).toUpperCase() : "HOTEL"}
                   </div>
                 </div>
 
                 <div className="p-5">
-                  <h3 className="text-base font-semibold text-ink-primary mb-1">{hotel.name}</h3>
+                  <h3 className="text-base font-semibold text-ink-primary mb-1">
+                    {hotel.name}
+                  </h3>
                   <div className="flex items-center gap-1.5 text-xs text-ink-muted font-mono mb-3">
                     <MapPin size={12} className="text-ink-secondary" />
                     <span>{hotel.city}</span>
-                    {hotel.address && <span className="truncate">· {hotel.address}</span>}
+                    {hotel.address && (
+                      <span className="truncate">· {hotel.address}</span>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-between py-2 border-y border-stone-100 text-xs font-mono mb-4">

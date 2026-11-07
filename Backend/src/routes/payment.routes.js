@@ -2,10 +2,13 @@ import { Router } from "express";
 import {
   createPaymentOrder,
   verifyPayment,
-  getPaymentMethods
+  getPaymentMethods,
 } from "../controllers/payment.controllers.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { apiLimiter, strictLimiter } from "../middlewares/rateLimit.middleware.js";
+import {
+  apiLimiter,
+  strictLimiter,
+} from "../middlewares/rateLimit.middleware.js";
 
 const router = Router();
 

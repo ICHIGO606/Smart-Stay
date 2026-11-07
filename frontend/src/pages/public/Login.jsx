@@ -1,43 +1,50 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router';
-import { useAuth } from '../../context/AuthContext';
-import authService from '../../services/authService';
-import { ArrowRight, AlertCircle } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { useAuth } from "../../context/AuthContext";
+import authService from "../../services/authService";
+import { ArrowRight, AlertCircle } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
   const { login, completeGoogleLogin } = useAuth();
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const googleError = params.get('googleError');
+    const googleError = params.get("googleError");
     if (googleError) {
       const messages = {
-        google_auth_failed: 'Google authentication was not completed. Please try again.',
-        google_email_not_verified: 'Your Google account requires a verified email address.',
-        google_oauth_not_configured: 'Google sign-in is currently unavailable on the server.',
+        google_auth_failed:
+          "Google authentication was not completed. Please try again.",
+        google_email_not_verified:
+          "Your Google account requires a verified email address.",
+        google_oauth_not_configured:
+          "Google sign-in is currently unavailable on the server.",
       };
-      setError(messages[googleError] || 'Google sign-in failed. Please try again.');
-      window.history.replaceState({}, '', window.location.pathname);
+      setError(
+        messages[googleError] || "Google sign-in failed. Please try again.",
+      );
+      window.history.replaceState({}, "", window.location.pathname);
       return;
     }
 
-    if (params.get('google') !== 'success') return;
-    window.history.replaceState({}, '', window.location.pathname);
+    if (params.get("google") !== "success") return;
+    window.history.replaceState({}, "", window.location.pathname);
     setLoading(true);
-    completeGoogleLogin().then((result) => {
-      if (result.success) {
-        navigate('/user');
-      } else {
-        setError(result.error);
-      }
-    }).finally(() => setLoading(false));
+    completeGoogleLogin()
+      .then((result) => {
+        if (result.success) {
+          navigate("/user");
+        } else {
+          setError(result.error);
+        }
+      })
+      .finally(() => setLoading(false));
   }, [completeGoogleLogin, navigate]);
 
   const handleChange = (e) => {
@@ -49,18 +56,21 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
       const result = await login(formData.email, formData.password);
       if (result.success) {
-        navigate('/user');
+        navigate("/user");
       } else {
         setError(result.error);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid credentials. Please verify your email and password.');
+      setError(
+        err.response?.data?.message ||
+          "Invalid credentials. Please verify your email and password.",
+      );
     } finally {
       setLoading(false);
     }
@@ -80,17 +90,20 @@ const Login = () => {
             Access your bookings and guest benefits
           </p>
         </div>
-        
+
         {error && (
           <div className="mb-5 p-3 rounded-control bg-red-50 border border-red-200/80 flex items-start gap-2.5 text-xs text-red-800">
             <AlertCircle size={15} className="mt-0.5 flex-shrink-0" />
             <span>{error}</span>
           </div>
         )}
-        
+
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="email" className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+            <label
+              htmlFor="email"
+              className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1"
+            >
               Email address
             </label>
             <input
@@ -108,7 +121,10 @@ const Login = () => {
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label htmlFor="password" className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted">
+              <label
+                htmlFor="password"
+                className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted"
+              >
                 Password
               </label>
             </div>
@@ -130,7 +146,7 @@ const Login = () => {
             disabled={loading}
             className="btn-primary w-full !py-2.5 text-xs font-mono uppercase tracking-wider mt-2"
           >
-            {loading ? 'Authenticating...' : 'Sign in'}
+            {loading ? "Authenticating..." : "Sign in"}
           </button>
         </form>
 
@@ -171,8 +187,11 @@ const Login = () => {
         </button>
 
         <p className="mt-6 text-center text-xs text-ink-muted">
-          New guest?{' '}
-          <Link to="/register" className="text-ink-primary font-medium hover:underline">
+          New guest?{" "}
+          <Link
+            to="/register"
+            className="text-ink-primary font-medium hover:underline"
+          >
             Create an account
           </Link>
         </p>

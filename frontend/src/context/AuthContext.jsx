@@ -1,7 +1,13 @@
-import { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router';
-import authService from '../services/authService';
-import userService from '../services/userService';
+import {
+  createContext,
+  useState,
+  useContext,
+  useEffect,
+  useCallback,
+} from "react";
+import { useNavigate } from "react-router";
+import authService from "../services/authService";
+import userService from "../services/userService";
 
 const AuthContext = createContext(null);
 
@@ -13,8 +19,8 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     // Check if user is logged in and validate token
-    const token = localStorage.getItem('accessToken');
-    if (token || localStorage.getItem('googleSession')) {
+    const token = localStorage.getItem("accessToken");
+    if (token || localStorage.getItem("googleSession")) {
       // Verify token by fetching user profile
       fetchUserProfile();
     } else {
@@ -26,29 +32,29 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await userService.getProfile();
       setUser(response.data);
-      localStorage.setItem('user', JSON.stringify(response.data));
+      localStorage.setItem("user", JSON.stringify(response.data));
     } catch (error) {
-      console.error('Failed to fetch user profile:', error);
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('user');
-      localStorage.removeItem('googleSession');
+      console.error("Failed to fetch user profile:", error);
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("user");
+      localStorage.removeItem("googleSession");
     } finally {
       setLoading(false);
     }
   };
 
   const completeGoogleLogin = useCallback(async () => {
-    localStorage.setItem('googleSession', 'true');
+    localStorage.setItem("googleSession", "true");
     try {
       const response = await userService.getProfile();
       setUser(response.data);
-      localStorage.setItem('user', JSON.stringify(response.data));
+      localStorage.setItem("user", JSON.stringify(response.data));
       return { success: true };
     } catch (error) {
-      localStorage.removeItem('googleSession');
+      localStorage.removeItem("googleSession");
       return {
         success: false,
-        error: error.message || 'Google sign-in could not be completed',
+        error: error.message || "Google sign-in could not be completed",
       };
     }
   }, []);
@@ -56,21 +62,21 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await authService.login({ email, password });
-      
+
       if (response.success) {
         setUser(response.data.user);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem("user", JSON.stringify(response.data.user));
         return { success: true };
       } else {
-        return { 
-          success: false, 
-          error: response.message || 'Login failed' 
+        return {
+          success: false,
+          error: response.message || "Login failed",
         };
       }
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.message || 'Login failed' 
+      return {
+        success: false,
+        error: error.message || "Login failed",
       };
     }
   };
@@ -78,21 +84,21 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       const response = await authService.register(userData);
-      
+
       if (response.success) {
         setUser(response.data.user);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem("user", JSON.stringify(response.data.user));
         return { success: true };
       } else {
-        return { 
-          success: false, 
-          error: response.message || 'Registration failed' 
+        return {
+          success: false,
+          error: response.message || "Registration failed",
         };
       }
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.message || 'Registration failed' 
+      return {
+        success: false,
+        error: error.message || "Registration failed",
       };
     }
   };
@@ -101,12 +107,12 @@ export const AuthProvider = ({ children }) => {
     try {
       await authService.logout();
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
     } finally {
       setUser(null);
-      localStorage.removeItem('user');
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('googleSession');
+      localStorage.removeItem("user");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("googleSession");
     }
   };
 
@@ -118,14 +124,10 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     isAuthenticated: !!user,
-    isAdmin: user?.role === 'admin'
+    isAdmin: user?.role === "admin",
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 // Auth protection component for routes
@@ -135,7 +137,7 @@ export const RequireAuth = ({ children }) => {
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      navigate('/login');
+      navigate("/login");
     }
   }, [isAuthenticated, loading, navigate]);
 
@@ -154,9 +156,9 @@ export const RequireAdmin = ({ children }) => {
   useEffect(() => {
     if (!loading) {
       if (!isAuthenticated) {
-        navigate('/login');
+        navigate("/login");
       } else if (!isAdmin) {
-        navigate('/');
+        navigate("/");
       }
     }
   }, [isAuthenticated, isAdmin, loading, navigate]);
@@ -165,5 +167,5 @@ export const RequireAdmin = ({ children }) => {
     return <div>Loading...</div>;
   }
 
-  return (isAuthenticated && isAdmin) ? children : null;
+  return isAuthenticated && isAdmin ? children : null;
 };

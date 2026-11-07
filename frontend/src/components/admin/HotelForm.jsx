@@ -1,56 +1,67 @@
-import { useState } from 'react';
-import { ArrowLeft, AlertCircle } from 'lucide-react';
+import { useState } from "react";
+import { ArrowLeft, AlertCircle } from "lucide-react";
 
 const HotelForm = ({ onSubmit, onCancel, initialData }) => {
   const [formData, setFormData] = useState({
-    name: initialData?.name || '',
-    city: initialData?.city || '',
-    description: initialData?.description || '',
-    address: initialData?.address || '',
+    name: initialData?.name || "",
+    city: initialData?.city || "",
+    description: initialData?.description || "",
+    address: initialData?.address || "",
     amenities: initialData?.amenities || [],
-    images: []
+    images: [],
   });
-  
+
   const [selectedImages, setSelectedImages] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const amenitiesOptions = [
-    'WiFi', 'Pool', 'Parking', 'Restaurant', 'Gym', 'Spa',
-    'Air Conditioning', 'Breakfast', 'Bar', 'Room Service',
-    'Business Center', 'Pet Friendly', 'Swimming Pool', 'Fitness Center'
+    "WiFi",
+    "Pool",
+    "Parking",
+    "Restaurant",
+    "Gym",
+    "Spa",
+    "Air Conditioning",
+    "Breakfast",
+    "Bar",
+    "Room Service",
+    "Business Center",
+    "Pet Friendly",
+    "Swimming Pool",
+    "Fitness Center",
   ];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleAmenityChange = (amenity) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       amenities: prev.amenities.includes(amenity)
-        ? prev.amenities.filter(a => a !== amenity)
-        : [...prev.amenities, amenity]
+        ? prev.amenities.filter((a) => a !== amenity)
+        : [...prev.amenities, amenity],
     }));
   };
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     setSelectedImages(files);
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      images: files
+      images: files,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       await onSubmit(formData);
@@ -73,7 +84,7 @@ const HotelForm = ({ onSubmit, onCancel, initialData }) => {
         </button>
         <div>
           <h2 className="font-serif text-2xl text-ink-primary font-normal">
-            {initialData ? 'Edit hotel dossier' : 'Add new hotel property'}
+            {initialData ? "Edit hotel dossier" : "Add new hotel property"}
           </h2>
         </div>
       </div>
@@ -154,12 +165,12 @@ const HotelForm = ({ onSubmit, onCancel, initialData }) => {
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             {amenitiesOptions.map((amenity) => (
-              <label 
-                key={amenity} 
+              <label
+                key={amenity}
                 className={`flex items-center gap-2 p-2 rounded-control border text-xs cursor-pointer transition-colors ${
                   formData.amenities.includes(amenity)
-                    ? 'border-stone-900 bg-stone-50 font-medium text-ink-primary'
-                    : 'border-stone-200 text-ink-secondary hover:border-stone-300'
+                    ? "border-stone-900 bg-stone-50 font-medium text-ink-primary"
+                    : "border-stone-200 text-ink-secondary hover:border-stone-300"
                 }`}
               >
                 <input
@@ -205,7 +216,11 @@ const HotelForm = ({ onSubmit, onCancel, initialData }) => {
             disabled={loading}
             className="btn-primary !text-xs !py-2 !px-5 font-mono uppercase tracking-wider"
           >
-            {loading ? 'Submitting to ledger...' : (initialData ? 'Update hotel' : 'Create hotel')}
+            {loading
+              ? "Submitting to ledger..."
+              : initialData
+                ? "Update hotel"
+                : "Create hotel"}
           </button>
         </div>
       </form>

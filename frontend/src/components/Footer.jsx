@@ -1,5 +1,5 @@
-import { Link } from 'react-router';
-import { Compass, Globe, Shield, Sparkles } from 'lucide-react';
+import { Link } from "react-router";
+import { Compass, Globe, Shield, Sparkles } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -12,10 +12,13 @@ const Footer = () => {
               <span className="w-6 h-6 rounded-[5px] bg-stone-100 text-stone-900 flex items-center justify-center text-xs font-semibold">
                 SS
               </span>
-              <span className="text-sm font-semibold tracking-tight text-white">SmartStay</span>
+              <span className="text-sm font-semibold tracking-tight text-white">
+                SmartStay
+              </span>
             </div>
             <p className="text-xs text-stone-400 leading-relaxed max-w-xs mb-4">
-              Architectural boutique accommodations, historic estates, and tailored itinerary reservations.
+              Architectural boutique accommodations, historic estates, and
+              tailored itinerary reservations.
             </p>
             <div className="flex items-center gap-2 text-[11px] text-stone-400 font-mono">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
@@ -30,22 +33,34 @@ const Footer = () => {
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
-                <Link to="/hotels" className="text-stone-400 hover:text-white transition-colors">
+                <Link
+                  to="/hotels"
+                  className="text-stone-400 hover:text-white transition-colors"
+                >
                   All properties
                 </Link>
               </li>
               <li>
-                <Link to="/hotels" className="text-stone-400 hover:text-white transition-colors">
+                <Link
+                  to="/hotels"
+                  className="text-stone-400 hover:text-white transition-colors"
+                >
                   Boutique city suites
                 </Link>
               </li>
               <li>
-                <Link to="/hotels" className="text-stone-400 hover:text-white transition-colors">
+                <Link
+                  to="/hotels"
+                  className="text-stone-400 hover:text-white transition-colors"
+                >
                   Heritage villas
                 </Link>
               </li>
               <li>
-                <Link to="/hotels" className="text-stone-400 hover:text-white transition-colors">
+                <Link
+                  to="/hotels"
+                  className="text-stone-400 hover:text-white transition-colors"
+                >
                   Coastal hideaways
                 </Link>
               </li>
@@ -59,17 +74,26 @@ const Footer = () => {
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
-                <Link to="/packages" className="text-stone-400 hover:text-white transition-colors">
+                <Link
+                  to="/packages"
+                  className="text-stone-400 hover:text-white transition-colors"
+                >
                   Curated packages
                 </Link>
               </li>
               <li>
-                <Link to="/packages" className="text-stone-400 hover:text-white transition-colors">
+                <Link
+                  to="/packages"
+                  className="text-stone-400 hover:text-white transition-colors"
+                >
                   Cultural itineraries
                 </Link>
               </li>
               <li>
-                <Link to="/packages" className="text-stone-400 hover:text-white transition-colors">
+                <Link
+                  to="/packages"
+                  className="text-stone-400 hover:text-white transition-colors"
+                >
                   Architectural tours
                 </Link>
               </li>
@@ -99,11 +123,20 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-stone-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-stone-400 font-mono">
-          <p>© {new Date().getFullYear()} SmartStay Operations. All rights reserved.</p>
+          <p>
+            © {new Date().getFullYear()} SmartStay Operations. All rights
+            reserved.
+          </p>
           <div className="flex items-center gap-4">
-            <span className="hover:text-stone-300 transition-colors cursor-pointer">Privacy protocol</span>
-            <span className="hover:text-stone-300 transition-colors cursor-pointer">Terms of stay</span>
-            <span className="hover:text-stone-300 transition-colors cursor-pointer">Security disclosure</span>
+            <span className="hover:text-stone-300 transition-colors cursor-pointer">
+              Privacy protocol
+            </span>
+            <span className="hover:text-stone-300 transition-colors cursor-pointer">
+              Terms of stay
+            </span>
+            <span className="hover:text-stone-300 transition-colors cursor-pointer">
+              Security disclosure
+            </span>
           </div>
         </div>
       </div>

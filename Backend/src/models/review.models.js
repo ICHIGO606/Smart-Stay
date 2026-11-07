@@ -28,9 +28,8 @@ const reviewSchema = new mongoose.Schema(
       trim: true,
     },
   },
-  { timestamps: true } 
+  { timestamps: true },
 );
-
 
 reviewSchema.index({ user: 1, targetId: 1, targetModel: 1 }, { unique: true });
 

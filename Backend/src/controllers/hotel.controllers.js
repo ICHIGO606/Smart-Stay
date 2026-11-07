@@ -4,17 +4,25 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Hotel } from "../models/hotel.models.js";
 import { Room } from "../models/room.models.js";
 import { Booking } from "../models/booking.models.js";
-import {escapeRegex} from "../utils/helpers.js";
+import { escapeRegex } from "../utils/helpers.js";
 
 const getLocationSuggestions = asyncHandler(async (req, res) => {
   const { query } = req.query;
   if (!query) throw new ApiError(400, "Query parameter is required");
-  
+
   const suggestions = await Hotel.distinct("city", {
-    city: new RegExp(escapeRegex(query), "i")
+    city: new RegExp(escapeRegex(query), "i"),
   });
-  
-  return res.status(200).json(new ApiResponse(200, suggestions, "Location suggestions fetched successfully"));
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        suggestions,
+        "Location suggestions fetched successfully",
+      ),
+    );
 });
 
 const getHotels = asyncHandler(async (req, res) => {
@@ -34,7 +42,8 @@ const getHotels = asyncHandler(async (req, res) => {
 
   const checkInDate = checkIn ? new Date(checkIn) : null;
   const checkOutDate = checkOut ? new Date(checkOut) : null;
-  const totalGuests = parseInt(guests) || (parseInt(adults) + parseInt(children)) || 1;
+  const totalGuests =
+    parseInt(guests) || parseInt(adults) + parseInt(children) || 1;
 
   const hotelsWithPrices = await Promise.all(
     hotels.map(async (hotel) => {
@@ -49,12 +58,17 @@ const getHotels = asyncHandler(async (req, res) => {
             .filter((booking) => {
               const bCheckIn = new Date(booking.checkInDate);
               const bCheckOut = new Date(booking.checkOutDate);
-              return (checkInDate < bCheckOut && checkOutDate > bCheckIn);
+              return checkInDate < bCheckOut && checkOutDate > bCheckIn;
             })
             .map((b) => b.roomNumber);
 
-          const freeNumbers = allNumbers.filter((num) => !bookedNumbers.includes(num));
-          return freeNumbers.length > 0 && (room.maxOccupancy ? room.maxOccupancy >= totalGuests : true);
+          const freeNumbers = allNumbers.filter(
+            (num) => !bookedNumbers.includes(num),
+          );
+          return (
+            freeNumbers.length > 0 &&
+            (room.maxOccupancy ? room.maxOccupancy >= totalGuests : true)
+          );
         });
       }
 
@@ -71,7 +85,9 @@ const getHotels = asyncHandler(async (req, res) => {
       const lowestPrice =
         availableRooms.length > 0
           ? Math.min(...availableRooms.map((room) => room.pricePerNight || 0))
-          : (rooms.length > 0 ? Math.min(...rooms.map((r) => r.pricePerNight || 0)) : 0);
+          : rooms.length > 0
+            ? Math.min(...rooms.map((r) => r.pricePerNight || 0))
+            : 0;
 
       // Nights calculation for total estimated trip price
       let totalStayPrice = lowestPrice;
@@ -89,9 +105,10 @@ const getHotels = asyncHandler(async (req, res) => {
         nights,
         hasRooms: rooms.length > 0,
         availableRoomsCount: availableRooms.length,
-        isAvailableForDates: checkInDate && checkOutDate ? availableRooms.length > 0 : true,
+        isAvailableForDates:
+          checkInDate && checkOutDate ? availableRooms.length > 0 : true,
       };
-    })
+    }),
   );
 
   // If specific dates were searched, filter out hotels with zero vacancy
@@ -100,7 +117,9 @@ const getHotels = asyncHandler(async (req, res) => {
     filteredHotels = hotelsWithPrices.filter((h) => h.isAvailableForDates);
   }
 
-  return res.status(200).json(new ApiResponse(200, filteredHotels, "Hotels fetched successfully"));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, filteredHotels, "Hotels fetched successfully"));
 });
 
 // Get rooms for a hotel
@@ -108,7 +127,9 @@ const getRooms = asyncHandler(async (req, res) => {
   const { hotelId } = req.params;
   const rooms = await Room.find({ hotelId });
   if (!rooms.length) throw new ApiError(404, "No rooms found for this hotel");
-  return res.status(200).json(new ApiResponse(200, rooms, "Rooms fetched successfully"));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, rooms, "Rooms fetched successfully"));
 });
 
 // Get hotel details by ID
@@ -116,14 +137,20 @@ const getHotelDetails = asyncHandler(async (req, res) => {
   const { hotelId } = req.params;
   const hotel = await Hotel.findById(hotelId);
   if (!hotel) throw new ApiError(404, "Hotel not found");
-  
+
   // Get rooms for this hotel
   const rooms = await Room.find({ hotelId });
-  
-  return res.status(200).json(new ApiResponse(200, {
-    ...hotel.toObject(),
-    rooms: rooms
-  }, "Hotel details fetched successfully"));
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        ...hotel.toObject(),
+        rooms: rooms,
+      },
+      "Hotel details fetched successfully",
+    ),
+  );
 });
 
 // User booking
@@ -132,17 +159,30 @@ const assignBooking = asyncHandler(async (req, res) => {
   const room = await Room.findOne({ _id: roomId, hotelId });
   if (!room) throw new ApiError(404, "Room not found in this hotel");
 
-  const { checkInDate, checkOutDate, numberOfAdults, numberOfChildren, guests, totalAmount, paymentStatus, bookingStatus } = req.body;
+  const {
+    checkInDate,
+    checkOutDate,
+    numberOfAdults,
+    numberOfChildren,
+    guests,
+    totalAmount,
+    paymentStatus,
+    bookingStatus,
+  } = req.body;
 
   const overlap = await Booking.findOne({
     roomId,
     hotelId,
     bookingStatus: "Confirmed",
     $or: [
-      { checkInDate: { $lt: new Date(checkOutDate) }, checkOutDate: { $gt: new Date(checkInDate) } }
-    ]
+      {
+        checkInDate: { $lt: new Date(checkOutDate) },
+        checkOutDate: { $gt: new Date(checkInDate) },
+      },
+    ],
   });
-  if (overlap) throw new ApiError(400, "Room is already booked for the given dates");
+  if (overlap)
+    throw new ApiError(400, "Room is already booked for the given dates");
 
   const booking = await Booking.create({
     user: req.user._id,
@@ -156,10 +196,18 @@ const assignBooking = asyncHandler(async (req, res) => {
     guests,
     totalAmount,
     paymentStatus,
-    bookingStatus
+    bookingStatus,
   });
 
-  return res.status(200).json(new ApiResponse(200, booking, "Booking done successfully"));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, booking, "Booking done successfully"));
 });
 
-export { getHotels, getRooms, assignBooking, getLocationSuggestions, getHotelDetails };
+export {
+  getHotels,
+  getRooms,
+  assignBooking,
+  getLocationSuggestions,
+  getHotelDetails,
+};

@@ -1,4 +1,4 @@
-import {Hotel} from "../models/hotel.models.js";
+import { Hotel } from "../models/hotel.models.js";
 
 export const verifyHotelAdmin = async (req, res, next) => {
   try {
@@ -18,7 +18,9 @@ export const verifyHotelAdmin = async (req, res, next) => {
       req.user.username !== "sadmin" &&
       req.user.username !== "admin"
     ) {
-      return res.status(403).json({ message: "You are not the admin of this hotel." });
+      return res
+        .status(403)
+        .json({ message: "You are not the admin of this hotel." });
     }
 
     next();

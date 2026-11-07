@@ -1,13 +1,20 @@
-import { LayoutDashboard, Users, Calendar, ShieldCheck, UserCog, ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router';
+import {
+  LayoutDashboard,
+  Users,
+  Calendar,
+  ShieldCheck,
+  UserCog,
+  ArrowLeft,
+} from "lucide-react";
+import { Link } from "react-router";
 
 const UserSidebar = ({ onTabChange, activeTab }) => {
   const tabs = [
-    { id: 'dashboard', label: 'Account overview', icon: LayoutDashboard },
-    { id: 'bookings', label: 'My reservations', icon: Calendar },
-    { id: 'family', label: 'Registered guests', icon: Users },
-    { id: 'verification', label: 'Identity verification', icon: ShieldCheck },
-    { id: 'settings', label: 'Profile settings', icon: UserCog },
+    { id: "dashboard", label: "Account overview", icon: LayoutDashboard },
+    { id: "bookings", label: "My reservations", icon: Calendar },
+    { id: "family", label: "Registered guests", icon: Users },
+    { id: "verification", label: "Identity verification", icon: ShieldCheck },
+    { id: "settings", label: "Profile settings", icon: UserCog },
   ];
 
   return (
@@ -46,11 +53,14 @@ const UserSidebar = ({ onTabChange, activeTab }) => {
                     onClick={() => onTabChange(tab.id)}
                     className={`w-full flex items-center gap-2.5 h-9 px-3 rounded-control text-xs transition-colors text-left ${
                       active
-                        ? 'bg-stone-800/90 text-white font-medium border border-stone-700/60'
-                        : 'text-stone-400 hover:text-stone-200 hover:bg-stone-850'
+                        ? "bg-stone-800/90 text-white font-medium border border-stone-700/60"
+                        : "text-stone-400 hover:text-stone-200 hover:bg-stone-850"
                     }`}
                   >
-                    <Icon size={15} className={active ? 'text-white' : 'text-stone-400'} />
+                    <Icon
+                      size={15}
+                      className={active ? "text-white" : "text-stone-400"}
+                    />
                     <span>{tab.label}</span>
                   </button>
                 </li>
@@ -61,8 +71,8 @@ const UserSidebar = ({ onTabChange, activeTab }) => {
       </div>
 
       <div className="pt-4 border-t border-stone-800/80">
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="flex items-center gap-2 px-3 py-2 text-xs text-stone-400 hover:text-stone-200 transition-colors"
         >
           <ArrowLeft size={14} />

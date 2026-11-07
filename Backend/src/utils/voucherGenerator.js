@@ -255,7 +255,7 @@ export function generateVoucherHtml(voucherData) {
         <div class="info-box">
           <div class="info-label">Primary Guest</div>
           <div class="info-value">${voucherData.guest.name}</div>
-          <div class="info-sub">${voucherData.guest.numberOfAdults} Adults${voucherData.guest.numberOfChildren > 0 ? `, ${voucherData.guest.numberOfChildren} Children` : ''}</div>
+          <div class="info-sub">${voucherData.guest.numberOfAdults} Adults${voucherData.guest.numberOfChildren > 0 ? `, ${voucherData.guest.numberOfChildren} Children` : ""}</div>
         </div>
       </div>
 
@@ -275,13 +275,17 @@ export function generateVoucherHtml(voucherData) {
             ${voucherData.settlement.bookingStatus} (${voucherData.settlement.paymentMethod})
           </td>
         </tr>
-        ${voucherData.settlement.utr ? `
+        ${
+          voucherData.settlement.utr
+            ? `
         <tr>
           <td>UPI Settlement Reference (UTR)</td>
           <td style="text-align: right; font-family: 'JetBrains Mono', monospace;">
             ${voucherData.settlement.utr}
           </td>
-        </tr>` : ''}
+        </tr>`
+            : ""
+        }
         <tr>
           <td>Total Tariff Paid</td>
           <td style="text-align: right; font-family: 'JetBrains Mono', monospace;">
@@ -292,7 +296,7 @@ export function generateVoucherHtml(voucherData) {
 
       <div class="section-title">Arrival Guidelines</div>
       <ul class="policies">
-        ${voucherData.policies.map(p => `<li>${p}</li>`).join('')}
+        ${voucherData.policies.map((p) => `<li>${p}</li>`).join("")}
       </ul>
     </div>
 
@@ -304,4 +308,3 @@ export function generateVoucherHtml(voucherData) {
 </body>
 </html>`;
 }
-

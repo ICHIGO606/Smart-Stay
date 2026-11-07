@@ -35,7 +35,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     },
     {
       new: true,
-    }
+    },
   );
   const options = {
     httpOnly: true,
@@ -54,7 +54,7 @@ const addFamilyMember = asyncHandler(async (req, res) => {
   if (!fullName || !relationship || !age) {
     return new ApiError(
       401,
-      "All the details are required to add the family member"
+      "All the details are required to add the family member",
     );
   }
   const updateUser = await User.findByIdAndUpdate(
@@ -70,7 +70,7 @@ const addFamilyMember = asyncHandler(async (req, res) => {
     },
     {
       new: true,
-    }
+    },
   );
   return res
     .status(200)
@@ -78,8 +78,8 @@ const addFamilyMember = asyncHandler(async (req, res) => {
       new ApiResponse(
         200,
         updateUser.familyMembers,
-        "Family Member added successfully"
-      )
+        "Family Member added successfully",
+      ),
     );
 });
 
@@ -93,13 +93,13 @@ const removeFamilyMember = asyncHandler(async (req, res) => {
         familyMembers: { _id: memberId },
       },
     },
-    { new: true }
+    { new: true },
   );
   if (!updatedUser) {
     throw new ApiError(404, "Family Member not found");
   }
   const user = await User.findById(updatedUser._id).select(
-    "-password -refreshToken"
+    "-password -refreshToken",
   );
   res
     .status(200)
@@ -121,7 +121,7 @@ const getFamilyMemberById = asyncHandler(async (req, res) => {
   const { memberId } = req.params;
   const user = await User.findOne(
     { _id: req.user._id, "familyMembers._id": memberId },
-    { "familyMembers.$": 1 }
+    { "familyMembers.$": 1 },
   );
   if (!user || !user.familyMembers.length) {
     throw new ApiError(404, "Family member not found");
@@ -132,8 +132,8 @@ const getFamilyMemberById = asyncHandler(async (req, res) => {
       new ApiResponse(
         200,
         user.familyMembers[0],
-        "Family Member fetched successfully"
-      )
+        "Family Member fetched successfully",
+      ),
     );
 });
 
@@ -149,18 +149,18 @@ const updateFamilyMember = asyncHandler(async (req, res) => {
         "familyMembers.$.age": age,
       },
     },
-    { new: true }
+    { new: true },
   );
   if (!user) {
     return new ApiError(404, "Family Member not found");
   }
   const returnUser = await User.findById(user._id).select(
-    "-password -refreshToken"
+    "-password -refreshToken",
   );
   return res
     .status(200)
     .json(
-      new ApiResponse(200, returnUser, "Family Member updated Successfully")
+      new ApiResponse(200, returnUser, "Family Member updated Successfully"),
     );
 });
 
@@ -168,22 +168,22 @@ const updateUser = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const { fullName, age, gender, phone, address } = req.body;
   const user = await User.findById(userId).select("-password -refreshToken");
-  
+
   user.age = age;
   user.gender = gender;
   user.fullName = fullName;
-  user.phone = phone || '';
-  
+  user.phone = phone || "";
+
   if (address) {
     user.address = {
-      street: address.street || '',
-      city: address.city || '',
-      state: address.state || '',
-      zipCode: address.zipCode || '',
-      country: address.country || ''
+      street: address.street || "",
+      city: address.city || "",
+      state: address.state || "",
+      zipCode: address.zipCode || "",
+      country: address.country || "",
     };
   }
-  
+
   const updatedUser = await user.save({ validateBeforeSave: false });
 
   return res
@@ -214,7 +214,7 @@ const uploadVerificationDocument = asyncHandler(async (req, res) => {
         "verification.status": "Pending",
       },
     },
-    { new: true }
+    { new: true },
   ).select("-password -refreshToken");
 
   res
@@ -223,8 +223,8 @@ const uploadVerificationDocument = asyncHandler(async (req, res) => {
       new ApiResponse(
         200,
         updatedUser,
-        "Verification document uploaded successfully"
-      )
+        "Verification document uploaded successfully",
+      ),
     );
 });
 
@@ -243,7 +243,7 @@ const uploadFamilyMemberVerificationDoc = asyncHandler(async (req, res) => {
         "familyMembers.$.verification.status": "Pending",
       },
     },
-    { new: true }
+    { new: true },
   ).select("-password -refreshToken");
 
   if (!user) throw new ApiError(404, "Family member not found");
@@ -254,8 +254,8 @@ const uploadFamilyMemberVerificationDoc = asyncHandler(async (req, res) => {
       new ApiResponse(
         200,
         user,
-        "Family member verification document uploaded successfully"
-      )
+        "Family member verification document uploaded successfully",
+      ),
     );
 });
 

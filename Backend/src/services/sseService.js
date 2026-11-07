@@ -38,7 +38,9 @@ class SSEService {
     });
 
     // Send initial greeting
-    res.write(`event: connected\ndata: ${JSON.stringify({ connected: true, hotelId, timestamp: new Date() })}\n\n`);
+    res.write(
+      `event: connected\ndata: ${JSON.stringify({ connected: true, hotelId, timestamp: new Date() })}\n\n`,
+    );
   }
 
   /**
@@ -63,4 +65,3 @@ class SSEService {
 
 export const sseService = new SSEService();
 export default sseService;
-

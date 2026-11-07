@@ -23,7 +23,7 @@ class NotificationService {
     };
 
     console.log(
-      `[NOTIFICATION DISPATCH] Booking Confirmation -> ${payload.to} for Stay at ${payload.hotelName} (№ ${booking._id})`
+      `[NOTIFICATION DISPATCH] Booking Confirmation -> ${payload.to} for Stay at ${payload.hotelName} (№ ${booking._id})`,
     );
 
     return { sent: true, recipient: payload.to, event: "BOOKING_CONFIRMED" };
@@ -37,7 +37,7 @@ class NotificationService {
     const utr = payment.utr || "Verified via Gateway";
 
     console.log(
-      `[NOTIFICATION DISPATCH] YouPI Payment Receipt -> ${recipient} | UTR: ${utr} | Amount: ₹${booking.totalAmount}`
+      `[NOTIFICATION DISPATCH] YouPI Payment Receipt -> ${recipient} | UTR: ${utr} | Amount: ₹${booking.totalAmount}`,
     );
 
     return { sent: true, recipient, utr, event: "PAYMENT_RECEIPT" };
@@ -50,13 +50,17 @@ class NotificationService {
     console.log(
       `[NOTIFICATION DISPATCH] KYC Status Update -> ${user.email} (${user.fullName}): Status is ${status}${
         reason ? ` Reason: ${reason}` : ""
-      }`
+      }`,
     );
 
-    return { sent: true, recipient: user.email, status, event: "KYC_STATUS_UPDATED" };
+    return {
+      sent: true,
+      recipient: user.email,
+      status,
+      event: "KYC_STATUS_UPDATED",
+    };
   }
 }
 
 export const notificationService = new NotificationService();
 export default notificationService;
-

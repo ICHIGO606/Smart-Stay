@@ -20,9 +20,11 @@ const createHotel = asyncHandler(async (req, res) => {
   let imageUrls = [];
   if (req.files?.images) {
     const uploadedImages = await Promise.all(
-      req.files.images.map(file => uploadOnCloudinary(file.path))
+      req.files.images.map((file) => uploadOnCloudinary(file.path)),
     );
-    imageUrls = uploadedImages.filter(img => img).map(img => img.secure_url);
+    imageUrls = uploadedImages
+      .filter((img) => img)
+      .map((img) => img.secure_url);
   }
 
   const newHotel = await Hotel.create({
@@ -60,7 +62,7 @@ const updateHotel = asyncHandler(async (req, res) => {
   // Upload new images
   if (req.files?.images) {
     const newUrls = await Promise.all(
-      req.files.images.map(file => uploadOnCloudinary(file.path))
+      req.files.images.map((file) => uploadOnCloudinary(file.path)),
     );
     hotel.images.push(...newUrls);
   }
@@ -68,7 +70,7 @@ const updateHotel = asyncHandler(async (req, res) => {
   // Add/remove images from body
   if (images?.add) hotel.images.push(...images.add);
   if (images?.remove)
-    hotel.images = hotel.images.filter(img => !images.remove.includes(img));
+    hotel.images = hotel.images.filter((img) => !images.remove.includes(img));
 
   const updatedHotel = await hotel.save();
   return res
@@ -108,8 +110,8 @@ const getAdminHotelById = asyncHandler(async (req, res) => {
         ...hotel.toObject(),
         rooms,
       },
-      "Hotel fetched successfully"
-    )
+      "Hotel fetched successfully",
+    ),
   );
 });
 
@@ -120,7 +122,7 @@ function parseRoomNumbers(input) {
   if (!input) return [];
   const str = Array.isArray(input) ? input.join(",") : String(input);
   const result = [];
-  str.split(",").forEach(part => {
+  str.split(",").forEach((part) => {
     if (part.includes("-")) {
       const [start, end] = part.split("-").map(Number);
       if (!isNaN(start) && !isNaN(end) && start <= end)
@@ -145,27 +147,35 @@ const addRoom = asyncHandler(async (req, res) => {
   const safeType = String(type);
 
   const parsedNumbers = parseRoomNumbers(roomNumbers);
-  if (parsedNumbers.length === 0) throw new ApiError(400, "Invalid room numbers");
+  if (parsedNumbers.length === 0)
+    throw new ApiError(400, "Invalid room numbers");
 
   let imageUrls = [];
   if (req.files?.images) {
-      imageUrls = await Promise.all(
-          req.files.images.map(async (file) => {
-              const result = await uploadOnCloudinary(file.path);
-              return result.secure_url;
-          })
-      );
+    imageUrls = await Promise.all(
+      req.files.images.map(async (file) => {
+        const result = await uploadOnCloudinary(file.path);
+        return result.secure_url;
+      }),
+    );
   }
 
-  let existingRoom = await Room.findOne({ hotelId: safeHotelId, type: safeType });
+  let existingRoom = await Room.findOne({
+    hotelId: safeHotelId,
+    type: safeType,
+  });
   if (existingRoom) {
-    existingRoom.roomNumbers = [...new Set([...existingRoom.roomNumbers, ...parsedNumbers])];
+    existingRoom.roomNumbers = [
+      ...new Set([...existingRoom.roomNumbers, ...parsedNumbers]),
+    ];
     existingRoom.pricePerNight = pricePerNight;
     existingRoom.maxOccupancy = maxOccupancy;
     if (amenities) existingRoom.amenities = amenities;
     if (imageUrls.length > 0) existingRoom.images.push(...imageUrls);
     await existingRoom.save();
-    return res.status(200).json(new ApiResponse(200, existingRoom, "Rooms updated successfully"));
+    return res
+      .status(200)
+      .json(new ApiResponse(200, existingRoom, "Rooms updated successfully"));
   }
 
   const newRoom = await Room.create({
@@ -178,13 +188,16 @@ const addRoom = asyncHandler(async (req, res) => {
     images: imageUrls,
   });
 
-  return res.status(201).json(new ApiResponse(201, newRoom, "New room type added"));
+  return res
+    .status(201)
+    .json(new ApiResponse(201, newRoom, "New room type added"));
 });
 
 // Update room
 const updateRoom = asyncHandler(async (req, res) => {
   const { roomId } = req.params;
-  const { type, pricePerNight, maxOccupancy, roomNumbers, amenities, images } = req.body;
+  const { type, pricePerNight, maxOccupancy, roomNumbers, amenities, images } =
+    req.body;
 
   // CodeQL Fix: Sanitize user input
   const safeRoomId = String(roomId);
@@ -199,42 +212,60 @@ const updateRoom = asyncHandler(async (req, res) => {
 
   if (roomNumbers) {
     const parsedNumbers = parseRoomNumbers(roomNumbers);
-    if (parsedNumbers.length > 0) room.roomNumbers = [...new Set([...room.roomNumbers, ...parsedNumbers])];
+    if (parsedNumbers.length > 0)
+      room.roomNumbers = [...new Set([...room.roomNumbers, ...parsedNumbers])];
   }
 
   // Upload new images
   if (req.files?.images) {
-    const newUrls = await Promise.all(req.files.images.map(file => uploadOnCloudinary(file.path)));
+    const newUrls = await Promise.all(
+      req.files.images.map((file) => uploadOnCloudinary(file.path)),
+    );
     room.images.push(...newUrls);
   }
 
   // Add/remove images from body
   if (images?.add) room.images.push(...images.add);
-  if (images?.remove) room.images = room.images.filter(img => !images.remove.includes(img));
+  if (images?.remove)
+    room.images = room.images.filter((img) => !images.remove.includes(img));
 
   const updatedRoom = await room.save();
-  return res.status(200).json(new ApiResponse(200, updatedRoom, "Room updated successfully"));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedRoom, "Room updated successfully"));
 });
 
 // Delete room
 const deleteRoom = asyncHandler(async (req, res) => {
   const { roomId } = req.params;
   const { roomNumber } = req.body;
-  
+
   // CodeQL Fix: Sanitize user input
   const safeRoomId = String(roomId);
-  
+
   const room = await Room.findById(safeRoomId);
   if (!room) throw new ApiError(404, "Room type not found");
 
   if (roomNumber) {
     const parsedNumbers = parseRoomNumbers(roomNumber);
-    room.roomNumbers = room.roomNumbers.filter(num => !parsedNumbers.includes(num));
+    room.roomNumbers = room.roomNumbers.filter(
+      (num) => !parsedNumbers.includes(num),
+    );
     await room.save();
-    return res.status(200).json(new ApiResponse(200, room, `Removed room numbers ${parsedNumbers.join(", ")}`));
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          room,
+          `Removed room numbers ${parsedNumbers.join(", ")}`,
+        ),
+      );
   } else {
     await room.deleteOne();
-    return res.status(200).json(new ApiResponse(200, {}, "Room type deleted successfully"));
+    return res
+      .status(200)
+      .json(new ApiResponse(200, {}, "Room type deleted successfully"));
   }
 });
 
@@ -245,7 +276,12 @@ const getAdminHotels = asyncHandler(async (req, res) => {
   let hotels = await Hotel.find({ adminId });
 
   // If none found for this specific adminId, and user has admin role (or sadmin/admin), check for all hotels
-  if ((!hotels || hotels.length === 0) && (req.user.username === "sadmin" || req.user.username === "admin" || req.user.role === "admin")) {
+  if (
+    (!hotels || hotels.length === 0) &&
+    (req.user.username === "sadmin" ||
+      req.user.username === "admin" ||
+      req.user.role === "admin")
+  ) {
     const allHotels = await Hotel.find({});
     if (allHotels && allHotels.length > 0) {
       hotels = allHotels;
@@ -265,9 +301,9 @@ const getAdminHotels = asyncHandler(async (req, res) => {
       const rooms = await Room.find({ hotelId: hotel._id });
       return {
         ...hotel.toObject(),
-        rooms: rooms
+        rooms: rooms,
       };
-    })
+    }),
   );
 
   return res
@@ -349,15 +385,16 @@ const getHotelRoomsStatus = asyncHandler(async (req, res) => {
       const booking = bookings.find(
         (b) =>
           b.roomId.toString() === room._id.toString() &&
-          b.roomNumbers.includes(roomNumber)
+          b.roomNumbers.includes(roomNumber),
       );
 
       // Check operational lifecycle status
       const opEntry = (room.operationalStatuses || []).find(
-        (op) => Number(op.roomNumber) === Number(roomNumber)
+        (op) => Number(op.roomNumber) === Number(roomNumber),
       );
 
-      const operationalStatus = opEntry?.status || (booking ? "Reserved" : "Available");
+      const operationalStatus =
+        opEntry?.status || (booking ? "Reserved" : "Available");
 
       floorWiseRooms[floor].push({
         roomId: room._id,
@@ -365,7 +402,11 @@ const getHotelRoomsStatus = asyncHandler(async (req, res) => {
         pricePerNight: room.pricePerNight,
         maxOccupancy: room.maxOccupancy,
         roomNumber,
-        status: booking ? "Booked" : (operationalStatus === "Available" ? "Available" : operationalStatus),
+        status: booking
+          ? "Booked"
+          : operationalStatus === "Available"
+            ? "Available"
+            : operationalStatus,
         operationalStatus,
         notes: opEntry?.notes || "",
         updatedAt: opEntry?.updatedAt || null,
@@ -397,12 +438,14 @@ const getHotelRoomsStatus = asyncHandler(async (req, res) => {
 
 const getHotelRooms = asyncHandler(async (req, res) => {
   const { hotelId } = req.params;
-  
+
   // CodeQL Fix: Sanitize user input
   const safeHotelId = String(hotelId);
-  
+
   const rooms = await Room.find({ hotelId: safeHotelId });
-  return res.status(200).json(new ApiResponse(200, rooms, "Rooms fetched successfully"));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, rooms, "Rooms fetched successfully"));
 });
 
 // Update operational lifecycle status of a room (Pillar 3)
@@ -414,9 +457,19 @@ const updateRoomOperationalStatus = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Room number and operational status are required");
   }
 
-  const validStatuses = ["Available", "Reserved", "Occupied", "Dirty", "Cleaning", "Maintenance"];
+  const validStatuses = [
+    "Available",
+    "Reserved",
+    "Occupied",
+    "Dirty",
+    "Cleaning",
+    "Maintenance",
+  ];
   if (!validStatuses.includes(status)) {
-    throw new ApiError(400, `Invalid operational status. Must be one of: ${validStatuses.join(", ")}`);
+    throw new ApiError(
+      400,
+      `Invalid operational status. Must be one of: ${validStatuses.join(", ")}`,
+    );
   }
 
   const safeHotelId = String(hotelId);
@@ -426,20 +479,28 @@ const updateRoomOperationalStatus = asyncHandler(async (req, res) => {
   if (!room) throw new ApiError(404, "Room not found for this hotel");
 
   if (!room.roomNumbers.includes(Number(roomNumber))) {
-    throw new ApiError(400, `Room number ${roomNumber} does not exist in room type ${room.type}`);
+    throw new ApiError(
+      400,
+      `Room number ${roomNumber} does not exist in room type ${room.type}`,
+    );
   }
 
   // Update or append operational status
   if (!room.operationalStatuses) room.operationalStatuses = [];
 
   const opIndex = room.operationalStatuses.findIndex(
-    (item) => Number(item.roomNumber) === Number(roomNumber)
+    (item) => Number(item.roomNumber) === Number(roomNumber),
   );
 
   const updatedEntry = {
     roomNumber: Number(roomNumber),
     status,
-    notes: notes !== undefined ? notes : (opIndex >= 0 ? room.operationalStatuses[opIndex].notes : ""),
+    notes:
+      notes !== undefined
+        ? notes
+        : opIndex >= 0
+          ? room.operationalStatuses[opIndex].notes
+          : "",
     updatedAt: new Date(),
   };
 
@@ -461,9 +522,15 @@ const updateRoomOperationalStatus = asyncHandler(async (req, res) => {
     updatedAt: updatedEntry.updatedAt,
   });
 
-  return res.status(200).json(
-    new ApiResponse(200, updatedEntry, `Room ${roomNumber} status updated to ${status}`)
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        updatedEntry,
+        `Room ${roomNumber} status updated to ${status}`,
+      ),
+    );
 });
 
 // Stream real-time events via Server-Sent Events (SSE) (Pillar 4)
@@ -532,17 +599,24 @@ const exportBookingsCsv = asyncHandler(async (req, res) => {
     b.createdAt ? new Date(b.createdAt).toISOString() : "",
   ]);
 
-  const csvContent = [headers.map(escapeCsv).join(","), ...rows.map((row) => row.map(escapeCsv).join(","))].join("\n");
+  const csvContent = [
+    headers.map(escapeCsv).join(","),
+    ...rows.map((row) => row.map(escapeCsv).join(",")),
+  ].join("\n");
 
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
-  res.setHeader("Content-Disposition", `attachment; filename="smartstay-bookings-${Date.now()}.csv"`);
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="smartstay-bookings-${Date.now()}.csv"`,
+  );
   return res.status(200).send(csvContent);
 });
 
 // Admin Platform & Hospitality Analytics with ADR & RevPAR (Pillar 5)
 const getAdminAnalyticsStats = asyncHandler(async (req, res) => {
   const adminId = req.user._id;
-  const isSuper = req.user.username === "sadmin" || req.user.username === "admin";
+  const isSuper =
+    req.user.username === "sadmin" || req.user.username === "admin";
 
   let hotelFilter = {};
   if (!isSuper) {
@@ -552,28 +626,41 @@ const getAdminAnalyticsStats = asyncHandler(async (req, res) => {
 
   const allBookings = await Booking.find(hotelFilter).lean();
   const confirmedBookings = allBookings.filter(
-    (b) => b.bookingStatus === "Confirmed" || b.paymentStatus === "Completed"
+    (b) => b.bookingStatus === "Confirmed" || b.paymentStatus === "Completed",
   );
 
-  const totalRevenue = confirmedBookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+  const totalRevenue = confirmedBookings.reduce(
+    (sum, b) => sum + (b.totalAmount || 0),
+    0,
+  );
 
   // Calculate occupied room nights
   let totalOccupiedNights = 0;
   confirmedBookings.forEach((b) => {
     const checkIn = new Date(b.checkInDate);
     const checkOut = new Date(b.checkOutDate);
-    const nights = Math.max(1, Math.round((checkOut - checkIn) / (1000 * 60 * 60 * 24)));
+    const nights = Math.max(
+      1,
+      Math.round((checkOut - checkIn) / (1000 * 60 * 60 * 24)),
+    );
     const roomsCount = b.roomNumbers?.length || 1;
     totalOccupiedNights += nights * roomsCount;
   });
 
   // ADR: Average Daily Rate = Total Room Revenue / Occupied Room Nights
-  const adr = totalOccupiedNights > 0 ? Math.round(totalRevenue / totalOccupiedNights) : 0;
+  const adr =
+    totalOccupiedNights > 0
+      ? Math.round(totalRevenue / totalOccupiedNights)
+      : 0;
 
   // RevPAR: Revenue Per Available Room = Total Revenue / Total Room Inventory
   const rooms = await Room.find(isSuper ? {} : hotelFilter).lean();
-  const totalRoomUnits = rooms.reduce((sum, r) => sum + (r.roomNumbers?.length || 1), 0);
-  const revPar = totalRoomUnits > 0 ? Math.round(totalRevenue / totalRoomUnits) : 0;
+  const totalRoomUnits = rooms.reduce(
+    (sum, r) => sum + (r.roomNumbers?.length || 1),
+    0,
+  );
+  const revPar =
+    totalRoomUnits > 0 ? Math.round(totalRevenue / totalRoomUnits) : 0;
 
   return res.status(200).json(
     new ApiResponse(
@@ -581,23 +668,28 @@ const getAdminAnalyticsStats = asyncHandler(async (req, res) => {
       {
         totalBookings: allBookings.length,
         confirmedBookings: confirmedBookings.length,
-        pendingBookings: allBookings.filter((b) => b.bookingStatus === "Pending").length,
-        cancelledBookings: allBookings.filter((b) => b.bookingStatus === "Cancelled").length,
+        pendingBookings: allBookings.filter(
+          (b) => b.bookingStatus === "Pending",
+        ).length,
+        cancelledBookings: allBookings.filter(
+          (b) => b.bookingStatus === "Cancelled",
+        ).length,
         totalRevenue,
         totalOccupiedNights,
         adr,
         revPar,
         totalRoomUnits,
       },
-      "Hospitality analytics metrics calculated successfully"
-    )
+      "Hospitality analytics metrics calculated successfully",
+    ),
   );
 });
 
 // Front-desk QR check-in & room occupation (Option 1)
 const checkInGuestByToken = asyncHandler(async (req, res) => {
   const { token, notes } = req.body;
-  if (!token) throw new ApiError(400, "Voucher token or reservation code is required");
+  if (!token)
+    throw new ApiError(400, "Voucher token or reservation code is required");
 
   const safeToken = String(token).trim().toUpperCase();
 
@@ -614,12 +706,18 @@ const checkInGuestByToken = asyncHandler(async (req, res) => {
     return (
       data.verificationToken === safeToken ||
       data.checkInCode === safeToken ||
-      b._id.toString().toUpperCase().endsWith(safeToken.replace(/[^A-Z0-9]/g, ""))
+      b._id
+        .toString()
+        .toUpperCase()
+        .endsWith(safeToken.replace(/[^A-Z0-9]/g, ""))
     );
   });
 
   if (!booking) {
-    throw new ApiError(404, `No active reservation found matching token "${safeToken}"`);
+    throw new ApiError(
+      404,
+      `No active reservation found matching token "${safeToken}"`,
+    );
   }
 
   // Authorize: Admin must be superadmin or own this hotel
@@ -628,7 +726,10 @@ const checkInGuestByToken = asyncHandler(async (req, res) => {
     req.user.username !== "sadmin" &&
     req.user.username !== "admin"
   ) {
-    throw new ApiError(403, "Not authorized to check in guests for this property");
+    throw new ApiError(
+      403,
+      "Not authorized to check in guests for this property",
+    );
   }
 
   booking.bookingStatus = "Confirmed";
@@ -646,10 +747,11 @@ const checkInGuestByToken = asyncHandler(async (req, res) => {
 
       if (roomNumberAssigned) {
         const opIndex = room.operationalStatuses.findIndex(
-          (o) => Number(o.roomNumber) === Number(roomNumberAssigned)
+          (o) => Number(o.roomNumber) === Number(roomNumberAssigned),
         );
 
-        const checkInNote = notes || `Checked in via Voucher Pass № ${safeToken}`;
+        const checkInNote =
+          notes || `Checked in via Voucher Pass № ${safeToken}`;
         const entry = {
           roomNumber: Number(roomNumberAssigned),
           status: "Occupied",
@@ -695,8 +797,8 @@ const checkInGuestByToken = asyncHandler(async (req, res) => {
         operationalStatus: "Occupied",
         voucherData,
       },
-      `Guest ${booking.user?.fullName || "Guest"} checked in successfully. Room ${roomNumberAssigned || ""} is now Occupied.`
-    )
+      `Guest ${booking.user?.fullName || "Guest"} checked in successfully. Room ${roomNumberAssigned || ""} is now Occupied.`,
+    ),
   );
 });
 
@@ -716,5 +818,5 @@ export {
   streamHotelLiveUpdates,
   exportBookingsCsv,
   getAdminAnalyticsStats,
-  checkInGuestByToken
+  checkInGuestByToken,
 };

@@ -9,7 +9,10 @@ import {
   verifyVoucherToken,
 } from "../controllers/booking.controllers.js";
 import { verifyJWT, isAdmin } from "../middlewares/auth.middleware.js";
-import { apiLimiter, strictLimiter } from "../middlewares/rateLimit.middleware.js";
+import {
+  apiLimiter,
+  strictLimiter,
+} from "../middlewares/rateLimit.middleware.js";
 
 const router = Router();
 
@@ -25,6 +28,12 @@ router.get("/verify-token/:token", verifyJWT, verifyVoucherToken);
 
 // Admin routes
 router.get("/", verifyJWT, isAdmin, getAllBookings);
-router.put("/:bookingId", strictLimiter, verifyJWT, isAdmin, updateBookingStatus);
+router.put(
+  "/:bookingId",
+  strictLimiter,
+  verifyJWT,
+  isAdmin,
+  updateBookingStatus,
+);
 
 export default router;

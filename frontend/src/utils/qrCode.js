@@ -50,7 +50,7 @@ QRPolynomial.prototype = {
     for (let i = 0; i < this.getLength(); i++) {
       for (let j = 0; j < e.getLength(); j++) {
         num[i + j] ^= QRMath.gexp(
-          QRMath.glog(this.get(i)) + QRMath.glog(e.get(j))
+          QRMath.glog(this.get(i)) + QRMath.glog(e.get(j)),
         );
       }
     }
@@ -81,25 +81,55 @@ function getErrorCorrectPolynomial(errorCorrectLength) {
 const QR_RS_BLOCK_TABLE = [
   // L, M, Q, H for version 1 to 10
   // Version 1
-  [1, 26, 19], [1, 26, 16], [1, 26, 13], [1, 26, 9],
+  [1, 26, 19],
+  [1, 26, 16],
+  [1, 26, 13],
+  [1, 26, 9],
   // Version 2
-  [1, 44, 34], [1, 44, 28], [1, 44, 22], [1, 44, 16],
+  [1, 44, 34],
+  [1, 44, 28],
+  [1, 44, 22],
+  [1, 44, 16],
   // Version 3
-  [1, 70, 55], [1, 70, 44], [2, 35, 17], [2, 35, 13],
+  [1, 70, 55],
+  [1, 70, 44],
+  [2, 35, 17],
+  [2, 35, 13],
   // Version 4
-  [1, 100, 80], [2, 50, 32], [2, 50, 24], [4, 25, 9],
+  [1, 100, 80],
+  [2, 50, 32],
+  [2, 50, 24],
+  [4, 25, 9],
   // Version 5
-  [1, 134, 108], [2, 67, 43], [2, 33, 15, 2, 34, 16], [2, 33, 11, 2, 34, 12],
+  [1, 134, 108],
+  [2, 67, 43],
+  [2, 33, 15, 2, 34, 16],
+  [2, 33, 11, 2, 34, 12],
   // Version 6
-  [2, 86, 68], [4, 43, 27], [4, 43, 19], [4, 43, 15],
+  [2, 86, 68],
+  [4, 43, 27],
+  [4, 43, 19],
+  [4, 43, 15],
   // Version 7
-  [2, 98, 78], [4, 49, 31], [2, 32, 14, 4, 33, 15], [4, 39, 13, 1, 40, 14],
+  [2, 98, 78],
+  [4, 49, 31],
+  [2, 32, 14, 4, 33, 15],
+  [4, 39, 13, 1, 40, 14],
   // Version 8
-  [2, 121, 97], [2, 60, 38, 2, 61, 39], [4, 40, 18, 2, 41, 19], [4, 40, 14, 2, 41, 15],
+  [2, 121, 97],
+  [2, 60, 38, 2, 61, 39],
+  [4, 40, 18, 2, 41, 19],
+  [4, 40, 14, 2, 41, 15],
   // Version 9
-  [2, 146, 116], [3, 58, 36, 2, 59, 37], [4, 36, 16, 4, 37, 17], [4, 36, 12, 4, 37, 13],
+  [2, 146, 116],
+  [3, 58, 36, 2, 59, 37],
+  [4, 36, 16, 4, 37, 17],
+  [4, 36, 12, 4, 37, 13],
   // Version 10
-  [2, 86, 68, 2, 87, 69], [4, 69, 43, 1, 70, 44], [6, 43, 19, 2, 44, 20], [6, 43, 15, 2, 44, 16],
+  [2, 86, 68, 2, 87, 69],
+  [4, 69, 43, 1, 70, 44],
+  [6, 43, 19, 2, 44, 20],
+  [6, 43, 15, 2, 44, 16],
 ];
 
 function getRSBlocks(typeNumber, errorCorrectionLevel) {
@@ -205,7 +235,7 @@ QRCodeModel.prototype = {
       this.dataCache = QRCodeModel.createData(
         this.typeNumber,
         this.errorCorrectionLevel,
-        this.dataList
+        this.dataList,
       );
     }
     this.mapData(this.dataCache, maskPattern);
@@ -336,21 +366,37 @@ const QR_PATTERN_POSITION_TABLE = [
 ];
 
 const QR_MASK_FUNCTIONS = [
-  function (i, j) { return (i + j) % 2 === 0; },
-  function (i) { return i % 2 === 0; },
-  function (i, j) { return j % 3 === 0; },
-  function (i, j) { return (i + j) % 3 === 0; },
-  function (i, j) { return (Math.floor(i / 2) + Math.floor(j / 3)) % 2 === 0; },
-  function (i, j) { return ((i * j) % 2) + ((i * j) % 3) === 0; },
-  function (i, j) { return (((i * j) % 2) + ((i * j) % 3)) % 2 === 0; },
-  function (i, j) { return (((i * j) % 3) + ((i + j) % 2)) % 2 === 0; },
+  function (i, j) {
+    return (i + j) % 2 === 0;
+  },
+  function (i) {
+    return i % 2 === 0;
+  },
+  function (i, j) {
+    return j % 3 === 0;
+  },
+  function (i, j) {
+    return (i + j) % 3 === 0;
+  },
+  function (i, j) {
+    return (Math.floor(i / 2) + Math.floor(j / 3)) % 2 === 0;
+  },
+  function (i, j) {
+    return ((i * j) % 2) + ((i * j) % 3) === 0;
+  },
+  function (i, j) {
+    return (((i * j) % 2) + ((i * j) % 3)) % 2 === 0;
+  },
+  function (i, j) {
+    return (((i * j) % 3) + ((i + j) % 2)) % 2 === 0;
+  },
 ];
 
 const QR_FORMAT_INFO_TABLE = [
-  0x5412, 0x5125, 0x5e7c, 0x5b4b, 0x45f9, 0x40ce, 0x4f97, 0x4aa0,
-  0x77c4, 0x72f3, 0x7daa, 0x789d, 0x662f, 0x6318, 0x6c41, 0x6976,
-  0x1689, 0x13be, 0x1ce7, 0x19d0, 0x0762, 0x0255, 0x0d0c, 0x083b,
-  0x355f, 0x3068, 0x3f31, 0x3a06, 0x24b4, 0x2183, 0x2eda, 0x2bed,
+  0x5412, 0x5125, 0x5e7c, 0x5b4b, 0x45f9, 0x40ce, 0x4f97, 0x4aa0, 0x77c4,
+  0x72f3, 0x7daa, 0x789d, 0x662f, 0x6318, 0x6c41, 0x6976, 0x1689, 0x13be,
+  0x1ce7, 0x19d0, 0x0762, 0x0255, 0x0d0c, 0x083b, 0x355f, 0x3068, 0x3f31,
+  0x3a06, 0x24b4, 0x2183, 0x2eda, 0x2bed,
 ];
 
 QRCodeModel.createData = function (typeNumber, errorCorrectionLevel, dataList) {
@@ -364,7 +410,8 @@ QRCodeModel.createData = function (typeNumber, errorCorrectionLevel, dataList) {
   }
 
   let totalDataCount = 0;
-  for (let i = 0; i < rsBlocks.length; i++) totalDataCount += rsBlocks[i].dataCount;
+  for (let i = 0; i < rsBlocks.length; i++)
+    totalDataCount += rsBlocks[i].dataCount;
 
   if (buffer.length + 4 <= totalDataCount * 8) buffer.put(0, 4);
   while (buffer.length % 8 !== 0) buffer.putBit(false);
@@ -409,7 +456,8 @@ QRCodeModel.createBytes = function (buffer, rsBlocks) {
   }
 
   let totalCodeCount = 0;
-  for (let i = 0; i < rsBlocks.length; i++) totalCodeCount += rsBlocks[i].totalCount;
+  for (let i = 0; i < rsBlocks.length; i++)
+    totalCodeCount += rsBlocks[i].totalCount;
 
   const data = new Array(totalCodeCount);
   let index = 0;
@@ -432,7 +480,8 @@ QRCodeModel.createBytes = function (buffer, rsBlocks) {
 /**
  * Determine smallest typeNumber that fits the data string
  */
-function getOptimalTypeNumber(textLength, ecLevel = 1) { // 1 = M
+function getOptimalTypeNumber(textLength, ecLevel = 1) {
+  // 1 = M
   // Rough byte capacity table for M:
   // V1: 14, V2: 26, V3: 42, V4: 61, V5: 84, V6: 106, V7: 122, V8: 152, V9: 180, V10: 213
   const limits = [0, 14, 26, 42, 61, 84, 106, 122, 152, 180, 213];
@@ -467,4 +516,3 @@ export function generateQRCodePath(text) {
     return { path: "", count: 0 };
   }
 }
-

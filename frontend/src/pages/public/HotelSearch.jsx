@@ -1,8 +1,19 @@
-import { useState, useEffect } from 'react';
-import { useLocation, Link } from 'react-router';
-import { hotelService } from '../../services/hotelService';
-import { formatCurrency } from '../../utils/formatters';
-import { Star, MapPin, SlidersHorizontal, ArrowRight, ShieldCheck, Wifi, Waves, Car, Utensils, Dumbbell } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useLocation, Link } from "react-router";
+import { hotelService } from "../../services/hotelService";
+import { formatCurrency } from "../../utils/formatters";
+import {
+  Star,
+  MapPin,
+  SlidersHorizontal,
+  ArrowRight,
+  ShieldCheck,
+  Wifi,
+  Waves,
+  Car,
+  Utensils,
+  Dumbbell,
+} from "lucide-react";
 
 const HotelSearch = () => {
   const location = useLocation();
@@ -13,7 +24,7 @@ const HotelSearch = () => {
   const [filters, setFilters] = useState({
     priceRange: [0, 25000],
     starRating: [],
-    amenities: []
+    amenities: [],
   });
 
   useEffect(() => {
@@ -27,15 +38,15 @@ const HotelSearch = () => {
         if (searchParams.children) queryParams.children = searchParams.children;
 
         const response = await hotelService.searchHotels(
-          searchParams.location || '',
-          queryParams
+          searchParams.location || "",
+          queryParams,
         );
-        
+
         if (response && response.data) {
           setHotels(response.data);
         }
       } catch (error) {
-        console.error('Error fetching hotels:', error);
+        console.error("Error fetching hotels:", error);
         setHotels([]);
       } finally {
         setLoading(false);
@@ -47,35 +58,38 @@ const HotelSearch = () => {
 
   useEffect(() => {
     let result = hotels;
-    
-    result = result.filter(hotel => {
-      const minPrice = hotel.rooms && hotel.rooms.length > 0 
-        ? Math.min(...hotel.rooms.map(room => room.pricePerNight || 0))
-        : 0;
-      return minPrice >= filters.priceRange[0] && minPrice <= filters.priceRange[1];
+
+    result = result.filter((hotel) => {
+      const minPrice =
+        hotel.rooms && hotel.rooms.length > 0
+          ? Math.min(...hotel.rooms.map((room) => room.pricePerNight || 0))
+          : 0;
+      return (
+        minPrice >= filters.priceRange[0] && minPrice <= filters.priceRange[1]
+      );
     });
-    
+
     if (filters.starRating.length > 0) {
-      result = result.filter(hotel => 
-        filters.starRating.includes(hotel.starRating)
+      result = result.filter((hotel) =>
+        filters.starRating.includes(hotel.starRating),
       );
     }
-    
+
     if (filters.amenities.length > 0) {
-      result = result.filter(hotel => 
-        filters.amenities.every(amenity => 
-          hotel.amenities && hotel.amenities.includes(amenity)
-        )
+      result = result.filter((hotel) =>
+        filters.amenities.every(
+          (amenity) => hotel.amenities && hotel.amenities.includes(amenity),
+        ),
       );
     }
-    
+
     setFilteredHotels(result);
   }, [hotels, filters]);
 
   const handleFilterChange = (type, value) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      [type]: value
+      [type]: value,
     }));
   };
 
@@ -86,7 +100,11 @@ const HotelSearch = () => {
           <Star
             key={i}
             size={13}
-            className={i <= rating ? "fill-amber-700 text-amber-700" : "fill-stone-200 text-stone-200"}
+            className={
+              i <= rating
+                ? "fill-amber-700 text-amber-700"
+                : "fill-stone-200 text-stone-200"
+            }
           />
         ))}
       </div>
@@ -110,16 +128,17 @@ const HotelSearch = () => {
             Directory & availability
           </p>
           <h1 className="font-serif text-3xl text-ink-primary font-normal">
-            {searchParams.location 
-              ? `Accommodations in ${searchParams.location}` 
-              : 'All properties'}
+            {searchParams.location
+              ? `Accommodations in ${searchParams.location}`
+              : "All properties"}
           </h1>
         </div>
         <p className="text-xs font-mono text-ink-muted tabular-nums">
-          {filteredHotels.length} {filteredHotels.length === 1 ? 'property' : 'properties'} cataloged
+          {filteredHotels.length}{" "}
+          {filteredHotels.length === 1 ? "property" : "properties"} cataloged
         </p>
       </div>
-      
+
       <div className="flex flex-col md:flex-row gap-8 items-start">
         {/* Filters Sidebar */}
         <aside className="w-full md:w-64 flex-shrink-0">
@@ -129,21 +148,31 @@ const HotelSearch = () => {
                 <SlidersHorizontal size={13} />
                 <span>Filters</span>
               </h2>
-              {(filters.starRating.length > 0 || filters.amenities.length > 0 || filters.priceRange[1] < 25000) && (
+              {(filters.starRating.length > 0 ||
+                filters.amenities.length > 0 ||
+                filters.priceRange[1] < 25000) && (
                 <button
-                  onClick={() => setFilters({ priceRange: [0, 25000], starRating: [], amenities: [] })}
+                  onClick={() =>
+                    setFilters({
+                      priceRange: [0, 25000],
+                      starRating: [],
+                      amenities: [],
+                    })
+                  }
                   className="text-[11px] font-mono text-accent hover:underline"
                 >
                   Reset
                 </button>
               )}
             </div>
-            
+
             {/* Price Range */}
             <div>
               <div className="flex items-center justify-between text-xs text-ink-secondary mb-2 font-mono tabular-nums">
                 <span>Maximum rate</span>
-                <span className="font-medium text-ink-primary">{formatCurrency(filters.priceRange[1])}</span>
+                <span className="font-medium text-ink-primary">
+                  {formatCurrency(filters.priceRange[1])}
+                </span>
               </div>
               <input
                 type="range"
@@ -151,7 +180,12 @@ const HotelSearch = () => {
                 max="25000"
                 step="500"
                 value={filters.priceRange[1]}
-                onChange={(e) => handleFilterChange('priceRange', [filters.priceRange[0], parseInt(e.target.value)])}
+                onChange={(e) =>
+                  handleFilterChange("priceRange", [
+                    filters.priceRange[0],
+                    parseInt(e.target.value),
+                  ])
+                }
                 className="w-full accent-stone-900 bg-stone-200 h-1 rounded-full cursor-pointer"
               />
               <div className="flex justify-between text-[10px] font-mono text-ink-muted mt-1 tabular-nums">
@@ -159,105 +193,140 @@ const HotelSearch = () => {
                 <span>₹25,000+</span>
               </div>
             </div>
-            
+
             {/* Star Rating */}
             <div className="pt-4 border-t border-stone-100">
               <h3 className="text-xs font-mono uppercase tracking-wider text-ink-muted mb-3">
                 Rating
               </h3>
               <div className="space-y-2">
-                {[5, 4, 3].map(star => (
-                  <label key={star} className="flex items-center gap-2.5 text-xs text-ink-secondary cursor-pointer hover:text-ink-primary">
+                {[5, 4, 3].map((star) => (
+                  <label
+                    key={star}
+                    className="flex items-center gap-2.5 text-xs text-ink-secondary cursor-pointer hover:text-ink-primary"
+                  >
                     <input
                       type="checkbox"
                       checked={filters.starRating.includes(star)}
                       onChange={() => {
                         const newRatings = filters.starRating.includes(star)
-                          ? filters.starRating.filter(s => s !== star)
+                          ? filters.starRating.filter((s) => s !== star)
                           : [...filters.starRating, star];
-                        handleFilterChange('starRating', newRatings);
+                        handleFilterChange("starRating", newRatings);
                       }}
                       className="rounded border-stone-300 text-stone-900 focus:ring-0"
                     />
                     <div className="flex items-center gap-1.5">
                       {renderStars(star)}
-                      <span className="text-[11px] font-mono text-ink-muted tabular-nums">({star} star)</span>
+                      <span className="text-[11px] font-mono text-ink-muted tabular-nums">
+                        ({star} star)
+                      </span>
                     </div>
                   </label>
                 ))}
               </div>
             </div>
-            
+
             {/* Amenities */}
             <div className="pt-4 border-t border-stone-100">
               <h3 className="text-xs font-mono uppercase tracking-wider text-ink-muted mb-3">
                 Amenities
               </h3>
               <div className="space-y-2">
-                {['WiFi', 'Pool', 'Parking', 'Restaurant', 'Gym'].map(amenity => (
-                  <label key={amenity} className="flex items-center gap-2.5 text-xs text-ink-secondary cursor-pointer hover:text-ink-primary">
-                    <input
-                      type="checkbox"
-                      checked={filters.amenities.includes(amenity)}
-                      onChange={() => {
-                        const newAmenities = filters.amenities.includes(amenity)
-                          ? filters.amenities.filter(a => a !== amenity)
-                          : [...filters.amenities, amenity];
-                        handleFilterChange('amenities', newAmenities);
-                      }}
-                      className="rounded border-stone-300 text-stone-900 focus:ring-0"
-                    />
-                    <span className="flex items-center gap-1.5">
-                      {amenityIcons[amenity]}
-                      <span>{amenity}</span>
-                    </span>
-                  </label>
-                ))}
+                {["WiFi", "Pool", "Parking", "Restaurant", "Gym"].map(
+                  (amenity) => (
+                    <label
+                      key={amenity}
+                      className="flex items-center gap-2.5 text-xs text-ink-secondary cursor-pointer hover:text-ink-primary"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={filters.amenities.includes(amenity)}
+                        onChange={() => {
+                          const newAmenities = filters.amenities.includes(
+                            amenity,
+                          )
+                            ? filters.amenities.filter((a) => a !== amenity)
+                            : [...filters.amenities, amenity];
+                          handleFilterChange("amenities", newAmenities);
+                        }}
+                        className="rounded border-stone-300 text-stone-900 focus:ring-0"
+                      />
+                      <span className="flex items-center gap-1.5">
+                        {amenityIcons[amenity]}
+                        <span>{amenity}</span>
+                      </span>
+                    </label>
+                  ),
+                )}
               </div>
             </div>
           </div>
         </aside>
-        
+
         {/* Hotel Results */}
         <main className="w-full md:flex-1">
           {loading ? (
             <div className="flex flex-col justify-center items-center h-64 gap-3">
               <div className="animate-spin rounded-full h-8 w-8 border-2 border-stone-900 border-t-transparent"></div>
-              <p className="text-xs font-mono text-ink-muted">Reading property ledger...</p>
+              <p className="text-xs font-mono text-ink-muted">
+                Reading property ledger...
+              </p>
             </div>
           ) : (
             <div className="space-y-4">
               {filteredHotels.length === 0 ? (
                 <div className="card-base text-center py-16 px-6">
-                  <p className="text-sm font-medium text-ink-primary">No properties match these criteria</p>
-                  <p className="text-xs text-ink-muted mt-1">Try expanding maximum rate or removing specific amenity filters.</p>
-                  <button 
-                    onClick={() => setFilters({ priceRange: [0, 1000], starRating: [], amenities: [] })}
+                  <p className="text-sm font-medium text-ink-primary">
+                    No properties match these criteria
+                  </p>
+                  <p className="text-xs text-ink-muted mt-1">
+                    Try expanding maximum rate or removing specific amenity
+                    filters.
+                  </p>
+                  <button
+                    onClick={() =>
+                      setFilters({
+                        priceRange: [0, 1000],
+                        starRating: [],
+                        amenities: [],
+                      })
+                    }
                     className="mt-4 btn-secondary text-xs"
                   >
                     Clear all filters
                   </button>
                 </div>
               ) : (
-                filteredHotels.map(hotel => {
-                  const lowestPrice = hotel.lowestPrice > 0 
-                    ? hotel.lowestPrice 
-                    : (hotel.rooms && hotel.rooms.length > 0 ? Math.min(...hotel.rooms.map(r => r.pricePerNight || 0)) : null);
+                filteredHotels.map((hotel) => {
+                  const lowestPrice =
+                    hotel.lowestPrice > 0
+                      ? hotel.lowestPrice
+                      : hotel.rooms && hotel.rooms.length > 0
+                        ? Math.min(
+                            ...hotel.rooms.map((r) => r.pricePerNight || 0),
+                          )
+                        : null;
 
                   return (
-                    <div 
-                      key={hotel._id} 
+                    <div
+                      key={hotel._id}
                       className="card-base overflow-hidden flex flex-col sm:flex-row hover:border-stone-300 transition-colors group"
                     >
                       {/* Image Thumbnail */}
                       <div className="sm:w-72 h-52 sm:h-auto relative bg-stone-100 flex-shrink-0">
-                        <img 
-                          src={hotel.images && hotel.images.length > 0 ? hotel.images[0] : 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1200&auto=format&fit=crop'} 
-                          alt={hotel.name} 
+                        <img
+                          src={
+                            hotel.images && hotel.images.length > 0
+                              ? hotel.images[0]
+                              : "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1200&auto=format&fit=crop"
+                          }
+                          alt={hotel.name}
                           className="w-full h-full object-cover"
                         />
                         <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded-tag text-[10px] font-mono text-ink-primary">
-                          № {hotel._id ? hotel._id.slice(-3).toUpperCase() : '01'}
+                          №{" "}
+                          {hotel._id ? hotel._id.slice(-3).toUpperCase() : "01"}
                         </div>
                       </div>
 
@@ -278,17 +347,20 @@ const HotelSearch = () => {
                           </div>
 
                           <p className="text-xs text-ink-secondary line-clamp-2 leading-relaxed mb-4">
-                            {hotel.description || 'Architectural property offering tailored guest services, acoustic quiet rooms, and curated dining.'}
+                            {hotel.description ||
+                              "Architectural property offering tailored guest services, acoustic quiet rooms, and curated dining."}
                           </p>
 
                           {/* Amenity tags */}
                           {hotel.amenities && hotel.amenities.length > 0 && (
                             <div className="flex flex-wrap gap-1.5 mb-4">
-                              {hotel.amenities.slice(0, 4).map((amenity, idx) => (
-                                <span key={idx} className="tag-signature">
-                                  {amenity}
-                                </span>
-                              ))}
+                              {hotel.amenities
+                                .slice(0, 4)
+                                .map((amenity, idx) => (
+                                  <span key={idx} className="tag-signature">
+                                    {amenity}
+                                  </span>
+                                ))}
                             </div>
                           )}
                         </div>
@@ -297,13 +369,21 @@ const HotelSearch = () => {
                         <div className="flex items-center justify-between pt-3 border-t border-stone-100">
                           <div className="tabular-nums">
                             <span className="text-xs text-ink-muted block leading-none mb-1">
-                              {hotel.nights > 1 ? `Stay for ${hotel.nights} nights` : 'From'}
+                              {hotel.nights > 1
+                                ? `Stay for ${hotel.nights} nights`
+                                : "From"}
                             </span>
                             <div className="flex items-baseline gap-1.5">
                               <span className="text-lg font-semibold text-ink-primary">
-                                {lowestPrice ? formatCurrency(lowestPrice) : 'Inquire'}
+                                {lowestPrice
+                                  ? formatCurrency(lowestPrice)
+                                  : "Inquire"}
                               </span>
-                              {lowestPrice && <span className="text-xs text-ink-muted font-mono">/ night</span>}
+                              {lowestPrice && (
+                                <span className="text-xs text-ink-muted font-mono">
+                                  / night
+                                </span>
+                              )}
                               {hotel.totalStayPrice && hotel.nights > 1 && (
                                 <span className="text-xs text-ink-muted font-mono">
                                   ({formatCurrency(hotel.totalStayPrice)} total)
@@ -313,13 +393,14 @@ const HotelSearch = () => {
                           </div>
 
                           <div className="flex items-center gap-2">
-                            {hotel.isAvailableForDates && searchParams.checkIn && (
-                              <span className="hidden sm:inline-block text-[11px] font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-tag border border-emerald-200">
-                                Available
-                              </span>
-                            )}
-                            <Link 
-                              to={`/hotels/${hotel._id}`} 
+                            {hotel.isAvailableForDates &&
+                              searchParams.checkIn && (
+                                <span className="hidden sm:inline-block text-[11px] font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-tag border border-emerald-200">
+                                  Available
+                                </span>
+                              )}
+                            <Link
+                              to={`/hotels/${hotel._id}`}
                               state={searchParams}
                               className="btn-primary !text-xs !py-1.5 !px-3.5 inline-flex items-center gap-1.5"
                             >

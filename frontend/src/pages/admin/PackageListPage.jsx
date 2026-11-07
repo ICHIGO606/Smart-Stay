@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router';
-import { getAllPackages, deletePackage } from '../../services/adminPackageService';
-import { formatCurrency } from '../../utils/formatters';
-import toast from 'react-hot-toast';
-import { Plus, Edit3, Trash2, Package } from 'lucide-react';
-import ConfirmModal from '../../components/common/ConfirmModal';
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router";
+import {
+  getAllPackages,
+  deletePackage,
+} from "../../services/adminPackageService";
+import { formatCurrency } from "../../utils/formatters";
+import toast from "react-hot-toast";
+import { Plus, Edit3, Trash2, Package } from "lucide-react";
+import ConfirmModal from "../../components/common/ConfirmModal";
 
 const PackageListPage = () => {
   const [packages, setPackages] = useState([]);
@@ -22,8 +25,8 @@ const PackageListPage = () => {
       const response = await getAllPackages();
       setPackages(response?.data?.data || []);
     } catch (error) {
-      toast.error('Failed to fetch packages');
-      console.error('Error fetching packages:', error);
+      toast.error("Failed to fetch packages");
+      console.error("Error fetching packages:", error);
     } finally {
       setLoading(false);
     }
@@ -39,11 +42,11 @@ const PackageListPage = () => {
 
     try {
       await deletePackage(packageToDelete._id);
-      toast.success('Package deleted successfully');
+      toast.success("Package deleted successfully");
       setPackages((prev) => prev.filter((p) => p._id !== packageToDelete._id));
     } catch (error) {
-      toast.error('Failed to delete package');
-      console.error('Error deleting package:', error);
+      toast.error("Failed to delete package");
+      console.error("Error deleting package:", error);
     } finally {
       setShowDeleteModal(false);
       setPackageToDelete(null);
@@ -75,13 +78,19 @@ const PackageListPage = () => {
       {loading ? (
         <div className="flex flex-col justify-center items-center h-64 gap-3">
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-stone-900 border-t-transparent"></div>
-          <p className="text-xs font-mono text-ink-muted">Reading package ledger...</p>
+          <p className="text-xs font-mono text-ink-muted">
+            Reading package ledger...
+          </p>
         </div>
       ) : packages.length === 0 ? (
         <div className="card-base text-center py-16 px-6">
           <Package size={24} className="text-stone-300 mx-auto mb-2" />
-          <p className="text-sm font-medium text-ink-primary">No travel packages cataloged</p>
-          <p className="text-xs text-ink-muted mt-1 mb-4">Create your first multi-day route and lodging itinerary.</p>
+          <p className="text-sm font-medium text-ink-primary">
+            No travel packages cataloged
+          </p>
+          <p className="text-xs text-ink-muted mt-1 mb-4">
+            Create your first multi-day route and lodging itinerary.
+          </p>
           <Link
             to="/admin/packages/new"
             className="btn-primary !text-xs !py-1.5 !px-3 inline-flex items-center gap-1.5"
@@ -105,7 +114,10 @@ const PackageListPage = () => {
               </thead>
               <tbody className="divide-y divide-stone-100 text-xs">
                 {packages.map((pkg) => (
-                  <tr key={pkg._id} className="hover:bg-stone-50/50 transition-colors">
+                  <tr
+                    key={pkg._id}
+                    className="hover:bg-stone-50/50 transition-colors"
+                  >
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         {pkg.images && pkg.images.length > 0 ? (
@@ -120,9 +132,12 @@ const PackageListPage = () => {
                           </div>
                         )}
                         <div>
-                          <div className="font-medium text-ink-primary">{pkg.name}</div>
+                          <div className="font-medium text-ink-primary">
+                            {pkg.name}
+                          </div>
                           <div className="text-[11px] font-mono text-ink-muted truncate max-w-xs">
-                            {pkg.destinations?.join(', ') || 'No destinations cataloged'}
+                            {pkg.destinations?.join(", ") ||
+                              "No destinations cataloged"}
                           </div>
                         </div>
                       </div>
@@ -134,13 +149,19 @@ const PackageListPage = () => {
                       {formatCurrency(pkg.price)}
                     </td>
                     <td className="px-5 py-3.5">
-                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-tag text-xs font-mono ${
-                        pkg.isActive !== false
-                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                          : 'bg-stone-100 text-stone-600 border border-stone-200'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${pkg.isActive !== false ? 'bg-emerald-600' : 'bg-stone-400'}`}></span>
-                        <span>{pkg.isActive !== false ? 'Active' : 'Archived'}</span>
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-tag text-xs font-mono ${
+                          pkg.isActive !== false
+                            ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                            : "bg-stone-100 text-stone-600 border border-stone-200"
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${pkg.isActive !== false ? "bg-emerald-600" : "bg-stone-400"}`}
+                        ></span>
+                        <span>
+                          {pkg.isActive !== false ? "Active" : "Archived"}
+                        </span>
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-right">

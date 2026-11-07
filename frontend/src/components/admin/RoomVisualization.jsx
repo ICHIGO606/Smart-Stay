@@ -76,7 +76,10 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
                   return {
                     ...rm,
                     operationalStatus: update.operationalStatus,
-                    status: update.operationalStatus === "Available" ? "Available" : update.operationalStatus,
+                    status:
+                      update.operationalStatus === "Available"
+                        ? "Available"
+                        : update.operationalStatus,
                     notes: update.notes,
                     updatedAt: update.updatedAt,
                   };
@@ -92,17 +95,29 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
       });
 
       const handleLiveBookingRefresh = () => {
-        adminHotelService.getHotelRoomsStatus(hotelId).then((res) => {
-          if (res.data?.floors) {
-            setFloors(res.data.floors);
-          }
-        }).catch(() => {});
+        adminHotelService
+          .getHotelRoomsStatus(hotelId)
+          .then((res) => {
+            if (res.data?.floors) {
+              setFloors(res.data.floors);
+            }
+          })
+          .catch(() => {});
       };
 
       eventSource.addEventListener("booking_created", handleLiveBookingRefresh);
-      eventSource.addEventListener("booking_status_updated", handleLiveBookingRefresh);
-      eventSource.addEventListener("booking_cancelled", handleLiveBookingRefresh);
-      eventSource.addEventListener("payment_confirmed", handleLiveBookingRefresh);
+      eventSource.addEventListener(
+        "booking_status_updated",
+        handleLiveBookingRefresh,
+      );
+      eventSource.addEventListener(
+        "booking_cancelled",
+        handleLiveBookingRefresh,
+      );
+      eventSource.addEventListener(
+        "payment_confirmed",
+        handleLiveBookingRefresh,
+      );
 
       eventSource.onerror = () => {
         setLiveConnected(false);
@@ -120,7 +135,10 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
 
   const handleRoomClick = (room) => {
     setSelectedRoom(room);
-    setModalStatus(room.operationalStatus || (room.status === "Booked" ? "Reserved" : "Available"));
+    setModalStatus(
+      room.operationalStatus ||
+        (room.status === "Booked" ? "Reserved" : "Available"),
+    );
     setModalNotes(room.notes || "");
     setStatusSuccessMsg("");
     setShowRoomModal(true);
@@ -131,11 +149,15 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
     if (!selectedRoom || !selectedRoom.roomId) return;
     try {
       setOpStatusUpdating(true);
-      await adminHotelService.updateRoomOperationalStatus(hotelId, selectedRoom.roomId, {
-        roomNumber: selectedRoom.roomNumber,
-        status: modalStatus,
-        notes: modalNotes,
-      });
+      await adminHotelService.updateRoomOperationalStatus(
+        hotelId,
+        selectedRoom.roomId,
+        {
+          roomNumber: selectedRoom.roomNumber,
+          status: modalStatus,
+          notes: modalNotes,
+        },
+      );
 
       setFloors((prev) => {
         const updated = { ...prev };
@@ -176,10 +198,15 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
   const handleExportCsv = async () => {
     try {
       const blob = await adminHotelService.exportBookingsCsv(hotelId);
-      const url = window.URL.createObjectURL(new Blob([blob], { type: "text/csv" }));
+      const url = window.URL.createObjectURL(
+        new Blob([blob], { type: "text/csv" }),
+      );
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `hotel-${hotelId}-bookings-${Date.now()}.csv`);
+      link.setAttribute(
+        "download",
+        `hotel-${hotelId}-bookings-${Date.now()}.csv`,
+      );
       document.body.appendChild(link);
       link.click();
       link.parentNode.removeChild(link);
@@ -190,7 +217,9 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
   };
 
   const getStatusBadge = (room) => {
-    const op = room.operationalStatus || (room.status === "Booked" ? "Reserved" : "Available");
+    const op =
+      room.operationalStatus ||
+      (room.status === "Booked" ? "Reserved" : "Available");
     switch (op) {
       case "Available":
         return {
@@ -240,9 +269,13 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
   const getFilteredRooms = (floorRooms) => {
     if (filterStatus === "all") return floorRooms;
     if (filterStatus === "available")
-      return floorRooms.filter((r) => (r.operationalStatus || r.status) === "Available");
+      return floorRooms.filter(
+        (r) => (r.operationalStatus || r.status) === "Available",
+      );
     if (filterStatus === "booked" || filterStatus === "reserved")
-      return floorRooms.filter((r) => r.status === "Booked" || r.operationalStatus === "Reserved");
+      return floorRooms.filter(
+        (r) => r.status === "Booked" || r.operationalStatus === "Reserved",
+      );
     if (filterStatus === "occupied")
       return floorRooms.filter((r) => r.operationalStatus === "Occupied");
     if (filterStatus === "dirty")
@@ -257,8 +290,15 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
   const getRoomStats = () => {
     const allRooms = Object.values(floors).flat();
     const total = allRooms.length;
-    const booked = allRooms.filter((r) => r.status === "Booked" || r.operationalStatus === "Occupied" || r.operationalStatus === "Reserved").length;
-    const available = allRooms.filter((r) => (r.operationalStatus || r.status) === "Available").length;
+    const booked = allRooms.filter(
+      (r) =>
+        r.status === "Booked" ||
+        r.operationalStatus === "Occupied" ||
+        r.operationalStatus === "Reserved",
+    ).length;
+    const available = allRooms.filter(
+      (r) => (r.operationalStatus || r.status) === "Available",
+    ).length;
     const occupancyRate = total > 0 ? ((booked / total) * 100).toFixed(1) : 0;
 
     return { total, booked, available, occupancyRate };
@@ -302,7 +342,8 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
               key={room.roomNumber}
               onClick={() => handleRoomClick(room)}
               className={`relative group w-24 h-20 rounded-control border p-2 flex flex-col items-center justify-center cursor-pointer transition-colors ${
-                room.status === "Booked" || room.operationalStatus === "Occupied"
+                room.status === "Booked" ||
+                room.operationalStatus === "Occupied"
                   ? "bg-stone-100 border-stone-200 text-ink-muted"
                   : "bg-white border-stone-200 hover:border-stone-400 text-ink-primary shadow-subtle"
               }`}
@@ -325,7 +366,8 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
                     № {room.roomNumber} - {room.roomType}
                   </p>
                   <p className="text-gray-300 mt-1">
-                    Status: <span className="text-white font-mono">{badge.label}</span>
+                    Status:{" "}
+                    <span className="text-white font-mono">{badge.label}</span>
                   </p>
                   {room.notes && (
                     <p className="text-amber-300 text-[11px] mt-1 italic">
@@ -380,14 +422,18 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
                 <div
                   className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono border ${badge.bg}`}
                 >
-                  <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`}></span>
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${badge.dot}`}
+                  ></span>
                   <span>{badge.label}</span>
                 </div>
               </div>
 
               {room.notes && (
                 <div className="text-xs text-ink-secondary mb-2 bg-stone-50 p-2 rounded border border-stone-100">
-                  <span className="font-mono text-[10px] text-ink-muted block uppercase">Notes:</span>
+                  <span className="font-mono text-[10px] text-ink-muted block uppercase">
+                    Notes:
+                  </span>
                   <span>{room.notes}</span>
                 </div>
               )}
@@ -399,8 +445,13 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
                     {room.bookingDetails.user?.fullName || "Guest"}
                   </p>
                   <p className="text-ink-muted text-[11px] font-mono">
-                    {new Date(room.bookingDetails.checkInDate).toLocaleDateString()} —{" "}
-                    {new Date(room.bookingDetails.checkOutDate).toLocaleDateString()}
+                    {new Date(
+                      room.bookingDetails.checkInDate,
+                    ).toLocaleDateString()}{" "}
+                    —{" "}
+                    {new Date(
+                      room.bookingDetails.checkOutDate,
+                    ).toLocaleDateString()}
                   </p>
                 </div>
               )}
@@ -513,8 +564,12 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
               <span>Check-In Desk</span>
             </button>
             <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono bg-white border border-stone-200 shadow-subtle">
-              <span className={`w-2 h-2 rounded-full ${liveConnected ? "bg-emerald-500 animate-pulse" : "bg-stone-400"}`}></span>
-              <span className="text-stone-700">{liveConnected ? "Live Sync Active" : "Connecting..."}</span>
+              <span
+                className={`w-2 h-2 rounded-full ${liveConnected ? "bg-emerald-500 animate-pulse" : "bg-stone-400"}`}
+              ></span>
+              <span className="text-stone-700">
+                {liveConnected ? "Live Sync Active" : "Connecting..."}
+              </span>
             </div>
             <button
               type="button"
@@ -535,113 +590,111 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
           </div>
         </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-blue-100 rounded-lg">
-                  <svg
-                    className="w-8 h-8 text-blue-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">
-                    Total Rooms
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {stats.total}
-                  </p>
-                </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center">
+              <div className="p-3 bg-blue-100 rounded-lg">
+                <svg
+                  className="w-8 h-8 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                  />
+                </svg>
               </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-green-100 rounded-lg">
-                  <svg
-                    className="w-8 h-8 text-green-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Available</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {stats.available}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-red-100 rounded-lg">
-                  <svg
-                    className="w-8 h-8 text-red-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Booked</p>
-                  <p className="text-2xl font-bold text-red-600">
-                    {stats.booked}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-purple-100 rounded-lg">
-                  <svg
-                    className="w-8 h-8 text-purple-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Occupancy</p>
-                  <p className="text-2xl font-bold text-purple-600">
-                    {stats.occupancyRate}%
-                  </p>
-                </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Total Rooms</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {stats.total}
+                </p>
               </div>
             </div>
           </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center">
+              <div className="p-3 bg-green-100 rounded-lg">
+                <svg
+                  className="w-8 h-8 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Available</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {stats.available}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center">
+              <div className="p-3 bg-red-100 rounded-lg">
+                <svg
+                  className="w-8 h-8 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  />
+                </svg>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Booked</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {stats.booked}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center">
+              <div className="p-3 bg-purple-100 rounded-lg">
+                <svg
+                  className="w-8 h-8 text-purple-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  />
+                </svg>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Occupancy</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {stats.occupancyRate}%
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -853,7 +906,8 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
                           Booking Account:
                         </span>
                         <span className="ml-2 font-medium text-gray-900">
-                          {selectedRoom.bookingDetails.user?.fullName || "Unknown"}
+                          {selectedRoom.bookingDetails.user?.fullName ||
+                            "Unknown"}
                         </span>
                       </div>
 
@@ -872,7 +926,7 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
                         </span>
                         <span className="ml-2 font-medium text-gray-900">
                           {new Date(
-                            selectedRoom.bookingDetails.checkInDate
+                            selectedRoom.bookingDetails.checkInDate,
                           ).toLocaleDateString()}
                         </span>
                       </div>
@@ -883,7 +937,7 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
                         </span>
                         <span className="ml-2 font-medium text-gray-900">
                           {new Date(
-                            selectedRoom.bookingDetails.checkOutDate
+                            selectedRoom.bookingDetails.checkOutDate,
                           ).toLocaleDateString()}
                         </span>
                       </div>
@@ -913,11 +967,13 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
                               Guests:
                             </span>
                             <ul className="ml-4 list-disc mt-1 text-gray-900">
-                              {selectedRoom.bookingDetails.guests.map((guest, idx) => (
-                                <li key={idx}>
-                                  {guest.fullName} ({guest.age} yrs)
-                                </li>
-                              ))}
+                              {selectedRoom.bookingDetails.guests.map(
+                                (guest, idx) => (
+                                  <li key={idx}>
+                                    {guest.fullName} ({guest.age} yrs)
+                                  </li>
+                                ),
+                              )}
                             </ul>
                           </div>
                         )}
@@ -928,7 +984,8 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
               {selectedRoom.status !== "Booked" && (
                 <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-100 mb-4">
                   <p className="text-emerald-800 text-xs text-center font-mono">
-                    This room is currently unreserved and available for guest allocation.
+                    This room is currently unreserved and available for guest
+                    allocation.
                   </p>
                 </div>
               )}
@@ -939,7 +996,14 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
                   Front-Desk Operational State
                 </label>
                 <div className="grid grid-cols-3 gap-2 mb-3">
-                  {["Available", "Reserved", "Occupied", "Dirty", "Cleaning", "Maintenance"].map((st) => (
+                  {[
+                    "Available",
+                    "Reserved",
+                    "Occupied",
+                    "Dirty",
+                    "Cleaning",
+                    "Maintenance",
+                  ].map((st) => (
                     <button
                       key={st}
                       type="button"
@@ -980,7 +1044,9 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
                   onClick={handleUpdateOperationalStatus}
                   className="btn-primary w-full !text-xs !py-2.5 inline-flex items-center justify-center gap-1.5"
                 >
-                  {opStatusUpdating ? "Synchronizing..." : "Save Operational Status"}
+                  {opStatusUpdating
+                    ? "Synchronizing..."
+                    : "Save Operational Status"}
                 </button>
               </div>
             </div>

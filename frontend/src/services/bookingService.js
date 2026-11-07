@@ -1,10 +1,10 @@
-import api from './api';
+import api from "./api";
 
 export const bookingService = {
   // Create a new booking
   createBooking: async (bookingData) => {
     try {
-      const response = await api.post('/bookings', bookingData);
+      const response = await api.post("/bookings", bookingData);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -14,7 +14,7 @@ export const bookingService = {
   // Get all bookings for the current user
   getUserBookings: async () => {
     try {
-      const response = await api.get('/bookings/me');
+      const response = await api.get("/bookings/me");
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -52,10 +52,10 @@ export const bookingService = {
   },
 
   // Get booking voucher pass (Pillar 2)
-  getBookingVoucher: async (bookingId, format = 'json') => {
+  getBookingVoucher: async (bookingId, format = "json") => {
     try {
       const response = await api.get(`/bookings/${bookingId}/voucher`, {
-        params: { format }
+        params: { format },
       });
       return response.data;
     } catch (error) {
@@ -66,12 +66,12 @@ export const bookingService = {
   // Get all bookings (Admin only) with pagination, sorting, and filtering
   getAllBookings: async (params = {}) => {
     try {
-      const response = await api.get('/bookings', { params });
+      const response = await api.get("/bookings", { params });
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
     }
-  }
+  },
 };
 
 export default bookingService;

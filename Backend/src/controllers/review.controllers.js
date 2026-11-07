@@ -39,9 +39,18 @@ const addReview = asyncHandler(async (req, res) => {
       if (!Array.isArray(hotel.reviews)) hotel.reviews = [];
       hotel.reviews.push(newReview._id);
 
-      const allReviews = await Review.find({ targetId: safeTargetId, targetModel: "Hotel" });
-      const totalScore = allReviews.reduce((sum, r) => sum + (r.rating || 0), 0);
-      hotel.starRating = allReviews.length > 0 ? Math.round((totalScore / allReviews.length) * 10) / 10 : Number(rating);
+      const allReviews = await Review.find({
+        targetId: safeTargetId,
+        targetModel: "Hotel",
+      });
+      const totalScore = allReviews.reduce(
+        (sum, r) => sum + (r.rating || 0),
+        0,
+      );
+      hotel.starRating =
+        allReviews.length > 0
+          ? Math.round((totalScore / allReviews.length) * 10) / 10
+          : Number(rating);
       await hotel.save();
     }
   } else if (safeTargetModel === "Package") {
@@ -66,9 +75,9 @@ const getReviews = asyncHandler(async (req, res) => {
   const safeTargetId = String(targetId);
   const safeTargetModel = String(targetModel);
 
-  const reviews = await Review.find({ 
-    targetId: safeTargetId, 
-    targetModel: safeTargetModel 
+  const reviews = await Review.find({
+    targetId: safeTargetId,
+    targetModel: safeTargetModel,
   }).populate("user", "fullName");
 
   return res

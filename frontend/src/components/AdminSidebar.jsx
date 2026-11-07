@@ -1,20 +1,32 @@
-import { Link, useLocation } from 'react-router';
-import { LayoutDashboard, Building2, CalendarCheck, Package, ShieldCheck, Settings, ArrowLeft } from 'lucide-react';
+import { Link, useLocation } from "react-router";
+import {
+  LayoutDashboard,
+  Building2,
+  CalendarCheck,
+  Package,
+  ShieldCheck,
+  Settings,
+  ArrowLeft,
+} from "lucide-react";
 
 const AdminSidebar = () => {
   const location = useLocation();
 
   const links = [
-    { to: '/admin', label: 'Dashboard overview', icon: LayoutDashboard },
-    { to: '/admin/hotels', label: 'Hotels & rooms', icon: Building2 },
-    { to: '/admin/bookings', label: 'Reservations', icon: CalendarCheck },
-    { to: '/admin/packages', label: 'Curated packages', icon: Package },
-    { to: '/admin/verifications', label: 'ID verifications', icon: ShieldCheck },
-    { to: '/admin/profile', label: 'Settings', icon: Settings },
+    { to: "/admin", label: "Dashboard overview", icon: LayoutDashboard },
+    { to: "/admin/hotels", label: "Hotels & rooms", icon: Building2 },
+    { to: "/admin/bookings", label: "Reservations", icon: CalendarCheck },
+    { to: "/admin/packages", label: "Curated packages", icon: Package },
+    {
+      to: "/admin/verifications",
+      label: "ID verifications",
+      icon: ShieldCheck,
+    },
+    { to: "/admin/profile", label: "Settings", icon: Settings },
   ];
 
   const isActive = (path) => {
-    if (path === '/admin') return location.pathname === '/admin';
+    if (path === "/admin") return location.pathname === "/admin";
     return location.pathname.startsWith(path);
   };
 
@@ -55,11 +67,14 @@ const AdminSidebar = () => {
                     to={link.to}
                     className={`flex items-center gap-2.5 h-9 px-3 rounded-control text-xs transition-colors ${
                       active
-                        ? 'bg-stone-800/90 text-white font-medium border border-stone-700/60'
-                        : 'text-stone-400 hover:text-stone-200 hover:bg-stone-850'
+                        ? "bg-stone-800/90 text-white font-medium border border-stone-700/60"
+                        : "text-stone-400 hover:text-stone-200 hover:bg-stone-850"
                     }`}
                   >
-                    <Icon size={15} className={active ? 'text-white' : 'text-stone-400'} />
+                    <Icon
+                      size={15}
+                      className={active ? "text-white" : "text-stone-400"}
+                    />
                     <span>{link.label}</span>
                   </Link>
                 </li>
@@ -71,8 +86,8 @@ const AdminSidebar = () => {
 
       {/* Return to public site link */}
       <div className="pt-4 border-t border-stone-800/80">
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="flex items-center gap-2 px-3 py-2 text-xs text-stone-400 hover:text-stone-200 transition-colors"
         >
           <ArrowLeft size={14} />

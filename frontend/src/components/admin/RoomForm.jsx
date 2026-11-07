@@ -1,96 +1,115 @@
-import { useState } from 'react';
-import { ArrowLeft, AlertCircle, Plus, Trash2 } from 'lucide-react';
+import { useState } from "react";
+import { ArrowLeft, AlertCircle, Plus, Trash2 } from "lucide-react";
 
 const RoomForm = ({ hotel, onSubmit, onCancel, initialData }) => {
   const [formData, setFormData] = useState({
-    type: initialData?.type || '',
-    pricePerNight: initialData?.pricePerNight || '',
-    maxOccupancy: initialData?.maxOccupancy || '',
-    description: initialData?.description || '',
+    type: initialData?.type || "",
+    pricePerNight: initialData?.pricePerNight || "",
+    maxOccupancy: initialData?.maxOccupancy || "",
+    description: initialData?.description || "",
     roomNumbers: Array.isArray(initialData?.roomNumbers)
-      ? initialData.roomNumbers.map((number) => String(number ?? ''))
-      : [''],
+      ? initialData.roomNumbers.map((number) => String(number ?? ""))
+      : [""],
     amenities: initialData?.amenities || [],
-    images: []
+    images: [],
   });
-  
+
   const [selectedImages, setSelectedImages] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const roomTypes = [
-    'Standard', 'Deluxe', 'Superior', 'Executive', 'Suite',
-    'Family', 'Presidential', 'Business', 'Ocean View', 'Mountain View'
+    "Standard",
+    "Deluxe",
+    "Superior",
+    "Executive",
+    "Suite",
+    "Family",
+    "Presidential",
+    "Business",
+    "Ocean View",
+    "Mountain View",
   ];
 
   const roomAmenitiesOptions = [
-    'TV', 'AC', 'Mini Bar', 'Safe', 'Hair Dryer',
-    'Coffee Maker', 'Iron', 'Desk', 'Balcony', 'Bathtub',
-    'Shower', 'Toiletries', 'Slippers', 'Bathrobe'
+    "TV",
+    "AC",
+    "Mini Bar",
+    "Safe",
+    "Hair Dryer",
+    "Coffee Maker",
+    "Iron",
+    "Desk",
+    "Balcony",
+    "Bathtub",
+    "Shower",
+    "Toiletries",
+    "Slippers",
+    "Bathrobe",
   ];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleRoomNumberChange = (index, value) => {
     const newRoomNumbers = [...formData.roomNumbers];
     newRoomNumbers[index] = value;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      roomNumbers: newRoomNumbers
+      roomNumbers: newRoomNumbers,
     }));
   };
 
   const addRoomNumber = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      roomNumbers: [...prev.roomNumbers, '']
+      roomNumbers: [...prev.roomNumbers, ""],
     }));
   };
 
   const removeRoomNumber = (index) => {
     if (formData.roomNumbers.length > 1) {
       const newRoomNumbers = formData.roomNumbers.filter((_, i) => i !== index);
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        roomNumbers: newRoomNumbers
+        roomNumbers: newRoomNumbers,
       }));
     }
   };
 
   const handleAmenityChange = (amenity) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       amenities: prev.amenities.includes(amenity)
-        ? prev.amenities.filter(a => a !== amenity)
-        : [...prev.amenities, amenity]
+        ? prev.amenities.filter((a) => a !== amenity)
+        : [...prev.amenities, amenity],
     }));
   };
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     setSelectedImages(files);
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      images: files
+      images: files,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
     const validRoomNumbers = formData.roomNumbers
-      .map((number) => String(number ?? '').trim())
+      .map((number) => String(number ?? "").trim())
       .filter(Boolean);
     if (validRoomNumbers.length === 0) {
-      setError('Please provide at least one room key / number');
+      setError("Please provide at least one room key / number");
       setLoading(false);
       return;
     }
@@ -100,7 +119,7 @@ const RoomForm = ({ hotel, onSubmit, onCancel, initialData }) => {
         ...formData,
         roomNumbers: validRoomNumbers,
         pricePerNight: parseFloat(formData.pricePerNight),
-        maxOccupancy: parseInt(formData.maxOccupancy)
+        maxOccupancy: parseInt(formData.maxOccupancy),
       });
     } catch (err) {
       setError(err.message);
@@ -121,7 +140,7 @@ const RoomForm = ({ hotel, onSubmit, onCancel, initialData }) => {
         </button>
         <div>
           <h2 className="font-serif text-2xl text-ink-primary font-normal">
-            {initialData ? 'Edit room tier' : 'Add room tier'} · {hotel.name}
+            {initialData ? "Edit room tier" : "Add room tier"} · {hotel.name}
           </h2>
         </div>
       </div>
@@ -147,8 +166,10 @@ const RoomForm = ({ hotel, onSubmit, onCancel, initialData }) => {
               className="input-base bg-white"
             >
               <option value="">Select tier</option>
-              {roomTypes.map(type => (
-                <option key={type} value={type}>{type}</option>
+              {roomTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
               ))}
             </select>
           </div>
@@ -214,7 +235,9 @@ const RoomForm = ({ hotel, onSubmit, onCancel, initialData }) => {
                 <input
                   type="text"
                   value={number}
-                  onChange={(e) => handleRoomNumberChange(index, e.target.value)}
+                  onChange={(e) =>
+                    handleRoomNumberChange(index, e.target.value)
+                  }
                   placeholder="e.g. 101"
                   className="input-base max-w-xs"
                 />
@@ -247,12 +270,12 @@ const RoomForm = ({ hotel, onSubmit, onCancel, initialData }) => {
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             {roomAmenitiesOptions.map((amenity) => (
-              <label 
-                key={amenity} 
+              <label
+                key={amenity}
                 className={`flex items-center gap-2 p-2 rounded-control border text-xs cursor-pointer transition-colors ${
                   formData.amenities.includes(amenity)
-                    ? 'border-stone-900 bg-stone-50 font-medium text-ink-primary'
-                    : 'border-stone-200 text-ink-secondary hover:border-stone-300'
+                    ? "border-stone-900 bg-stone-50 font-medium text-ink-primary"
+                    : "border-stone-200 text-ink-secondary hover:border-stone-300"
                 }`}
               >
                 <input
@@ -280,7 +303,11 @@ const RoomForm = ({ hotel, onSubmit, onCancel, initialData }) => {
             disabled={loading}
             className="btn-primary !text-xs !py-2 !px-5 font-mono uppercase tracking-wider"
           >
-            {loading ? 'Recording...' : (initialData ? 'Update room' : 'Create room')}
+            {loading
+              ? "Recording..."
+              : initialData
+                ? "Update room"
+                : "Create room"}
           </button>
         </div>
       </form>

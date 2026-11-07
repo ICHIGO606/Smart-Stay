@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
-import userService from '../../services/userService';
-import ProfileSettings from '../../components/ProfileSettings';
+import { useState, useEffect } from "react";
+import userService from "../../services/userService";
+import ProfileSettings from "../../components/ProfileSettings";
 
 const AdminProfile = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetchUserProfile();
@@ -19,8 +19,8 @@ const AdminProfile = () => {
         setUser(response.data);
       }
     } catch (err) {
-      setError(err.message || 'Failed to load profile');
-      console.error('Profile fetch error:', err);
+      setError(err.message || "Failed to load profile");
+      console.error("Profile fetch error:", err);
     } finally {
       setLoading(false);
     }
@@ -52,17 +52,16 @@ const AdminProfile = () => {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-primary">Admin Profile Settings</h1>
+        <h1 className="text-3xl font-bold text-primary">
+          Admin Profile Settings
+        </h1>
         <p className="text-gray-600 mt-2">
           Manage your personal information and account security
         </p>
       </div>
 
       {user && (
-        <ProfileSettings 
-          user={user} 
-          onProfileUpdate={handleProfileUpdate} 
-        />
+        <ProfileSettings user={user} onProfileUpdate={handleProfileUpdate} />
       )}
     </div>
   );

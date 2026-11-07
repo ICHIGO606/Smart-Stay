@@ -1,7 +1,15 @@
-import { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router';
-import { useAuth } from '../context/AuthContext';
-import { Compass, ChevronDown, User, LogOut, LayoutDashboard, Menu, X } from 'lucide-react';
+import { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router";
+import { useAuth } from "../context/AuthContext";
+import {
+  Compass,
+  ChevronDown,
+  User,
+  LogOut,
+  LayoutDashboard,
+  Menu,
+  X,
+} from "lucide-react";
 
 const Navbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -12,17 +20,17 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate("/");
   };
 
   const navLinks = [
-    { to: '/', label: 'Overview' },
-    { to: '/hotels', label: 'Hotels' },
-    { to: '/packages', label: 'Curated packages' },
+    { to: "/", label: "Overview" },
+    { to: "/hotels", label: "Hotels" },
+    { to: "/packages", label: "Curated packages" },
   ];
 
   const isActive = (path) => {
-    if (path === '/') return location.pathname === '/';
+    if (path === "/") return location.pathname === "/";
     return location.pathname.startsWith(path);
   };
 
@@ -53,8 +61,8 @@ const Navbar = () => {
                 to={link.to}
                 className={`px-3 py-1.5 text-sm rounded-control transition-colors ${
                   isActive(link.to)
-                    ? 'text-ink-primary font-medium bg-stone-100/80'
-                    : 'text-ink-secondary hover:text-ink-primary hover:bg-stone-50'
+                    ? "text-ink-primary font-medium bg-stone-100/80"
+                    : "text-ink-secondary hover:text-ink-primary hover:bg-stone-50"
                 }`}
               >
                 {link.label}
@@ -71,26 +79,36 @@ const Navbar = () => {
                   className="flex items-center gap-2 pl-2.5 pr-2 py-1.5 rounded-control text-sm text-ink-primary hover:bg-stone-100 transition-colors border border-transparent hover:border-stone-200"
                 >
                   <span className="w-6 h-6 rounded-full bg-stone-200 flex items-center justify-center text-xs text-ink-secondary font-medium">
-                    {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                    {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
                   </span>
-                  <span className="font-medium text-xs text-ink-primary">{user?.name}</span>
+                  <span className="font-medium text-xs text-ink-primary">
+                    {user?.name}
+                  </span>
                   <ChevronDown size={14} className="text-ink-muted" />
                 </button>
 
                 {profileMenuOpen && (
                   <div className="absolute right-0 mt-1.5 w-52 bg-white rounded-card border border-stone-200 shadow-elevated py-1 z-50">
                     <div className="px-3.5 py-2 border-b border-stone-100">
-                      <p className="text-xs font-medium text-ink-primary truncate">{user?.name}</p>
-                      <p className="text-[11px] text-ink-muted truncate">{user?.email}</p>
+                      <p className="text-xs font-medium text-ink-primary truncate">
+                        {user?.name}
+                      </p>
+                      <p className="text-[11px] text-ink-muted truncate">
+                        {user?.email}
+                      </p>
                     </div>
 
                     <Link
-                      to={user?.role === 'admin' ? '/admin' : '/user'}
+                      to={user?.role === "admin" ? "/admin" : "/user"}
                       className="flex items-center gap-2.5 px-3.5 py-2 text-xs text-ink-secondary hover:text-ink-primary hover:bg-stone-50 transition-colors"
                       onClick={() => setProfileMenuOpen(false)}
                     >
                       <LayoutDashboard size={14} className="text-ink-muted" />
-                      <span>{user?.role === 'admin' ? 'Admin dashboard' : 'Account dashboard'}</span>
+                      <span>
+                        {user?.role === "admin"
+                          ? "Admin dashboard"
+                          : "Account dashboard"}
+                      </span>
                     </Link>
 
                     <button
@@ -146,8 +164,8 @@ const Navbar = () => {
               to={link.to}
               className={`block px-3 py-2 rounded-control text-sm ${
                 isActive(link.to)
-                  ? 'bg-stone-100 text-ink-primary font-medium'
-                  : 'text-ink-secondary hover:bg-stone-50'
+                  ? "bg-stone-100 text-ink-primary font-medium"
+                  : "text-ink-secondary hover:bg-stone-50"
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -159,11 +177,13 @@ const Navbar = () => {
             {isAuthenticated ? (
               <>
                 <Link
-                  to={user?.role === 'admin' ? '/admin' : '/user'}
+                  to={user?.role === "admin" ? "/admin" : "/user"}
                   className="block px-3 py-2 rounded-control text-sm text-ink-primary font-medium"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  {user?.role === 'admin' ? 'Admin dashboard' : 'Account dashboard'}
+                  {user?.role === "admin"
+                    ? "Admin dashboard"
+                    : "Account dashboard"}
                 </Link>
                 <button
                   onClick={() => {

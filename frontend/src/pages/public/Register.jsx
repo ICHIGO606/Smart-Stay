@@ -1,20 +1,20 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
-import { useAuth } from '../../context/AuthContext';
-import { AlertCircle } from 'lucide-react';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { useAuth } from "../../context/AuthContext";
+import { AlertCircle } from "lucide-react";
 
 const Register = () => {
   const navigate = useNavigate();
   const { register } = useAuth();
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    age: '',
-    gender: 'male',
-    role: 'user'
+    fullName: "",
+    email: "",
+    password: "",
+    age: "",
+    gender: "male",
+    role: "user",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
@@ -26,14 +26,17 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
       await register(formData);
-      navigate('/dashboard');
+      navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please check the details and try again.');
+      setError(
+        err.response?.data?.message ||
+          "Registration failed. Please check the details and try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -53,17 +56,20 @@ const Register = () => {
             Register to manage boutique reservations and verified itineraries
           </p>
         </div>
-        
+
         {error && (
           <div className="mb-5 p-3 rounded-control bg-red-50 border border-red-200/80 flex items-start gap-2.5 text-xs text-red-800">
             <AlertCircle size={15} className="mt-0.5 flex-shrink-0" />
             <span>{error}</span>
           </div>
         )}
-        
+
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="fullName" className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+            <label
+              htmlFor="fullName"
+              className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1"
+            >
               Full name
             </label>
             <input
@@ -80,7 +86,10 @@ const Register = () => {
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+            <label
+              htmlFor="email"
+              className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1"
+            >
               Email address
             </label>
             <input
@@ -97,7 +106,10 @@ const Register = () => {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+            <label
+              htmlFor="password"
+              className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1"
+            >
               Password
             </label>
             <input
@@ -115,7 +127,10 @@ const Register = () => {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="age" className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+              <label
+                htmlFor="age"
+                className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1"
+              >
                 Age
               </label>
               <input
@@ -132,7 +147,10 @@ const Register = () => {
             </div>
 
             <div>
-              <label htmlFor="gender" className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+              <label
+                htmlFor="gender"
+                className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1"
+              >
                 Gender
               </label>
               <select
@@ -155,13 +173,16 @@ const Register = () => {
             disabled={loading}
             className="btn-primary w-full !py-2.5 text-xs font-mono uppercase tracking-wider mt-2"
           >
-            {loading ? 'Creating profile...' : 'Create account'}
+            {loading ? "Creating profile..." : "Create account"}
           </button>
         </form>
 
         <p className="mt-6 text-center text-xs text-ink-muted">
-          Already registered?{' '}
-          <Link to="/login" className="text-ink-primary font-medium hover:underline">
+          Already registered?{" "}
+          <Link
+            to="/login"
+            className="text-ink-primary font-medium hover:underline"
+          >
             Sign in
           </Link>
         </p>
