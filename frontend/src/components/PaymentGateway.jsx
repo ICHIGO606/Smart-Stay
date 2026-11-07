@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { paymentService } from "../services/paymentService";
 import { generateQRCodePath } from "../utils/qrCode";
 import {
@@ -30,29 +30,10 @@ const PaymentGateway = ({ booking, onSuccess, onCancel }) => {
   const [copied, setCopied] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutes
 
-  useEffect(() => {
-    fetchPaymentMethods();
-  }, [booking]);
-
-  // Expiration timer for active UPI checkout session
-  useEffect(() => {
-    if (!youpiSession) return;
-    const interval = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [youpiSession]);
-
-  const fetchPaymentMethods = async () => {
+  const fetchPaymentMethods = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await paymentService.getPaymentMethods(booking._id);
+      const response = await paymentService.getPaymentMethods(booking?._id);
       const methods = response.data.methods || [];
       setPaymentMethods(methods);
 
@@ -72,7 +53,26 @@ const PaymentGateway = ({ booking, onSuccess, onCancel }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [booking?._id]);
+
+  useEffect(() => {
+    fetchPaymentMethods();
+  }, [fetchPaymentMethods]);
+
+  // Expiration timer for active UPI checkout session
+  useEffect(() => {
+    if (!youpiSession) return;
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [youpiSession]);
 
   const handleInitiatePayment = async () => {
     if (!selectedMethod) {

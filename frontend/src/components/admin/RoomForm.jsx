@@ -290,6 +290,24 @@ const RoomForm = ({ hotel, onSubmit, onCancel, initialData }) => {
           </div>
         </div>
 
+        <div>
+          <label className="block text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-2">
+            Room photography (optional)
+          </label>
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={handleImageChange}
+            className="input-base text-xs file:mr-3 file:py-1 file:px-2.5 file:rounded-control file:border-0 file:text-xs file:bg-stone-100 file:text-stone-700 hover:file:bg-stone-200"
+          />
+          {selectedImages.length > 0 && (
+            <p className="text-[11px] text-ink-muted font-mono mt-1">
+              {selectedImages.length} image{selectedImages.length !== 1 ? "s" : ""} selected
+            </p>
+          )}
+        </div>
+
         <div className="flex justify-end gap-3 pt-4 border-t border-stone-100">
           <button
             type="button"

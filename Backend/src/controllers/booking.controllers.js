@@ -4,14 +4,14 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Booking } from "../models/booking.models.js";
 import { Room } from "../models/room.models.js";
-import { Hotel } from "../models/hotel.models.js";
+// import { Hotel } from "../models/hotel.models.js";
 import { escapeRegex } from "../utils/helpers.js";
 import {
   generateVoucherData,
   generateVoucherHtml,
 } from "../utils/voucherGenerator.js";
 import { sseService } from "../services/sseService.js";
-import { notificationService } from "../services/notificationService.js";
+// import { notificationService } from "../services/notificationService.js";
 
 // Helper function to get available room numbers for a specific room type and dates
 const getAvailableRoomNumbers = async (roomId, checkInDate, checkOutDate) => {

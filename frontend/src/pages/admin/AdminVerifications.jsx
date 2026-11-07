@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
 import adminService from "../../services/adminService";
 import {
@@ -21,11 +21,7 @@ const AdminVerifications = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  useEffect(() => {
-    fetchVerificationData();
-  }, [activeTab]);
-
-  const fetchVerificationData = async () => {
+  const fetchVerificationData = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -51,7 +47,11 @@ const AdminVerifications = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab]);
+
+  useEffect(() => {
+    fetchVerificationData();
+  }, [fetchVerificationData]);
 
   const viewUserDetails = async (userId) => {
     try {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router";
 import toast from "react-hot-toast";
 import {
@@ -32,13 +32,7 @@ const PackageFormPage = () => {
     itinerary: [{ day: 1, title: "", description: "" }],
   });
 
-  useEffect(() => {
-    if (isEditMode) {
-      fetchPackageDetails();
-    }
-  }, [id]);
-
-  const fetchPackageDetails = async () => {
+  const fetchPackageDetails = useCallback(async () => {
     try {
       setLoading(true);
       const response = await getPackageById(id);
@@ -66,7 +60,13 @@ const PackageFormPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, navigate]);
+
+  useEffect(() => {
+    if (isEditMode) {
+      fetchPackageDetails();
+    }
+  }, [isEditMode, fetchPackageDetails]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;

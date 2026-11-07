@@ -29,13 +29,7 @@ const BookingPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [familyMembers, setFamilyMembers] = useState([]);
-  const [showNewUserForm, setShowNewUserForm] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
-  const [newUserData, setNewUserData] = useState({
-    fullName: "",
-    age: "",
-    relationship: "",
-  });
   const [bookingData, setBookingData] = useState({
     checkInDate: prefilled.checkIn || "",
     checkOutDate: prefilled.checkOut || "",
@@ -155,25 +149,6 @@ const BookingPage = () => {
   const selectFamilyMember = (member, index) => {
     handleGuestDetailChange(index, "fullName", member.fullName);
     handleGuestDetailChange(index, "age", member.age);
-  };
-
-  const handleNewUserChange = (e) => {
-    const { name, value } = e.target;
-    setNewUserData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const addNewFamilyMember = async () => {
-    try {
-      await userService.addFamilyMember(newUserData);
-      const familyResponse = await userService.getFamilyMembers();
-      setFamilyMembers(
-        Array.isArray(familyResponse.data) ? familyResponse.data : [],
-      );
-      setNewUserData({ fullName: "", age: "", relationship: "" });
-      setShowNewUserForm(false);
-    } catch (err) {
-      console.error("Error adding family member:", err);
-    }
   };
 
   const calculateTotal = () => {

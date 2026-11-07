@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router";
 import { getPackageById, bookPackage } from "../../services/packageService";
 import { formatCurrency } from "../../utils/formatters";
@@ -26,11 +26,7 @@ const PackageDetails = () => {
   const [participants, setParticipants] = useState(1);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchPackageDetails();
-  }, [id]);
-
-  const fetchPackageDetails = async () => {
+  const fetchPackageDetails = useCallback(async () => {
     try {
       setLoading(true);
       const response = await getPackageById(id);
@@ -42,7 +38,11 @@ const PackageDetails = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchPackageDetails();
+  }, [fetchPackageDetails]);
 
   const handleBooking = async (e) => {
     e.preventDefault();

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router";
 import adminHotelService from "../../services/adminHotelService";
 import { hotelService } from "../../services/hotelService";
@@ -33,11 +33,7 @@ const HotelDetailPage = () => {
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [viewMode, setViewMode] = useState("details");
 
-  useEffect(() => {
-    fetchHotelDetails();
-  }, [hotelId]);
-
-  const fetchHotelDetails = async () => {
+  const fetchHotelDetails = useCallback(async () => {
     try {
       setLoading(true);
       const hotelResponse = await hotelService.getHotelDetails(hotelId);
@@ -57,7 +53,11 @@ const HotelDetailPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [hotelId]);
+
+  useEffect(() => {
+    fetchHotelDetails();
+  }, [fetchHotelDetails]);
 
   const handleUpdateHotel = async (hotelData) => {
     try {

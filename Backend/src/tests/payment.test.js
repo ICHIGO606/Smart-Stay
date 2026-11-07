@@ -12,7 +12,7 @@ const mockFindHotelById = jest.fn();
 await jest.unstable_mockModule("../models/booking.models.js", () => ({
   Booking: {
     findById: mockFindBookingById,
-    findOne: jest.fn().mockImplementation((query) => {
+    findOne: jest.fn().mockImplementation(() => {
       const b = makeBooking();
       return Promise.resolve(b);
     }),

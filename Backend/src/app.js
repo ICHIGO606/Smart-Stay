@@ -57,7 +57,8 @@ app.use("/api/v1/hotels", hotelRouter);
 app.use("/api/v1/payments", paymentRouter);
 app.use("/api/v1/packages", packageRouter);
 
-// Global error handling middleware
+// Global error handling middleware (requires 4 arguments for Express error handler)
+// eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || err.status || 500;
   const message = err.message || "Internal Server Error";

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import adminHotelService from "../../services/adminHotelService";
 import { API_BASE_URL } from "../../services/api";
 import { FileSpreadsheet, RefreshCw, Radio, QrCode } from "lucide-react";
@@ -22,7 +22,7 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
   const [opStatusUpdating, setOpStatusUpdating] = useState(false);
   const [statusSuccessMsg, setStatusSuccessMsg] = useState("");
 
-  const fetchRooms = async () => {
+  const fetchRooms = useCallback(async () => {
     try {
       setLoading(true);
       const response = await adminHotelService.getHotelRoomsStatus(hotelId);
@@ -31,8 +31,8 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
       setFloors(data.floors || {});
 
       const availableFloors = Object.keys(data.floors || {});
-      if (availableFloors.length > 0 && !selectedFloor) {
-        setSelectedFloor(availableFloors[0]);
+      if (availableFloors.length > 0) {
+        setSelectedFloor((prev) => prev || availableFloors[0]);
       }
     } catch (error) {
       console.error("RoomVisualization error:", error);
@@ -40,11 +40,11 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [hotelId]);
 
   useEffect(() => {
     if (hotelId) fetchRooms();
-  }, [hotelId]);
+  }, [hotelId, fetchRooms]);
 
   // Server-Sent Events (SSE) Live Floor Sync (Pillar 4)
   useEffect(() => {

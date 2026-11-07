@@ -54,7 +54,13 @@ const HotelSearch = () => {
     };
 
     fetchHotels();
-  }, [searchParams.location]);
+  }, [
+    searchParams.location,
+    searchParams.checkIn,
+    searchParams.checkOut,
+    searchParams.adults,
+    searchParams.children,
+  ]);
 
   useEffect(() => {
     let result = hotels;

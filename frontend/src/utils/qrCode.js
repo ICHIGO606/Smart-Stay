@@ -480,8 +480,7 @@ QRCodeModel.createBytes = function (buffer, rsBlocks) {
 /**
  * Determine smallest typeNumber that fits the data string
  */
-function getOptimalTypeNumber(textLength, ecLevel = 1) {
-  // 1 = M
+function getOptimalTypeNumber(textLength) {
   // Rough byte capacity table for M:
   // V1: 14, V2: 26, V3: 42, V4: 61, V5: 84, V6: 106, V7: 122, V8: 152, V9: 180, V10: 213
   const limits = [0, 14, 26, 42, 61, 84, 106, 122, 152, 180, 213];
@@ -496,7 +495,7 @@ function getOptimalTypeNumber(textLength, ecLevel = 1) {
  */
 export function generateQRCodePath(text) {
   try {
-    const typeNumber = getOptimalTypeNumber(text.length, 1);
+    const typeNumber = getOptimalTypeNumber(text.length);
     const qr = new QRCodeModel(typeNumber, 1); // 1 = Error Correction Level M (15%)
     qr.addData(text);
     qr.make();

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import bookingService from "../../services/bookingService";
 
 const BookingManagement = () => {
@@ -39,11 +39,7 @@ const BookingManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  useEffect(() => {
-    fetchBookings();
-  }, [currentPage, itemsPerPage, appliedFilters, sorting]);
-
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -94,7 +90,11 @@ const BookingManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, itemsPerPage, sorting, appliedFilters]);
+
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]);
 
   const updateBookingStatus = async (bookingId, newStatus) => {
     try {

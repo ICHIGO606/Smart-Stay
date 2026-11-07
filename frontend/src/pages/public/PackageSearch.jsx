@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router";
 import { searchPackages } from "../../services/packageService";
 import { formatCurrency } from "../../utils/formatters";
@@ -26,55 +26,58 @@ const PackageSearch = () => {
   const [destinations, setDestinations] = useState([]);
   const [sortBy, setSortBy] = useState("price-low-high");
 
+  const fetchPackages = useCallback(
+    async (params = {}) => {
+      try {
+        setLoading(true);
+        const packagesData = await searchPackages(params);
+
+        let sortedPackages = [...packagesData];
+        switch (sortBy) {
+          case "price-low-high":
+            sortedPackages.sort((a, b) => a.price - b.price);
+            break;
+          case "price-high-low":
+            sortedPackages.sort((a, b) => b.price - a.price);
+            break;
+          case "duration-short-long":
+            sortedPackages.sort(
+              (a, b) => (a.duration?.days || 0) - (b.duration?.days || 0),
+            );
+            break;
+          case "duration-long-short":
+            sortedPackages.sort(
+              (a, b) => (b.duration?.days || 0) - (a.duration?.days || 0),
+            );
+            break;
+          default:
+            break;
+        }
+
+        setPackages(sortedPackages);
+
+        if (packagesData.length > 0) {
+          const allDestinations = packagesData.flatMap(
+            (pkg) => pkg.destinations || [],
+          );
+          const uniqueDestinations = [...new Set(allDestinations)];
+          setDestinations(uniqueDestinations);
+        }
+
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching packages:", err);
+        setError("Failed to load packages. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [sortBy],
+  );
+
   useEffect(() => {
     fetchPackages();
-  }, []);
-
-  const fetchPackages = async (params = {}) => {
-    try {
-      setLoading(true);
-      const packagesData = await searchPackages(params);
-
-      let sortedPackages = [...packagesData];
-      switch (sortBy) {
-        case "price-low-high":
-          sortedPackages.sort((a, b) => a.price - b.price);
-          break;
-        case "price-high-low":
-          sortedPackages.sort((a, b) => b.price - a.price);
-          break;
-        case "duration-short-long":
-          sortedPackages.sort(
-            (a, b) => (a.duration?.days || 0) - (b.duration?.days || 0),
-          );
-          break;
-        case "duration-long-short":
-          sortedPackages.sort(
-            (a, b) => (b.duration?.days || 0) - (a.duration?.days || 0),
-          );
-          break;
-        default:
-          break;
-      }
-
-      setPackages(sortedPackages);
-
-      if (packagesData.length > 0) {
-        const allDestinations = packagesData.flatMap(
-          (pkg) => pkg.destinations || [],
-        );
-        const uniqueDestinations = [...new Set(allDestinations)];
-        setDestinations(uniqueDestinations);
-      }
-
-      setError(null);
-    } catch (err) {
-      console.error("Error fetching packages:", err);
-      setError("Failed to load packages. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [fetchPackages]);
 
   const handleSearchChange = (e) => {
     const { name, value } = e.target;
