@@ -197,6 +197,26 @@ const adminHotelService = {
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to fetch admin stats');
     }
+  },
+
+  // Verify guest voucher token at front-desk (Option 1)
+  verifyCheckInToken: async (token) => {
+    try {
+      const response = await api.get(`/bookings/verify-token/${encodeURIComponent(token)}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Invalid or expired check-in token');
+    }
+  },
+
+  // Process front-desk guest check-in & occupy room (Option 1)
+  checkInGuest: async (token, notes = '') => {
+    try {
+      const response = await api.post('/admin/bookings/check-in', { token, notes });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to complete guest check-in');
+    }
   }
 };
 

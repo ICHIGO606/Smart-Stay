@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { getAllPackages, deletePackage } from '../../services/adminPackageService';
+import { formatCurrency } from '../../utils/formatters';
 import toast from 'react-hot-toast';
 import { Plus, Edit3, Trash2, Package } from 'lucide-react';
 import ConfirmModal from '../../components/common/ConfirmModal';
@@ -130,7 +131,7 @@ const PackageListPage = () => {
                       {pkg.duration?.days || 0}D / {pkg.duration?.nights || 0}N
                     </td>
                     <td className="px-5 py-3.5 font-mono font-medium text-ink-primary tabular-nums">
-                      ${Math.round(pkg.price || 0).toLocaleString()}
+                      {formatCurrency(pkg.price)}
                     </td>
                     <td className="px-5 py-3.5">
                       <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-tag text-xs font-mono ${

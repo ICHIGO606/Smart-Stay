@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { searchPackages } from '../../services/packageService';
+import { formatCurrency } from '../../utils/formatters';
 import { Search, Compass, Calendar, ArrowRight, SlidersHorizontal, MapPin } from 'lucide-react';
 
 const PackageSearch = () => {
@@ -328,7 +329,7 @@ const PackageSearch = () => {
                     <div className="tabular-nums">
                       <span className="text-[10px] uppercase font-mono text-ink-muted block leading-none mb-1">Total package</span>
                       <span className="text-lg font-semibold text-ink-primary">
-                        ${Math.round(pkg.price).toLocaleString()}
+                        {formatCurrency(pkg.price)}
                       </span>
                     </div>
 

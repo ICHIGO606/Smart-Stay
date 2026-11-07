@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import adminHotelService from "../../services/adminHotelService";
 import { API_BASE_URL } from "../../services/api";
-import { FileSpreadsheet, RefreshCw, Radio } from "lucide-react";
+import { FileSpreadsheet, RefreshCw, Radio, QrCode } from "lucide-react";
+import CheckInStationModal from "./CheckInStationModal";
 
 const RoomVisualization = ({ hotelId, onRoomSelect }) => {
   const [floors, setFloors] = useState({});
@@ -12,6 +13,7 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [showRoomModal, setShowRoomModal] = useState(false);
+  const [showCheckInModal, setShowCheckInModal] = useState(false);
 
   // Operational status & live sync state (Pillars 3 & 4)
   const [liveConnected, setLiveConnected] = useState(false);
@@ -502,6 +504,14 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowCheckInModal(true)}
+              className="btn-primary !text-xs !py-1.5 inline-flex items-center gap-1.5"
+            >
+              <QrCode size={13} />
+              <span>Check-In Desk</span>
+            </button>
             <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono bg-white border border-stone-200 shadow-subtle">
               <span className={`w-2 h-2 rounded-full ${liveConnected ? "bg-emerald-500 animate-pulse" : "bg-stone-400"}`}></span>
               <span className="text-stone-700">{liveConnected ? "Live Sync Active" : "Connecting..."}</span>
@@ -987,6 +997,13 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
           </div>
         </div>
       )}
+
+      {/* Front-Desk Check-In Station Modal (Option 1) */}
+      <CheckInStationModal
+        isOpen={showCheckInModal}
+        onClose={() => setShowCheckInModal(false)}
+        onCheckInComplete={() => fetchRooms()}
+      />
     </div>
   );
 };

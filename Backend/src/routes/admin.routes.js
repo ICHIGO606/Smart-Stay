@@ -18,7 +18,8 @@ import {
   updateRoomOperationalStatus,
   streamHotelLiveUpdates,
   exportBookingsCsv,
-  getAdminAnalyticsStats
+  getAdminAnalyticsStats,
+  checkInGuestByToken
 } from "../controllers/admin.controllers.js";
 import {
   getPendingVerifications,
@@ -88,6 +89,7 @@ router.delete(
 );
 
 router.get("/hotels/:hotelId/bookings", verifyJWT, verifyHotelAdmin, getHotelBookings);
+router.post("/bookings/check-in", strictLimiter, verifyJWT, isAdmin, checkInGuestByToken);
 router.get("/bookings/export-csv", verifyJWT, isAdmin, exportBookingsCsv);
 router.get("/stats", verifyJWT, isAdmin, getAdminAnalyticsStats);
 

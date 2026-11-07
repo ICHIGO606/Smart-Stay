@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
 import { getPackageById, bookPackage } from '../../services/packageService';
+import { formatCurrency } from '../../utils/formatters';
 import { useAuth } from '../../context/AuthContext';
 import { ArrowLeft, MapPin, Calendar, Users, ShieldCheck, Check, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -205,7 +206,7 @@ const PackageDetails = () => {
               </p>
               <div className="flex items-baseline gap-1.5 tabular-nums">
                 <span className="text-3xl font-semibold text-ink-primary">
-                  ${Math.round(packageData.price).toLocaleString()}
+                  {formatCurrency(packageData.price)}
                 </span>
                 <span className="text-xs text-ink-muted font-mono">/ guest</span>
               </div>

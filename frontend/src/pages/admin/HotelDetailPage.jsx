@@ -5,8 +5,10 @@ import { hotelService } from '../../services/hotelService';
 import HotelForm from '../../components/admin/HotelForm';
 import RoomForm from '../../components/admin/RoomForm';
 import RoomVisualization from '../../components/admin/RoomVisualization';
+import CheckInStationModal from '../../components/admin/CheckInStationModal';
 import adminService from '../../services/adminService';
-import { ArrowLeft, Plus, Edit3, Trash2, BedDouble, AlertCircle, Check, Eye } from 'lucide-react';
+import { formatCurrency } from '../../utils/formatters';
+import { ArrowLeft, Plus, Edit3, Trash2, BedDouble, AlertCircle, Check, Eye, QrCode } from 'lucide-react';
 
 const HotelDetailPage = () => {
   const { hotelId } = useParams();
@@ -17,6 +19,7 @@ const HotelDetailPage = () => {
   const [success, setSuccess] = useState('');
   const [showRoomForm, setShowRoomForm] = useState(false);
   const [showRoomVisualization, setShowRoomVisualization] = useState(false);
+  const [showCheckInStation, setShowCheckInStation] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [viewMode, setViewMode] = useState('details');
 
@@ -192,6 +195,13 @@ const HotelDetailPage = () => {
 
         <div className="flex items-center gap-2">
           <button
+            onClick={() => setShowCheckInStation(true)}
+            className="btn-primary !text-xs !py-1.5 !px-3 inline-flex items-center gap-1.5"
+          >
+            <QrCode size={12} />
+            <span>Check-In Desk</span>
+          </button>
+          <button
             onClick={() => setViewMode('edit')}
             className="btn-secondary !text-xs !py-1.5 !px-3 inline-flex items-center gap-1"
           >
@@ -303,7 +313,7 @@ const HotelDetailPage = () => {
                     </div>
 
                     <div className="flex items-center gap-4 text-xs font-mono text-ink-muted">
-                      <span>Rate: <strong className="text-ink-primary tabular-nums">${room.pricePerNight}</strong>/night</span>
+                      <span>Rate: <strong className="text-ink-primary tabular-nums">{formatCurrency(room.pricePerNight)}</strong>/night</span>
                       <span>·</span>
                       <span>Max occupancy: <strong className="text-ink-primary tabular-nums">{room.maxOccupancy}</strong></span>
                       <span>·</span>
@@ -344,6 +354,13 @@ const HotelDetailPage = () => {
           </div>
         )}
       </div>
+
+      {/* Front-Desk Check-In Station Modal (Option 1) */}
+      <CheckInStationModal
+        isOpen={showCheckInStation}
+        onClose={() => setShowCheckInStation(false)}
+        onCheckInComplete={() => fetchHotelDetails()}
+      />
     </div>
   );
 };

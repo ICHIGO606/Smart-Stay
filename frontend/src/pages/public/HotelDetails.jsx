@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router';
+import { useParams, useNavigate, useLocation, Link } from 'react-router';
 import { hotelService } from '../../services/hotelService';
+import { formatCurrency } from '../../utils/formatters';
 import { useAuth } from '../../context/AuthContext';
 import { Star, MapPin, Users, Check, ArrowLeft, Shield, Bed, ChevronRight } from 'lucide-react';
 
 const HotelDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [hotel, setHotel] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -34,10 +36,10 @@ const HotelDetails = () => {
 
   const handleBookNow = (roomId) => {
     if (!user) {
-      navigate('/login', { state: { from: `/hotels/${id}` } });
+      navigate('/login', { state: { from: `/hotels/${id}`, ...location.state } });
       return;
     }
-    navigate(`/hotels/${id}/book/${roomId}`);
+    navigate(`/hotels/${id}/book/${roomId}`, { state: location.state });
   };
 
   const renderStars = (rating) => (
@@ -241,7 +243,7 @@ const HotelDetails = () => {
                 <div className="p-5 pt-0 border-t border-stone-100 pt-3 flex items-center justify-between">
                   <div className="tabular-nums">
                     <span className="text-xs text-ink-muted block leading-none mb-1">Per night</span>
-                    <span className="text-xl font-semibold text-ink-primary">${room.pricePerNight}</span>
+                    <span className="text-xl font-semibold text-ink-primary">{formatCurrency(room.pricePerNight)}</span>
                   </div>
 
                   <button 

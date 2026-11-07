@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router';
 import { hotelService } from '../../services/hotelService';
+import { formatCurrency } from '../../utils/formatters';
 import { Star, MapPin, SlidersHorizontal, ArrowRight, ShieldCheck, Wifi, Waves, Car, Utensils, Dumbbell } from 'lucide-react';
 
 const HotelSearch = () => {
@@ -10,7 +11,7 @@ const HotelSearch = () => {
   const [filteredHotels, setFilteredHotels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
-    priceRange: [0, 1000],
+    priceRange: [0, 25000],
     starRating: [],
     amenities: []
   });
@@ -128,9 +129,9 @@ const HotelSearch = () => {
                 <SlidersHorizontal size={13} />
                 <span>Filters</span>
               </h2>
-              {(filters.starRating.length > 0 || filters.amenities.length > 0 || filters.priceRange[1] < 1000) && (
+              {(filters.starRating.length > 0 || filters.amenities.length > 0 || filters.priceRange[1] < 25000) && (
                 <button
-                  onClick={() => setFilters({ priceRange: [0, 1000], starRating: [], amenities: [] })}
+                  onClick={() => setFilters({ priceRange: [0, 25000], starRating: [], amenities: [] })}
                   className="text-[11px] font-mono text-accent hover:underline"
                 >
                   Reset
@@ -142,20 +143,20 @@ const HotelSearch = () => {
             <div>
               <div className="flex items-center justify-between text-xs text-ink-secondary mb-2 font-mono tabular-nums">
                 <span>Maximum rate</span>
-                <span className="font-medium text-ink-primary">${filters.priceRange[1]}</span>
+                <span className="font-medium text-ink-primary">{formatCurrency(filters.priceRange[1])}</span>
               </div>
               <input
                 type="range"
-                min="50"
-                max="1000"
-                step="25"
+                min="500"
+                max="25000"
+                step="500"
                 value={filters.priceRange[1]}
                 onChange={(e) => handleFilterChange('priceRange', [filters.priceRange[0], parseInt(e.target.value)])}
                 className="w-full accent-stone-900 bg-stone-200 h-1 rounded-full cursor-pointer"
               />
               <div className="flex justify-between text-[10px] font-mono text-ink-muted mt-1 tabular-nums">
-                <span>$50</span>
-                <span>$1,000</span>
+                <span>₹500</span>
+                <span>₹25,000+</span>
               </div>
             </div>
             
@@ -300,12 +301,12 @@ const HotelSearch = () => {
                             </span>
                             <div className="flex items-baseline gap-1.5">
                               <span className="text-lg font-semibold text-ink-primary">
-                                {lowestPrice ? `$${lowestPrice}` : 'Inquire'}
+                                {lowestPrice ? formatCurrency(lowestPrice) : 'Inquire'}
                               </span>
                               {lowestPrice && <span className="text-xs text-ink-muted font-mono">/ night</span>}
                               {hotel.totalStayPrice && hotel.nights > 1 && (
                                 <span className="text-xs text-ink-muted font-mono">
-                                  (${hotel.totalStayPrice} total)
+                                  ({formatCurrency(hotel.totalStayPrice)} total)
                                 </span>
                               )}
                             </div>

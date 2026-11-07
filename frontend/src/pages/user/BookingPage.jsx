@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router';
+import { useParams, useNavigate, useLocation, Link } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
 import bookingService from '../../services/bookingService';
 import hotelService from '../../services/hotelService';
 import userService from '../../services/userService';
 import PaymentGateway from '../../components/PaymentGateway';
+import { formatCurrency } from '../../utils/formatters';
 import { ShieldCheck, ArrowLeft, ArrowRight, Check, BedDouble, Users, AlertCircle } from 'lucide-react';
 
 const BookingPage = () => {
   const { hotelId, roomId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
+  const prefilled = location.state || {};
   
   const [hotel, setHotel] = useState(null);
   const [room, setRoom] = useState(null);
@@ -22,11 +25,11 @@ const BookingPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [newUserData, setNewUserData] = useState({ fullName: '', age: '', relationship: '' });
   const [bookingData, setBookingData] = useState({
-    checkInDate: '',
-    checkOutDate: '',
+    checkInDate: prefilled.checkIn || '',
+    checkOutDate: prefilled.checkOut || '',
     guests: {
-      adults: 1,
-      children: 0,
+      adults: Number(prefilled.adults) || 1,
+      children: Number(prefilled.children) || 0,
       infants: 0
     },
     guestDetails: [
@@ -588,7 +591,7 @@ const BookingPage = () => {
             <div className="pt-3 border-t border-stone-100 space-y-2 text-xs font-mono">
               <div className="flex justify-between">
                 <span className="text-ink-secondary">Nightly rate</span>
-                <span className="text-ink-primary tabular-nums">${room?.pricePerNight}</span>
+                <span className="text-ink-primary tabular-nums">{formatCurrency(room?.pricePerNight)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-ink-secondary">Calculated nights</span>
@@ -596,7 +599,7 @@ const BookingPage = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-ink-secondary">Resort surcharges</span>
-                <span className="text-ink-primary tabular-nums">$0</span>
+                <span className="text-ink-primary tabular-nums">{formatCurrency(0)}</span>
               </div>
             </div>
 
@@ -604,7 +607,7 @@ const BookingPage = () => {
               <div className="flex justify-between items-baseline">
                 <span className="text-xs font-mono uppercase tracking-wider text-ink-secondary">Total amount</span>
                 <span className="text-2xl font-semibold text-ink-primary tabular-nums">
-                  ${calculateTotal().toLocaleString()}
+                  {formatCurrency(calculateTotal())}
                 </span>
               </div>
             </div>

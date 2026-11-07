@@ -6,6 +6,7 @@ import { Room } from "../models/room.models.js";
 import { Booking } from "../models/booking.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { sseService } from "../services/sseService.js";
+import { generateVoucherData } from "../utils/voucherGenerator.js";
 import mongoose from "mongoose";
 
 // ------------------- HOTEL CONTROLLERS ------------------- //
@@ -593,6 +594,112 @@ const getAdminAnalyticsStats = asyncHandler(async (req, res) => {
   );
 });
 
+// Front-desk QR check-in & room occupation (Option 1)
+const checkInGuestByToken = asyncHandler(async (req, res) => {
+  const { token, notes } = req.body;
+  if (!token) throw new ApiError(400, "Voucher token or reservation code is required");
+
+  const safeToken = String(token).trim().toUpperCase();
+
+  // Find confirmed or pending bookings
+  const bookings = await Booking.find({
+    bookingStatus: { $in: ["Confirmed", "Pending"] },
+  })
+    .populate("hotelId")
+    .populate("roomId")
+    .populate("user", "fullName email phone");
+
+  const booking = bookings.find((b) => {
+    const data = generateVoucherData(b);
+    return (
+      data.verificationToken === safeToken ||
+      data.checkInCode === safeToken ||
+      b._id.toString().toUpperCase().endsWith(safeToken.replace(/[^A-Z0-9]/g, ""))
+    );
+  });
+
+  if (!booking) {
+    throw new ApiError(404, `No active reservation found matching token "${safeToken}"`);
+  }
+
+  // Authorize: Admin must be superadmin or own this hotel
+  if (
+    booking.hotelId?.adminId?.toString() !== req.user._id?.toString() &&
+    req.user.username !== "sadmin" &&
+    req.user.username !== "admin"
+  ) {
+    throw new ApiError(403, "Not authorized to check in guests for this property");
+  }
+
+  booking.bookingStatus = "Confirmed";
+  await booking.save();
+
+  let roomNumberAssigned = null;
+
+  // Advance assigned room to Occupied
+  if (booking.roomId) {
+    const room = await Room.findById(booking.roomId._id || booking.roomId);
+    if (room) {
+      if (!room.operationalStatuses) room.operationalStatuses = [];
+
+      roomNumberAssigned = booking.roomNumbers?.[0] || room.roomNumbers?.[0];
+
+      if (roomNumberAssigned) {
+        const opIndex = room.operationalStatuses.findIndex(
+          (o) => Number(o.roomNumber) === Number(roomNumberAssigned)
+        );
+
+        const checkInNote = notes || `Checked in via Voucher Pass № ${safeToken}`;
+        const entry = {
+          roomNumber: Number(roomNumberAssigned),
+          status: "Occupied",
+          notes: checkInNote,
+          updatedAt: new Date(),
+        };
+
+        if (opIndex >= 0) {
+          room.operationalStatuses[opIndex] = entry;
+        } else {
+          room.operationalStatuses.push(entry);
+        }
+
+        await room.save();
+
+        const propertyId = booking.hotelId?._id || booking.hotelId;
+        sseService.broadcast(propertyId, "room_status_changed", {
+          hotelId: propertyId,
+          roomId: room._id,
+          roomNumber: Number(roomNumberAssigned),
+          operationalStatus: "Occupied",
+          notes: checkInNote,
+          updatedAt: entry.updatedAt,
+        });
+      }
+    }
+  }
+
+  const voucherData = generateVoucherData(booking);
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        bookingId: booking._id,
+        guestName: booking.user?.fullName || "Guest",
+        hotelName: booking.hotelId?.name || "Boutique Hotel",
+        roomType: booking.roomId?.type || "Standard Suite",
+        roomNumber: roomNumberAssigned,
+        checkInDate: booking.checkInDate,
+        checkOutDate: booking.checkOutDate,
+        paymentStatus: booking.paymentStatus,
+        operationalStatus: "Occupied",
+        voucherData,
+      },
+      `Guest ${booking.user?.fullName || "Guest"} checked in successfully. Room ${roomNumberAssigned || ""} is now Occupied.`
+    )
+  );
+});
+
 export {
   createHotel,
   updateHotel,
@@ -608,5 +715,6 @@ export {
   updateRoomOperationalStatus,
   streamHotelLiveUpdates,
   exportBookingsCsv,
-  getAdminAnalyticsStats
+  getAdminAnalyticsStats,
+  checkInGuestByToken
 };
