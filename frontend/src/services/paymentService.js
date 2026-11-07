@@ -11,8 +11,8 @@ export const paymentService = {
     }
   },
 
-  // Create payment order
-  createPaymentOrder: async (bookingId, paymentMethod) => {
+  // Create payment order / YouPI-PG session
+  createPaymentOrder: async (bookingId, paymentMethod = 'upi') => {
     try {
       const response = await api.post('/payments/create-order', {
         bookingId,
@@ -24,7 +24,7 @@ export const paymentService = {
     }
   },
 
-  // Verify payment
+  // Verify payment by UTR, signature, or session reference
   verifyPayment: async (paymentData) => {
     try {
       const response = await api.post('/payments/verify', paymentData);
@@ -34,7 +34,26 @@ export const paymentService = {
     }
   },
 
-  // Load Razorpay script dynamically
+  // Load YouPI-PG universal checkout SDK
+  loadYoupiSdk: (baseUrl = 'http://localhost:7000') => {
+    return new Promise((resolve) => {
+      if (window.Youpi) {
+        resolve();
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = `${baseUrl}/checkout.js`;
+      script.onload = () => resolve();
+      script.onerror = () => {
+        // Fallback to native UPI vector QR & intent deep links if SDK is not hosted
+        resolve();
+      };
+      document.body.appendChild(script);
+    });
+  },
+
+  // Legacy loader kept for backward compatibility and unit tests
   loadRazorpayScript: () => {
     return new Promise((resolve) => {
       if (window.Razorpay) {

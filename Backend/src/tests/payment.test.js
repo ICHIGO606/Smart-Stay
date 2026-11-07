@@ -1,24 +1,26 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 
-process.env.RAZORPAY_KEY_ID = 'rzp_test_ci';
+process.env.YOUPI_BASE_URL = 'http://localhost:7000';
+process.env.YOUPI_MERCHANT_ID = 'smartstay_merchant';
+process.env.YOUPI_MERCHANT_API_KEY = 'test_api_key';
+process.env.YOUPI_WEBHOOK_SECRET = 'ci_test_secret';
 process.env.RAZORPAY_KEY_SECRET = 'ci_test_secret';
 
 const mockFindBookingById = jest.fn();
 const mockFindHotelById = jest.fn();
-const mockCreateOrder = jest.fn();
 
 await jest.unstable_mockModule('../models/booking.models.js', () => ({
-  Booking: { findById: mockFindBookingById },
+  Booking: {
+    findById: mockFindBookingById,
+    findOne: jest.fn().mockImplementation((query) => {
+      const b = makeBooking();
+      return Promise.resolve(b);
+    }),
+  },
 }));
 
 await jest.unstable_mockModule('../models/hotel.models.js', () => ({
   Hotel: { findById: mockFindHotelById },
-}));
-
-await jest.unstable_mockModule('razorpay', () => ({
-  default: jest.fn().mockImplementation(() => ({
-    orders: { create: mockCreateOrder },
-  })),
 }));
 
 const { createPaymentOrder, verifyPayment } = await import(
@@ -31,6 +33,7 @@ const makeBooking = () => ({
   totalAmount: 5000,
   paymentStatus: 'Pending',
   bookingStatus: 'Pending',
+  paymentDetails: {},
   save: jest.fn().mockResolvedValue(undefined),
 });
 
@@ -64,14 +67,9 @@ describe('Payment controller', () => {
       populate: jest.fn().mockResolvedValue(booking),
     });
     mockFindHotelById.mockResolvedValue({ currency: 'INR' });
-    mockCreateOrder.mockResolvedValue({
-      id: 'order_test_123',
-      amount: 500000,
-      currency: 'INR',
-    });
   });
 
-  test('creates a payment order', async () => {
+  test('creates a YouPI payment order', async () => {
     const { response, payload } = await invokeController(createPaymentOrder, {
       bookingId: 'booking-id',
       paymentMethod: 'upi',
@@ -80,12 +78,15 @@ describe('Payment controller', () => {
     expect(response.status).toHaveBeenCalledWith(200);
     expect(payload.data).toMatchObject({
       amount: 500000,
+      amountInRupees: 5000,
       currency: 'INR',
-      orderId: 'order_test_123',
+      gateway: 'youpi',
+      paymentMethod: 'upi',
     });
-    expect(mockCreateOrder).toHaveBeenCalledWith(
-      expect.objectContaining({ amount: 500000, currency: 'inr' }),
-    );
+    expect(payload.data.orderId).toContain('youpi_booking-id');
+    expect(payload.data.upiString).toContain('upi://pay?');
+    expect(payload.data.deepLinks).toHaveProperty('gpay');
+    expect(payload.data.deepLinks).toHaveProperty('phonepe');
   });
 
   test('creates a pay-at-hotel booking without an online order', async () => {
@@ -98,9 +99,9 @@ describe('Payment controller', () => {
     expect(payload.data).toMatchObject({
       paymentMethod: 'pay_at_hotel',
       status: 'created',
+      amount: 5000,
     });
     expect(booking.save).toHaveBeenCalled();
-    expect(mockCreateOrder).not.toHaveBeenCalled();
   });
 
   test('forwards an invalid booking ID error', async () => {
@@ -130,11 +131,28 @@ describe('Payment controller', () => {
     expect(error).toHaveProperty('message', 'Booking not found');
   });
 
+  test('verifies a valid YouPI payment by UTR', async () => {
+    mockFindBookingById.mockResolvedValue(booking);
+    const { response, payload } = await invokeController(verifyPayment, {
+      orderId: 'youpi_booking-id_123',
+      paymentId: 'pay_123',
+      utr: '123456789012',
+      bookingId: 'booking-id',
+    });
+
+    expect(response.status).toHaveBeenCalledWith(200);
+    expect(payload.data).toMatchObject({
+      status: 'success',
+      gateway: 'youpi',
+      utr: '123456789012',
+    });
+  });
+
   test('rejects an invalid payment signature', async () => {
     const { error } = await invokeController(verifyPayment, {
-      razorpay_order_id: 'test_order_id',
-      razorpay_payment_id: 'test_payment_id',
-      razorpay_signature: 'test_signature',
+      orderId: 'test_order_id',
+      paymentId: 'test_payment_id',
+      signature: 'test_invalid_signature',
     });
 
     expect(error).toHaveProperty('statusCode', 400);
