@@ -30,9 +30,8 @@ const roomSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["Available", "Maintenance"], 
+      enum: ["Available", "Maintenance"],
       default: "Available",
-      
     },
     roomNumbers: {
       type: [Number], // e.g., [101, 102, 105]
@@ -49,15 +48,34 @@ const roomSchema = new mongoose.Schema(
         roomNumber: { type: Number, required: true },
         checkInDate: { type: Date, required: true },
         checkOutDate: { type: Date, required: true },
-        bookingId: { type: mongoose.Schema.Types.ObjectId, ref: "Booking" }
-      }
+        bookingId: { type: mongoose.Schema.Types.ObjectId, ref: "Booking" },
+      },
+    ],
+    operationalStatuses: [
+      {
+        roomNumber: { type: Number, required: true },
+        status: {
+          type: String,
+          enum: [
+            "Available",
+            "Reserved",
+            "Occupied",
+            "Dirty",
+            "Cleaning",
+            "Maintenance",
+          ],
+          default: "Available",
+        },
+        notes: { type: String, default: "" },
+        updatedAt: { type: Date, default: Date.now },
+      },
     ],
     amenities: {
       type: [String],
       default: [],
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Index for filters

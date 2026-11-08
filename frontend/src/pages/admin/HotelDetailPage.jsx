@@ -1,96 +1,106 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router';
-import adminHotelService from '../../services/adminHotelService';
-import { hotelService } from '../../services/hotelService';
-import HotelForm from '../../components/admin/HotelForm';
-import RoomForm from '../../components/admin/RoomForm';
-import RoomVisualization from '../../components/admin/RoomVisualization';
-import adminService from '../../services/adminService';
+import React, { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate, Link } from "react-router";
+import adminHotelService from "../../services/adminHotelService";
+import { hotelService } from "../../services/hotelService";
+import HotelForm from "../../components/admin/HotelForm";
+import RoomForm from "../../components/admin/RoomForm";
+import RoomVisualization from "../../components/admin/RoomVisualization";
+import CheckInStationModal from "../../components/admin/CheckInStationModal";
+import adminService from "../../services/adminService";
+import { formatCurrency } from "../../utils/formatters";
+import {
+  ArrowLeft,
+  Plus,
+  Edit3,
+  Trash2,
+  BedDouble,
+  AlertCircle,
+  Check,
+  Eye,
+  QrCode,
+} from "lucide-react";
 
 const HotelDetailPage = () => {
   const { hotelId } = useParams();
   const navigate = useNavigate();
   const [hotel, setHotel] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [showRoomForm, setShowRoomForm] = useState(false);
   const [showRoomVisualization, setShowRoomVisualization] = useState(false);
+  const [showCheckInStation, setShowCheckInStation] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
-  const [viewMode, setViewMode] = useState('details'); // 'details', 'edit', 'rooms'
+  const [viewMode, setViewMode] = useState("details");
+
+  const fetchHotelDetails = useCallback(async () => {
+    try {
+      setLoading(true);
+      const hotelResponse = await hotelService.getHotelDetails(hotelId);
+      const roomsResponse = await adminService.getRooms(hotelId);
+
+      if (hotelResponse.data) {
+        setHotel({
+          ...hotelResponse.data,
+          rooms: roomsResponse.data?.data || [],
+        });
+      } else {
+        setError("Hotel not found");
+      }
+    } catch (err) {
+      console.error("Error fetching hotel details:", err);
+      setError(err.response?.data?.message || "Failed to fetch hotel details");
+    } finally {
+      setLoading(false);
+    }
+  }, [hotelId]);
 
   useEffect(() => {
     fetchHotelDetails();
-  }, [hotelId]);
-
-  const fetchHotelDetails = async () => {
-  try {
-    setLoading(true);
-
-    const hotelResponse = await hotelService.getHotelDetails(hotelId);
-    const roomsResponse = await adminService.getRooms(hotelId);
-
-    console.log("Rooms response:", roomsResponse);
-
-    if (hotelResponse.data) {
-      setHotel({
-        ...hotelResponse.data,
-        rooms: roomsResponse.data?.data || []  // Updated to access data correctly
-      });
-    } else {
-      setError('Hotel not found');
-    }
-  } catch (err) {
-    console.error("Error fetching hotel details:", err);
-    setError(err.response?.data?.message || 'Failed to fetch hotel details');
-  } finally {
-    setLoading(false);
-  }
-};
-
+  }, [fetchHotelDetails]);
 
   const handleUpdateHotel = async (hotelData) => {
     try {
       await adminHotelService.updateHotel(hotelId, hotelData);
-      setSuccess('Hotel updated successfully');
-      setViewMode('details');
+      setSuccess("Hotel dossier updated");
+      setViewMode("details");
       fetchHotelDetails();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update hotel');
+      setError(err.response?.data?.message || "Failed to update hotel");
     }
   };
 
   const handleCreateRoom = async (roomData) => {
     try {
       await adminHotelService.createRoom(hotelId, roomData);
-      setSuccess('Room created successfully');
+      setSuccess("Room tier created");
       setShowRoomForm(false);
       fetchHotelDetails();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create room');
+      setError(err.response?.data?.message || "Failed to create room");
     }
   };
 
   const handleUpdateRoom = async (roomData) => {
     try {
       await adminHotelService.updateRoom(hotelId, selectedRoom._id, roomData);
-      setSuccess('Room updated successfully');
+      setSuccess("Room tier updated");
       setShowRoomForm(false);
       setSelectedRoom(null);
       fetchHotelDetails();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update room');
+      setError(err.response?.data?.message || "Failed to update room");
     }
   };
 
   const handleDeleteRoom = async (roomId) => {
-    if (window.confirm('Are you sure you want to delete this room?')) {
+    if (window.confirm("Delete this room tier from the hotel catalog?")) {
       try {
         await adminHotelService.deleteRoom(hotelId, roomId);
-        setSuccess('Room deleted successfully');
+        setSuccess("Room tier deleted");
         fetchHotelDetails();
       } catch (err) {
-        setError(err.response?.data?.message || 'Failed to delete room');
+        setError(err.response?.data?.message || "Failed to delete room");
       }
     }
   };
@@ -102,25 +112,25 @@ const HotelDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="p-8">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
+      <div className="p-8 flex flex-col justify-center items-center h-64 gap-3">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-stone-900 border-t-transparent"></div>
+        <p className="text-xs font-mono text-ink-muted">
+          Reading property records...
+        </p>
       </div>
     );
   }
 
   if (error && !hotel) {
     return (
-      <div className="p-8">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
+      <div className="card-base p-6 max-w-lg mx-auto text-center">
+        <p className="text-sm font-medium text-ink-primary mb-2">{error}</p>
         <button
-          onClick={() => navigate('/admin/hotels')}
-          className="mt-4 btn-secondary"
+          onClick={() => navigate("/admin/hotels")}
+          className="btn-secondary !text-xs inline-flex items-center gap-1.5"
         >
-          ← Back to Hotels
+          <ArrowLeft size={13} />
+          <span>Return to hotels</span>
         </button>
       </div>
     );
@@ -128,223 +138,265 @@ const HotelDetailPage = () => {
 
   if (showRoomForm) {
     return (
-      <div className="p-8">
-        <RoomForm
-          hotel={hotel}
-          initialData={selectedRoom}
-          onSubmit={selectedRoom ? handleUpdateRoom : handleCreateRoom}
-          onCancel={() => {
-            setShowRoomForm(false);
-            setSelectedRoom(null);
-          }}
-        />
-      </div>
+      <RoomForm
+        hotel={hotel}
+        initialData={selectedRoom}
+        onSubmit={selectedRoom ? handleUpdateRoom : handleCreateRoom}
+        onCancel={() => {
+          setShowRoomForm(false);
+          setSelectedRoom(null);
+        }}
+      />
     );
   }
 
   if (showRoomVisualization) {
     return (
-      <div className="p-8">
-        <div className="flex items-center mb-6">
+      <div className="space-y-6">
+        <div className="flex items-center gap-3 pb-4 border-b border-stone-200/80">
           <button
             onClick={() => setShowRoomVisualization(false)}
-            className="text-gray-600 hover:text-primary mr-4"
+            className="btn-secondary !text-xs !py-1.5 !px-2.5 inline-flex items-center gap-1"
           >
-            ← Back to Hotel
+            <ArrowLeft size={13} />
+            <span>Back</span>
           </button>
-          <h2 className="text-2xl font-bold text-primary">
-            Room Visualization - {hotel.name}
+          <h2 className="font-serif text-2xl text-ink-primary font-normal">
+            Room spatial map · {hotel.name}
           </h2>
         </div>
         <RoomVisualization hotelId={hotelId} rooms={hotel.rooms} />
-
       </div>
     );
   }
 
-  if (viewMode === 'edit') {
+  if (viewMode === "edit") {
     return (
-      <div className="p-8">
-        <div className="flex items-center mb-6">
-          <button
-            onClick={() => setViewMode('details')}
-            className="text-gray-600 hover:text-primary mr-4"
-          >
-            ← Back to Details
-          </button>
-          <h2 className="text-2xl font-bold text-primary">
-            Edit Hotel - {hotel.name}
-          </h2>
-        </div>
+      <div className="space-y-6">
         <HotelForm
           initialData={hotel}
           onSubmit={handleUpdateHotel}
-          onCancel={() => setViewMode('details')}
+          onCancel={() => setViewMode("details")}
         />
       </div>
     );
   }
 
   return (
-    <div className="p-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center">
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between pb-6 border-b border-stone-200/80 gap-3">
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/admin/hotels')}
-            className="text-gray-600 hover:text-primary mr-4"
+            onClick={() => navigate("/admin/hotels")}
+            className="btn-secondary !text-xs !py-1.5 !px-2.5 inline-flex items-center gap-1"
           >
-            ← Back to Hotels
+            <ArrowLeft size={13} />
+            <span>Hotels</span>
           </button>
-          <h1 className="text-3xl font-bold text-primary">{hotel.name}</h1>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="tag-signature">
+                № {hotel._id ? hotel._id.slice(-4).toUpperCase() : "PROP"}
+              </span>
+              <span className="text-xs font-mono text-ink-muted">
+                {hotel.city}
+              </span>
+            </div>
+            <h1 className="font-serif text-3xl text-ink-primary font-normal mt-0.5">
+              {hotel.name}
+            </h1>
+          </div>
         </div>
-        <div className="flex space-x-2">
+
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setViewMode('edit')}
-            className="btn-secondary"
+            onClick={() => setShowCheckInStation(true)}
+            className="btn-primary !text-xs !py-1.5 !px-3 inline-flex items-center gap-1.5"
           >
-            Edit Hotel
+            <QrCode size={12} />
+            <span>Check-In Desk</span>
+          </button>
+          <button
+            onClick={() => setViewMode("edit")}
+            className="btn-secondary !text-xs !py-1.5 !px-3 inline-flex items-center gap-1"
+          >
+            <Edit3 size={12} />
+            <span>Edit hotel</span>
           </button>
           <button
             onClick={() => setShowRoomVisualization(true)}
-            className="btn-primary"
+            className="btn-secondary !text-xs !py-1.5 !px-3 inline-flex items-center gap-1"
           >
-            View Room Layout
+            <Eye size={12} />
+            <span>Spatial layout</span>
+          </button>
+          <button
+            onClick={() => setShowRoomForm(true)}
+            className="btn-primary !text-xs !py-1.5 !px-3 inline-flex items-center gap-1"
+          >
+            <Plus size={12} />
+            <span>Add room tier</span>
           </button>
         </div>
       </div>
 
-      {/* Success/Error Messages */}
       {success && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-          {success}
+        <div className="p-3 rounded-control bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center gap-2">
+          <Check size={14} />
+          <span>{success}</span>
         </div>
       )}
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
+        <div className="p-3 rounded-control bg-red-50 border border-red-200 text-xs text-red-800 flex items-center gap-2">
+          <AlertCircle size={14} />
+          <span>{error}</span>
         </div>
       )}
 
-      {/* Hotel Details */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold text-primary mb-4">Hotel Information</h3>
-          <div className="space-y-3">
-            <p><span className="font-medium">City:</span> {hotel.city}</p>
-            <p><span className="font-medium">Address:</span> {hotel.address}</p>
-            <p><span className="font-medium">Description:</span> {hotel.description}</p>
-            {hotel.amenities && hotel.amenities.length > 0 && (
-              <div>
-                <span className="font-medium">Amenities:</span>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {hotel.amenities.map((amenity, index) => (
-                    <span key={index} className="bg-gray-100 px-2 py-1 rounded text-sm">
-                      {amenity}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+      {/* Hotel Details Overview */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-8 card-base p-6 space-y-4">
+          <h3 className="text-xs font-mono uppercase tracking-wider text-ink-muted">
+            Property specifications
+          </h3>
+          <div className="space-y-2 text-xs">
+            <p>
+              <span className="font-mono text-ink-muted">Address:</span>{" "}
+              <span className="text-ink-primary font-medium">
+                {hotel.address}
+              </span>
+            </p>
+            <p>
+              <span className="font-mono text-ink-muted">Description:</span>{" "}
+              <span className="text-ink-secondary leading-relaxed">
+                {hotel.description}
+              </span>
+            </p>
           </div>
+
+          {hotel.amenities && hotel.amenities.length > 0 && (
+            <div className="pt-2 border-t border-stone-100">
+              <span className="text-[10px] font-mono uppercase text-ink-muted block mb-1.5">
+                Amenities catalog
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {hotel.amenities.map((amenity, index) => (
+                  <span key={index} className="tag-signature">
+                    {amenity}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold text-primary mb-4">Hotel Images</h3>
+        <div className="lg:col-span-4 card-base p-6">
+          <h3 className="text-xs font-mono uppercase tracking-wider text-ink-muted mb-3">
+            Property photography
+          </h3>
           {hotel.images && hotel.images.length > 0 ? (
             <div className="grid grid-cols-2 gap-2">
               {hotel.images.map((image, index) => (
-                <img
+                <div
                   key={index}
-                  src={image}
-                  alt={`${hotel.name} ${index + 1}`}
-                  className="w-full h-24 object-cover rounded"
-                />
+                  className="aspect-[4/3] rounded-control overflow-hidden bg-stone-100 border border-stone-200"
+                >
+                  <img
+                    src={image}
+                    alt={`${hotel.name} ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               ))}
             </div>
           ) : (
-            <p className="text-gray-500">No images available</p>
+            <p className="text-xs font-mono text-ink-muted">
+              No photography files registered
+            </p>
           )}
         </div>
       </div>
 
       {/* Room Management Section */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-semibold text-primary">Room Management</h3>
+      <div className="card-base p-6 space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-stone-100">
+          <div>
+            <h3 className="text-sm font-semibold text-ink-primary">
+              Room tiers & allocations
+            </h3>
+            <p className="text-xs text-ink-muted">
+              Catalog of room types and assigned key numbers
+            </p>
+          </div>
           <button
             onClick={() => setShowRoomForm(true)}
-            className="btn-primary"
+            className="btn-primary !text-xs !py-1.5 !px-3 inline-flex items-center gap-1"
           >
-            + Add Room
+            <Plus size={12} />
+            <span>Add room</span>
           </button>
         </div>
 
         {hotel.rooms && hotel.rooms.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {hotel.rooms.map((room) => (
-              <div key={room._id} className="border border-gray-200 rounded-lg p-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-lg text-primary">{room.type}</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                      <div>
-                        <span className="font-medium">Price:</span> ${room.pricePerNight}/night
-                      </div>
-                      <div>
-                        <span className="font-medium">Max Occupancy:</span> {room.maxOccupancy}
-                      </div>
-                      <div>
-                        <span className="font-medium">Room Numbers:</span> {
-                          [...(room.availableRoomNumbers || []), ...(room.roomNumbers || [])].join(', ') || 'None'
-                        }
-                      </div>
+              <div
+                key={room._id}
+                className="p-4 rounded-control border border-stone-200/80 bg-stone-50/40 hover:border-stone-300 transition-colors"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="tag-signature">
+                        № {room._id ? room._id.slice(-3).toUpperCase() : "01"}
+                      </span>
+                      <h4 className="text-sm font-semibold text-ink-primary">
+                        {room.type}
+                      </h4>
                     </div>
-                    {room.amenities && room.amenities.length > 0 && (
-                      <div className="mt-2">
-                        <span className="font-medium">Amenities:</span>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {room.amenities.map((amenity, index) => (
-                            <span key={index} className="bg-gray-100 px-2 py-1 rounded text-xs">
-                              {amenity}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {room.images && room.images.length > 0 && (
-                      <div className="mt-2">
-                        <span className="font-medium">Images:</span>
-                        <div className="flex gap-2 mt-1">
-                          {room.images.slice(0, 3).map((image, index) => (
-                            <img
-                              key={index}
-                              src={image}
-                              alt={`${room.type} ${index + 1}`}
-                              className="w-12 h-12 object-cover rounded"
-                            />
-                          ))}
-                          {room.images.length > 3 && (
-                            <span className="text-sm text-gray-500">
-                              +{room.images.length - 3} more
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    )}
+
+                    <div className="flex items-center gap-4 text-xs font-mono text-ink-muted">
+                      <span>
+                        Rate:{" "}
+                        <strong className="text-ink-primary tabular-nums">
+                          {formatCurrency(room.pricePerNight)}
+                        </strong>
+                        /night
+                      </span>
+                      <span>·</span>
+                      <span>
+                        Max occupancy:{" "}
+                        <strong className="text-ink-primary tabular-nums">
+                          {room.maxOccupancy}
+                        </strong>
+                      </span>
+                      <span>·</span>
+                      <span>
+                        Keys:{" "}
+                        <strong className="text-ink-secondary">
+                          {[
+                            ...(room.availableRoomNumbers || []),
+                            ...(room.roomNumbers || []),
+                          ].join(", ") || "Unassigned"}
+                        </strong>
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex space-x-2 ml-4">
+
+                  <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleEditRoom(room)}
-                      className="btn-secondary text-sm"
+                      className="btn-secondary !text-xs !py-1 !px-2.5"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDeleteRoom(room._id)}
-                      className="btn-danger text-sm"
+                      className="text-stone-400 hover:text-red-700 p-1.5 transition-colors"
+                      aria-label="Delete room"
                     >
-                      Delete
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </div>
@@ -352,17 +404,30 @@ const HotelDetailPage = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
-            <p>No rooms added yet.</p>
+          <div className="text-center py-10">
+            <BedDouble size={22} className="text-stone-300 mx-auto mb-2" />
+            <p className="text-xs text-ink-secondary font-medium">
+              No room tiers registered
+            </p>
+            <p className="text-[11px] text-ink-muted mt-0.5 mb-3">
+              Add standard or deluxe room inventory to receive bookings.
+            </p>
             <button
               onClick={() => setShowRoomForm(true)}
-              className="btn-primary mt-4"
+              className="btn-primary !text-xs !py-1.5 !px-3"
             >
-              Add Your First Room
+              Add first room
             </button>
           </div>
         )}
       </div>
+
+      {/* Front-Desk Check-In Station Modal (Option 1) */}
+      <CheckInStationModal
+        isOpen={showCheckInStation}
+        onClose={() => setShowCheckInStation(false)}
+        onCheckInComplete={() => fetchHotelDetails()}
+      />
     </div>
   );
 };

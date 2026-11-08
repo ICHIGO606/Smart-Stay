@@ -4,7 +4,7 @@ const bookingSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",   // the person who made the booking
+      ref: "User", // the person who made the booking
       required: true,
     },
     bookingType: {
@@ -29,7 +29,6 @@ const bookingSchema = new mongoose.Schema(
       ref: "Package", // required if Package booking
     },
 
-
     checkInDate: { type: Date, required: true },
     checkOutDate: { type: Date, required: true },
 
@@ -43,10 +42,8 @@ const bookingSchema = new mongoose.Schema(
       },
     ],
 
-
     totalAmount: { type: Number, required: true, min: 0 },
     currency: { type: String, default: "INR" },
-
 
     paymentStatus: {
       type: String,
@@ -54,21 +51,20 @@ const bookingSchema = new mongoose.Schema(
       default: "Pending",
     },
 
-
     bookingStatus: {
       type: String,
       enum: ["Confirmed", "Pending", "Cancelled"],
       default: "Pending",
     },
 
-    specialRequests: { type: String }, 
+    specialRequests: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Indexes for performance
-bookingSchema.index({ user: 1, createdAt: -1 });  
-bookingSchema.index({ hotel: 1, room: 1, checkInDate: 1 }); 
+bookingSchema.index({ user: 1, createdAt: -1 });
+bookingSchema.index({ hotel: 1, room: 1, checkInDate: 1 });
 bookingSchema.index({ bookingStatus: 1, paymentStatus: 1 });
 
 export const Booking = mongoose.model("Booking", bookingSchema);

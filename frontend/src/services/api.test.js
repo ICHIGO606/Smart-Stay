@@ -71,7 +71,9 @@ describe("API client interceptors", () => {
   it("adds a bearer token to requests when one exists", async () => {
     const config = { headers: {} };
 
-    await expect(mocks.callbacks.request.fulfilled(config)).resolves.toBe(config);
+    await expect(mocks.callbacks.request.fulfilled(config)).resolves.toBe(
+      config,
+    );
     expect(config.headers.Authorization).toBe("Bearer access-token");
   });
 
@@ -87,7 +89,9 @@ describe("API client interceptors", () => {
   it("adds a CSRF token to state-changing requests", async () => {
     const config = { method: "post", headers: {} };
 
-    await expect(mocks.callbacks.request.fulfilled(config)).resolves.toBe(config);
+    await expect(mocks.callbacks.request.fulfilled(config)).resolves.toBe(
+      config,
+    );
 
     expect(config.headers["x-csrf-token"]).toBe("csrf-token");
     expect(mocks.get).toHaveBeenCalledWith(

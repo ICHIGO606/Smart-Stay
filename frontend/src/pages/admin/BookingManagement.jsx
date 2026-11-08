@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import bookingService from "../../services/bookingService";
 
 const BookingManagement = () => {
@@ -39,11 +39,7 @@ const BookingManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  useEffect(() => {
-    fetchBookings();
-  }, [currentPage, itemsPerPage, appliedFilters, sorting]);
-
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -76,7 +72,7 @@ const BookingManagement = () => {
             totalCount: response.data.bookings.length,
             hasNext: false,
             hasPrev: false,
-          }
+          },
         );
       } else {
         setBookings(response.data || []);
@@ -94,7 +90,11 @@ const BookingManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, itemsPerPage, sorting, appliedFilters]);
+
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]);
 
   const updateBookingStatus = async (bookingId, newStatus) => {
     try {
@@ -258,9 +258,9 @@ const BookingManagement = () => {
 
     return (
       <div
-        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${config.bg} ${config.text}`}
+        className={`inline-flex items-center px-2 py-0.5 rounded-tag text-xs font-mono ${config.bg} ${config.text} border border-stone-200/60`}
       >
-        <div className={`w-2 h-2 rounded-full ${config.dot} mr-2`}></div>
+        <div className={`w-1.5 h-1.5 rounded-full ${config.dot} mr-1.5`}></div>
         {status}
       </div>
     );
@@ -270,13 +270,13 @@ const BookingManagement = () => {
     return {
       total: pagination.totalCount,
       confirmed: bookings.filter(
-        (b) => b.bookingStatus?.toLowerCase() === "confirmed"
+        (b) => b.bookingStatus?.toLowerCase() === "confirmed",
       ).length,
       pending: bookings.filter(
-        (b) => b.bookingStatus?.toLowerCase() === "pending"
+        (b) => b.bookingStatus?.toLowerCase() === "pending",
       ).length,
       cancelled: bookings.filter(
-        (b) => b.bookingStatus?.toLowerCase() === "cancelled"
+        (b) => b.bookingStatus?.toLowerCase() === "cancelled",
       ).length,
       revenue: bookings
         .filter((b) => b.bookingStatus?.toLowerCase() === "confirmed")
@@ -334,103 +334,101 @@ const BookingManagement = () => {
   }
 
   return (
-    <div className="h-full bg-gray-50">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Booking Management
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Manage and track all hotel bookings
-              </p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => setViewMode("table")}
-                  className={`p-2 rounded-lg ${
-                    viewMode === "table"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200 text-gray-600"
-                  }`}
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M3 10h18M3 6h18m-9 8h9m-9 4h9m-9-8H3m0 4h6"
-                    />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => setViewMode("cards")}
-                  className={`p-2 rounded-lg ${
-                    viewMode === "cards"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200 text-gray-600"
-                  }`}
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              <select
-                value={itemsPerPage}
-                onChange={(e) => handleItemsPerPageChange(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="5">5 per page</option>
-                <option value="10">10 per page</option>
-                <option value="20">20 per page</option>
-                <option value="50">50 per page</option>
-              </select>
-
+      <div className="pb-6 border-b border-stone-200/80">
+        <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+              Ledger operations
+            </p>
+            <h1 className="font-serif text-3xl text-ink-primary font-normal">
+              Reservations ledger
+            </h1>
+          </div>
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-1.5 bg-stone-100 p-1 rounded-control border border-stone-200">
               <button
-                onClick={fetchBookings}
-                disabled={loading}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 flex items-center"
+                onClick={() => setViewMode("table")}
+                className={`p-1.5 rounded-control text-xs font-mono transition-colors ${
+                  viewMode === "table"
+                    ? "bg-white text-ink-primary font-medium shadow-subtle"
+                    : "text-ink-muted hover:text-ink-primary"
+                }`}
               >
-                {loading ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                ) : (
-                  <svg
-                    className="w-4 h-4 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    />
-                  </svg>
-                )}
-                Refresh
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M3 10h18M3 6h18m-9 8h9m-9 4h9m-9-8H3m0 4h6"
+                  />
+                </svg>
+              </button>
+              <button
+                onClick={() => setViewMode("cards")}
+                className={`p-1.5 rounded-control text-xs font-mono transition-colors ${
+                  viewMode === "cards"
+                    ? "bg-white text-ink-primary font-medium shadow-subtle"
+                    : "text-ink-muted hover:text-ink-primary"
+                }`}
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                  />
+                </svg>
               </button>
             </div>
+
+            <select
+              value={itemsPerPage}
+              onChange={(e) => handleItemsPerPageChange(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="5">5 per page</option>
+              <option value="10">10 per page</option>
+              <option value="20">20 per page</option>
+              <option value="50">50 per page</option>
+            </select>
+
+            <button
+              onClick={fetchBookings}
+              disabled={loading}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 flex items-center"
+            >
+              {loading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+              ) : (
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+              )}
+              Refresh
+            </button>
           </div>
         </div>
       </div>
@@ -824,7 +822,7 @@ const BookingManagement = () => {
                                 {
                                   hour: "2-digit",
                                   minute: "2-digit",
-                                }
+                                },
                               )}
                             </div>
                           </div>
@@ -957,7 +955,7 @@ const BookingManagement = () => {
                                   onClick={() =>
                                     updateBookingStatus(
                                       booking._id,
-                                      "Confirmed"
+                                      "Confirmed",
                                     )
                                   }
                                   disabled={submitting[booking._id]}
@@ -986,7 +984,7 @@ const BookingManagement = () => {
                                   onClick={() =>
                                     updateBookingStatus(
                                       booking._id,
-                                      "Cancelled"
+                                      "Cancelled",
                                     )
                                   }
                                   disabled={submitting[booking._id]}
@@ -1094,7 +1092,7 @@ const BookingManagement = () => {
                     <span className="font-medium">
                       {Math.min(
                         currentPage * itemsPerPage,
-                        pagination.totalCount
+                        pagination.totalCount,
                       )}
                     </span>{" "}
                     of{" "}
@@ -1120,8 +1118,8 @@ const BookingManagement = () => {
                               1,
                               Math.min(
                                 pagination.totalPages - 4,
-                                currentPage - 2
-                              )
+                                currentPage - 2,
+                              ),
                             ) + i;
                           if (page > pagination.totalPages) return null;
                           return (
@@ -1137,7 +1135,7 @@ const BookingManagement = () => {
                               {page}
                             </button>
                           );
-                        }
+                        },
                       )}
                     </div>
 
@@ -1420,7 +1418,7 @@ const BookingManagement = () => {
                     const page =
                       Math.max(
                         1,
-                        Math.min(pagination.totalPages - 4, currentPage - 2)
+                        Math.min(pagination.totalPages - 4, currentPage - 2),
                       ) + i;
                     if (page > pagination.totalPages) return null;
                     return (
@@ -1436,7 +1434,7 @@ const BookingManagement = () => {
                         {page}
                       </button>
                     );
-                  }
+                  },
                 )}
               </div>
 
@@ -1570,8 +1568,8 @@ const BookingManagement = () => {
                         Math.ceil(
                           (new Date(selectedBooking.checkOutDate) -
                             new Date(selectedBooking.checkInDate)) /
-                            (1000 * 60 * 60 * 24)
-                        )
+                            (1000 * 60 * 60 * 24),
+                        ),
                       )}{" "}
                       nights
                     </p>

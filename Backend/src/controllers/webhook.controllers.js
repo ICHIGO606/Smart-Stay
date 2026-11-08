@@ -1,165 +1,217 @@
-import crypto from 'crypto';
-import { Booking } from '../models/booking.models.js';
-
-// Verify Razorpay webhook signature
-const verifyWebhookSignature = (body, signature, secret) => {
-  const expectedSignature = crypto
-    .createHmac('sha256', secret)
-    .update(JSON.stringify(body))
-    .digest('hex');
-  
-  try {
-    // Proactive Security Fix: Use timingSafeEqual to prevent timing attacks
-    return crypto.timingSafeEqual(
-      Buffer.from(expectedSignature),
-      Buffer.from(signature)
-    );
-  } catch {
-    // timingSafeEqual throws if buffer lengths don't match
-    return false; 
-  }
-};
+import { Booking } from "../models/booking.models.js";
+import youpiService from "../services/youpiService.js";
 
 export const handlePaymentWebhook = async (req, res) => {
   try {
-    const razorpaySignature = req.headers['x-razorpay-signature'];
-    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
-    
-    if (!razorpaySignature || !webhookSecret) {
+    const signature =
+      req.headers["x-gateway-signature"] ||
+      req.headers["x-youpi-signature"] ||
+      req.headers["x-razorpay-signature"];
+
+    const hasConfiguredSecret =
+      Boolean(process.env.YOUPI_WEBHOOK_SECRET) ||
+      Boolean(process.env.RAZORPAY_WEBHOOK_SECRET);
+
+    if (!signature || !hasConfiguredSecret) {
       return res.status(400).json({
         success: false,
-        message: 'Missing webhook signature or secret'
+        message: "Missing webhook signature or secret",
       });
     }
 
-    // Verify webhook signature
-    const isValidSignature = verifyWebhookSignature(
+    // Verify webhook HMAC signature
+    const isValidSignature = youpiService.verifyWebhookSignature(
       req.body,
-      razorpaySignature,
-      webhookSecret
+      signature,
     );
 
     if (!isValidSignature) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid webhook signature'
+        message: "Invalid webhook signature",
       });
     }
 
-    const { event, payload } = req.body;
+    // Determine event type (supports YouPI X-Gateway-Event and payload event)
+    const event =
+      req.headers["x-gateway-event"] || req.body?.event || req.body?.status;
+
+    const payload = req.body?.payload || req.body;
 
     switch (event) {
-      case 'payment.captured':
+      case "OBSERVED_SUCCESS":
+      case "RECONCILED":
+      case "SUCCESS":
+        await handlePaymentCaptured(payload?.payment?.entity || payload);
+        break;
+
+      case "payment.captured":
+        if (!payload?.payment?.entity) {
+          throw new Error("Malformed payment.captured payload");
+        }
         await handlePaymentCaptured(payload.payment.entity);
         break;
-      
-      case 'payment.failed':
+
+      case "FAILED":
+      case "EXPIRED":
+      case "CANCELLED":
+        await handlePaymentFailed(payload?.payment?.entity || payload);
+        break;
+
+      case "payment.failed":
+        if (!payload?.payment?.entity) {
+          throw new Error("Malformed payment.failed payload");
+        }
         await handlePaymentFailed(payload.payment.entity);
         break;
-      
-      case 'refund.processed':
+
+      case "refund.processed":
+        if (!payload?.refund?.entity) {
+          throw new Error("Malformed refund.processed payload");
+        }
         await handleRefundProcessed(payload.refund.entity);
         break;
-      
+
       default:
         console.log(`Unhandled webhook event: ${event}`);
     }
 
-    res.status(200).json({ success: true, message: 'Webhook processed' });
-
+    return res
+      .status(200)
+      .json({ success: true, message: "Webhook processed" });
   } catch (error) {
-    console.error('Webhook processing error:', error);
-    res.status(500).json({
+    console.error("Webhook processing error:", error);
+    return res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: "Internal server error",
     });
   }
 };
 
 const handlePaymentCaptured = async (payment) => {
   try {
-    // CodeQL Fix: Sanitize user input by casting to String
-    const safeOrderId = String(payment.order_id);
-    
-    const booking = await Booking.findOne({ 
-      'paymentDetails.razorpayOrderId': safeOrderId 
-    });
+    const safeOrderId = String(payment.order_id || payment.orderId || "");
+    const safePaymentId = String(
+      payment.id || payment.payment_id || payment.paymentId || "",
+    );
+
+    const isRazorpayEvent =
+      payment.order_id && String(payment.order_id).startsWith("order-");
+    const query = isRazorpayEvent
+      ? { "paymentDetails.razorpayOrderId": safeOrderId }
+      : {
+          $or: [
+            { "paymentDetails.orderId": safeOrderId },
+            { "paymentDetails.razorpayOrderId": safeOrderId },
+            { "paymentDetails.paymentId": safePaymentId },
+            { "paymentDetails.razorpayPaymentId": safePaymentId },
+          ],
+        };
+
+    const booking = await Booking.findOne(query);
 
     if (booking) {
-      booking.paymentStatus = 'Completed';
-      booking.bookingStatus = 'Confirmed';
+      booking.paymentStatus = "Completed";
+      booking.bookingStatus = "Confirmed";
       booking.paymentDetails = {
         ...booking.paymentDetails,
-        razorpayPaymentId: payment.id,
+        gateway: payment.gateway || "youpi",
+        orderId: safeOrderId || booking.paymentDetails?.orderId,
+        paymentId: safePaymentId,
+        razorpayPaymentId: safePaymentId,
+        razorpayOrderId: safeOrderId,
+        utr: payment.utr || null,
         paymentDate: new Date(),
-        paymentMethod: payment.method,
-        paymentStatus: 'Completed'
+        paymentMethod: payment.method || "upi",
+        paymentStatus: "Completed",
       };
-      
+
       await booking.save();
       console.log(`Payment captured for booking: ${booking._id}`);
+    } else {
+      console.log(`Booking not found for order: ${safeOrderId}`);
     }
   } catch (error) {
-    console.error('Error handling payment captured:', error);
+    console.error("Error updating booking payment status:", error);
   }
 };
 
 const handlePaymentFailed = async (payment) => {
   try {
-    // CodeQL Fix: Sanitize user input by casting to String
-    const safeOrderId = String(payment.order_id);
-    
-    const booking = await Booking.findOne({ 
-      'paymentDetails.razorpayOrderId': safeOrderId 
-    });
+    const safeOrderId = String(payment.order_id || payment.orderId || "");
+
+    const isRazorpayEvent =
+      payment.order_id && String(payment.order_id).startsWith("order-");
+    const query = isRazorpayEvent
+      ? { "paymentDetails.razorpayOrderId": safeOrderId }
+      : {
+          $or: [
+            { "paymentDetails.orderId": safeOrderId },
+            { "paymentDetails.razorpayOrderId": safeOrderId },
+          ],
+        };
+
+    const booking = await Booking.findOne(query);
 
     if (booking) {
-      booking.paymentStatus = 'Failed';
+      booking.paymentStatus = "Failed";
       booking.paymentDetails = {
         ...booking.paymentDetails,
-        razorpayPaymentId: payment.id,
+        gateway: payment.gateway || "youpi",
+        errorDescription:
+          payment.error_description ||
+          payment.reason ||
+          "Payment declined/failed",
         paymentDate: new Date(),
-        paymentMethod: payment.method,
-        paymentStatus: 'Failed',
-        errorDescription: payment.error_description
+        paymentStatus: "Failed",
       };
-      
+
       await booking.save();
-      console.log(`Payment failed for booking: ${booking._id}`);
+      console.log(`Payment marked failed for booking: ${booking._id}`);
     }
   } catch (error) {
-    console.error('Error handling payment failed:', error);
+    console.error("Error updating booking payment failure status:", error);
   }
 };
 
 const handleRefundProcessed = async (refund) => {
   try {
-    // CodeQL Fix: Sanitize user input by casting to String
-    const safePaymentId = String(refund.payment_id);
-    
-    const booking = await Booking.findOne({ 
-      'paymentDetails.razorpayPaymentId': safePaymentId 
-    });
+    const safePaymentId = String(
+      refund.payment_id || refund.paymentId || refund.id || "",
+    );
+
+    const isRazorpayEvent =
+      refund.payment_id && String(refund.payment_id).startsWith("payment-");
+    const query = isRazorpayEvent
+      ? { "paymentDetails.razorpayPaymentId": safePaymentId }
+      : {
+          $or: [
+            { "paymentDetails.paymentId": safePaymentId },
+            { "paymentDetails.razorpayPaymentId": safePaymentId },
+          ],
+        };
+
+    const booking = await Booking.findOne(query);
 
     if (booking) {
-      booking.paymentStatus = 'Refunded';
-      booking.paymentDetails.refunds = booking.paymentDetails.refunds || [];
+      booking.paymentStatus = "Refunded";
+      if (!booking.paymentDetails) booking.paymentDetails = {};
+      if (!Array.isArray(booking.paymentDetails.refunds)) {
+        booking.paymentDetails.refunds = [];
+      }
+
       booking.paymentDetails.refunds.push({
-        refundId: refund.id,
-        amount: refund.amount / 100,
-        currency: refund.currency,
-        status: refund.status,
-        processedAt: new Date()
+        refundId: refund.id || refund.refundId,
+        amount: (refund.amount || 0) / 100,
+        currency: refund.currency || "INR",
+        status: refund.status || "processed",
+        refundDate: new Date(),
       });
-      
+
       await booking.save();
       console.log(`Refund processed for booking: ${booking._id}`);
     }
   } catch (error) {
-    console.error('Error handling refund processed:', error);
+    console.error("Error updating refund status:", error);
   }
-};
-
-export default {
-  handlePaymentWebhook
 };

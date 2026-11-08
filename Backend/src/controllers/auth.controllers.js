@@ -14,18 +14,19 @@ const generateAccessAndRefreshToken = async (userId) => {
   } catch {
     throw new ApiError(
       500,
-      "Something went wrong while generating the access and refresh token"
+      "Something went wrong while generating the access and refresh token",
     );
   }
 };
 
 const registerUser = asyncHandler(async (req, res) => {
-  const { fullName, username, email, password, age, role ,gender} = req.body;
+  const { fullName, username, email, password, age, role, gender } = req.body;
 
   if (
     [fullName, email, password, gender].some(
-      (field) => !field || field?.trim() === ""
-    ) || !age
+      (field) => !field || field?.trim() === "",
+    ) ||
+    !age
   ) {
     throw new ApiError(400, "All required fields are missing");
   }
@@ -38,19 +39,19 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(409, "User with this email or username already exists");
   }
   // Generate username from email if not provided
-  const generatedUsername = username || email.split('@')[0];
-  
+  const generatedUsername = username || email.split("@")[0];
+
   const user = await User.create({
     fullName,
     age,
     gender,
     username: generatedUsername.toLowerCase(),
     email,
-    role: role || 'user', // Default role to 'user' if not provided
+    role: role || "user", // Default role to 'user' if not provided
     password,
   });
   const createdUser = await User.findById(user._id).select(
-    "-password -refreshToken"
+    "-password -refreshToken",
   );
 
   if (!createdUser) {
@@ -72,18 +73,21 @@ const loginUser = asyncHandler(async (req, res) => {
     $or: [{ username }, { email }],
   });
   if (!user) {
-    return new ApiError(409, "User with this username or email does not exists");
+    return new ApiError(
+      409,
+      "User with this username or email does not exists",
+    );
   }
   const isPasswordValid = await user.isPasswordCorrect(password);
   if (!isPasswordValid) {
     return new ApiError(401, "Invalid user credentials");
   }
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
-    user._id
+    user._id,
   );
 
   const loggedInUser = await User.findById(user._id).select(
-    "-password -refreshToken"
+    "-password -refreshToken",
   );
 
   const options = {
@@ -100,12 +104,9 @@ const loginUser = asyncHandler(async (req, res) => {
       new ApiResponse(
         200,
         { user: loggedInUser, accessToken, refreshToken },
-        "User logged in successfully"
-      )
+        "User logged in successfully",
+      ),
     );
 });
 
-export {
-    registerUser,
-    loginUser
-}
+export { registerUser, loginUser };

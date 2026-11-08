@@ -4,7 +4,7 @@ const { ObjectId } = mongoose.Schema.Types;
 const itinerarySchema = new mongoose.Schema({
   day: { type: Number, required: true },
   title: { type: String, required: true },
-  description: { type: String, required: true }
+  description: { type: String, required: true },
 });
 
 const packageSchema = new mongoose.Schema(
@@ -20,9 +20,9 @@ const packageSchema = new mongoose.Schema(
     images: [{ type: String }],
     itinerary: [itinerarySchema],
     reviews: [{ type: ObjectId, ref: "Review" }],
-    createdBy: { type: ObjectId, ref: "User", required: true } // Admin who created
+    createdBy: { type: ObjectId, ref: "User", required: true }, // Admin who created
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const Package = mongoose.model("Package", packageSchema);

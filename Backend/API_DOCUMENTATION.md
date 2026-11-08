@@ -1,10 +1,10 @@
-# BringIt Hotel & Travel Management API Documentation
+# SmartStay Enterprise Hospitality & Travel API Documentation
 
 ## Base URL
 `http://localhost:8000/api/v1`
 
 ## Authentication
-All endpoints (except auth endpoints) require JWT authentication via cookies or Authorization header.
+All endpoints (except public directories and webhooks) require JWT authentication via cookies (`accessToken`) or `Authorization: Bearer <token>` header, or `?token=<jwt>` query parameter for SSE and downloads.
 
 ---
 
@@ -330,9 +330,17 @@ completes sign-in using the current-user endpoint.
 
 ## Hotel & Booking Routes
 
-### 10. Search Hotels
-**Endpoint:** `GET /hotels/hotels?city=New+York`
-**Authentication:** Required
+### 10. Search Hotels (Date-Aware & Occupancy Filtered)
+**Endpoint:** `GET /hotels/hotels?city=Paris&checkIn=2026-11-15&checkOut=2026-11-20&adults=2&children=0`
+**Authentication:** Optional / Public
+
+**Query Parameters:**
+- `city` (string): Filter by city name
+- `checkIn` (ISO string): Arrival date (`YYYY-MM-DD`)
+- `checkOut` (ISO string): Departure date (`YYYY-MM-DD`)
+- `adults` (number): Number of adult guests
+- `children` (number): Number of children
+- `minPrice` / `maxPrice` (number): Price range filters
 
 **Response:**
 ```json
@@ -341,13 +349,18 @@ completes sign-in using the current-user endpoint.
   "data": [
     {
       "_id": "hotel_id",
-      "name": "Grand Hotel",
-      "city": "New York",
-      "description": "Luxury hotel in downtown",
-      "amenities": ["WiFi", "Pool", "Spa"],
-      "address": "123 Main St",
-      "images": ["image_url1", "image_url2"],
-      "adminId": "admin_id"
+      "name": "Luxury Palace Hotel",
+      "city": "Paris",
+      "description": "A luxurious 5-star hotel with premium amenities",
+      "amenities": ["WiFi", "Pool", "Spa", "Restaurant"],
+      "address": "123 Champs-Élysées, Paris",
+      "images": ["image_url1"],
+      "starRating": 5,
+      "lowestPrice": 4500,
+      "totalStayPrice": 22500,
+      "nights": 5,
+      "availableRoomsCount": 3,
+      "isAvailableForDates": true
     }
   ],
   "message": "Hotels fetched successfully",
@@ -827,6 +840,205 @@ completes sign-in using the current-user endpoint.
   "success": true
 }
 ```
+
+---
+
+## Sovereign YouPI-PG Payment Routes
+
+### 25. Create YouPI Payment Order
+**Endpoint:** `POST /payments/create-order`
+**Authentication:** Required
+
+**Request Body:**
+```json
+{
+  "bookingId": "65ab1234cdef567890123456",
+  "paymentMethod": "upi"
+}
+```
+*Note: Set `paymentMethod: "pay_at_hotel"` for cash/on-arrival settlement.*
+
+**Response (UPI Intent & Vector QR):**
+```json
+{
+  "statusCode": 200,
+  "data": {
+    "orderId": "youpi_65ab1234_1794100000",
+    "paymentId": "pay_youpi_65ab1234_1794100000",
+    "amount": 900000,
+    "amountInRupees": 9000,
+    "currency": "INR",
+    "paymentMethod": "upi",
+    "upiId": "smartstay@upi",
+    "merchantName": "SmartStay Hospitality",
+    "upiString": "upi://pay?pa=smartstay@upi&pn=SmartStay&am=9000&cu=INR&tr=youpi_65ab1234",
+    "deepLinks": {
+      "gpay": "gpay://upi/pay?pa=smartstay@upi&pn=SmartStay&am=9000&cu=INR&tr=youpi_65ab1234",
+      "phonepe": "phonepe://pay?pa=smartstay@upi&pn=SmartStay&am=9000&cu=INR&tr=youpi_65ab1234",
+      "paytm": "paytmmp://pay?pa=smartstay@upi&pn=SmartStay&am=9000&cu=INR&tr=youpi_65ab1234"
+    },
+    "gateway": "youpi"
+  },
+  "message": "Payment order created successfully",
+  "success": true
+}
+```
+
+### 26. Verify Sovereign Payment
+**Endpoint:** `POST /payments/verify`
+**Authentication:** Required
+
+**Request Body:**
+```json
+{
+  "orderId": "youpi_65ab1234_1794100000",
+  "paymentId": "pay_youpi_65ab1234_1794100000",
+  "utr": "123456789012",
+  "signature": "hmac_sha256_hex_signature"
+}
+```
+
+**Response:**
+```json
+{
+  "statusCode": 200,
+  "data": {
+    "paymentId": "pay_youpi_65ab1234_1794100000",
+    "orderId": "youpi_65ab1234_1794100000",
+    "utr": "123456789012",
+    "status": "success",
+    "gateway": "youpi"
+  },
+  "message": "Payment verified successfully",
+  "success": true
+}
+```
+
+### 27. YouPI Webhook Callback
+**Endpoint:** `POST /payments/webhook`
+**Headers:** `x-youpi-signature: <hmac_hex>`
+**Authentication:** Verified via constant-time HMAC-SHA256 signature
+
+**Payload:**
+```json
+{
+  "event": "payment.captured",
+  "payload": {
+    "payment": {
+      "entity": {
+        "id": "pay_youpi_65ab1234",
+        "order_id": "youpi_65ab1234_1794100000",
+        "amount": 900000,
+        "currency": "INR",
+        "status": "captured",
+        "notes": { "bookingId": "65ab1234cdef567890123456" }
+      }
+    }
+  }
+}
+```
+
+---
+
+## Digital Guest Passes & Vouchers
+
+### 28. Get Booking Voucher Pass
+**Endpoint:** `GET /bookings/:bookingId/voucher?format=html`
+**Authentication:** Required (Guest Owner or Admin)
+
+- `format=html`: Returns a print-ready, styled HTML voucher pass with QR code, arrival instructions, and UTR settlement details.
+- `format=json` (default): Returns structured JSON voucher dossier.
+
+### 29. Verify Check-In Voucher Token
+**Endpoint:** `GET /bookings/verify-token/:token`
+**Authentication:** Required
+
+Validates 6-character cryptographic tokens (e.g. `STAY-A9B2C3`) generated on guest vouchers for front-desk scanning.
+
+### 30. Guest Self-Cancellation (Immediate Inventory Release)
+**Endpoint:** `POST /bookings/:bookingId/cancel` or `DELETE /bookings/:bookingId`
+**Authentication:** Required (Guest Owner)
+
+Cancels reservation and pulls booked room dates from `Room.bookedRoomNumbers` immediately.
+
+---
+
+## Front-Desk Operations & Live Streaming
+
+### 31. Front-Desk Arrival & Check-In
+**Endpoint:** `POST /admin/bookings/check-in`
+**Authentication:** Required (Admin)
+
+**Request Body:**
+```json
+{
+  "token": "STAY-9F2B4A",
+  "notes": "Physical keycard #204 issued; luggage delivered"
+}
+```
+
+Sets the assigned room's operational status to `Occupied`, updates booking to `Confirmed`, and broadcasts live via Server-Sent Events (SSE).
+
+### 32. Update Room Operational Lifecycle Status
+**Endpoint:** `PATCH /admin/hotels/:hotelId/rooms/:roomId/status`
+**Authentication:** Required (Hotel Admin)
+
+**Request Body:**
+```json
+{
+  "roomNumber": 204,
+  "status": "Cleaning",
+  "notes": "Housekeeping turn-down in progress"
+}
+```
+*Valid statuses: `Available`, `Reserved`, `Occupied`, `Dirty`, `Cleaning`, `Maintenance`.*
+
+### 33. Live Real-Time Floor Sync (Server-Sent Events)
+**Endpoint:** `GET /admin/hotels/:hotelId/live-stream`
+**Authentication:** Required (Cookies, `Authorization` header, or `?token=<jwt>` query param)
+**Response Headers:** `Content-Type: text/event-stream`
+
+Streams live hospitality events directly to admin consoles:
+- `room_status_changed`
+- `booking_created`
+- `booking_status_updated`
+- `booking_cancelled`
+- `payment_confirmed`
+
+---
+
+## Hospitality Intelligence & Analytics
+
+### 34. Get Administrative KPI Analytics
+**Endpoint:** `GET /admin/stats`
+**Authentication:** Required (Admin)
+
+**Response:**
+```json
+{
+  "statusCode": 200,
+  "data": {
+    "totalBookings": 48,
+    "confirmedBookings": 42,
+    "pendingBookings": 4,
+    "cancelledBookings": 2,
+    "totalRevenue": 384000,
+    "totalOccupiedNights": 86,
+    "adr": 4465,
+    "revPar": 3200,
+    "totalRoomUnits": 30
+  },
+  "message": "Hospitality analytics metrics calculated successfully",
+  "success": true
+}
+```
+
+### 35. Export Bookings CSV Ledger
+**Endpoint:** `GET /admin/bookings/export-csv?hotelId=:hotelId`
+**Authentication:** Required (Admin)
+**Response Headers:** `Content-Type: text/csv; charset=utf-8`
+
+Streams all hotel bookings with guest names, property names, room assignments, stay dates, amount, and payment status as a downloadable `.csv` file.
 
 ---
 

@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: smartstay-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - smartstay-network
+
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: smartstay-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/smartstay
+      - CORS_ORIGIN=http://localhost:3000,http://localhost:80,http://localhost
+      - ACCESS_TOKEN_SECRET=smartstay_super_secret_access_token_jwt_key_2026
+      - ACCESS_TOKEN_EXPIRY=1d
+      - REFRESH_TOKEN_SECRET=smartstay_super_secret_refresh_token_jwt_key_2026
+      - REFRESH_TOKEN_EXPIRY=10d
+      - CSRF_SECRET=smartstay_csrf_super_secure_random_token_key_2026
+      - YOUPI_GATEWAY_URL=http://localhost:8080
+      - YOUPI_MERCHANT_ID=smartstay_hospitality
+      - YOUPI_UPI_ID=smartstay@upi
+      - YOUPI_MERCHANT_NAME=SmartStay Hospitality
+      - YOUPI_WEBHOOK_SECRET=youpi_webhook_super_secret_key
+    depends_on:
+      - mongodb
+    networks:
+      - smartstay-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: smartstay-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - smartstay-network
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  smartstay-network:
+    driver: bridge
+

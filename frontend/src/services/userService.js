@@ -1,11 +1,11 @@
-import api from './api';
+import api from "./api";
 
 // User management services
 export const userService = {
   // Get current user profile
   getProfile: async () => {
     try {
-      const response = await api.get('/users/');
+      const response = await api.get("/users/");
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -15,7 +15,7 @@ export const userService = {
   // Update user profile
   updateProfile: async (userData) => {
     try {
-      const response = await api.put('/users/', userData);
+      const response = await api.put("/users/", userData);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -25,9 +25,9 @@ export const userService = {
   // Upload verification document
   uploadVerification: async (formData) => {
     try {
-      const response = await api.post('/users/upload-verification', formData, {
+      const response = await api.post("/users/upload-verification", formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
       });
       return response.data;
@@ -39,7 +39,7 @@ export const userService = {
   // Get family members
   getFamilyMembers: async () => {
     try {
-      const response = await api.get('/users/family');
+      const response = await api.get("/users/family");
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -49,7 +49,7 @@ export const userService = {
   // Add family member
   addFamilyMember: async (memberData) => {
     try {
-      const response = await api.post('/users/family', memberData);
+      const response = await api.post("/users/family", memberData);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -69,11 +69,15 @@ export const userService = {
   // Upload family member verification
   uploadFamilyVerification: async (memberId, formData) => {
     try {
-      const response = await api.post(`/users/family/${memberId}/verify`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
+      const response = await api.post(
+        `/users/family/${memberId}/verify`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         },
-      });
+      );
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -83,12 +87,12 @@ export const userService = {
   // Change password
   changePassword: async (passwordData) => {
     try {
-      const response = await api.post('/users/change-password', passwordData);
+      const response = await api.post("/users/change-password", passwordData);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
     }
-  }
+  },
 };
 
 export default userService;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router";
 import toast from "react-hot-toast";
 import {
@@ -32,13 +32,7 @@ const PackageFormPage = () => {
     itinerary: [{ day: 1, title: "", description: "" }],
   });
 
-  useEffect(() => {
-    if (isEditMode) {
-      fetchPackageDetails();
-    }
-  }, [id]);
-
-  const fetchPackageDetails = async () => {
+  const fetchPackageDetails = useCallback(async () => {
     try {
       setLoading(true);
       const response = await getPackageById(id);
@@ -66,7 +60,13 @@ const PackageFormPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, navigate]);
+
+  useEffect(() => {
+    if (isEditMode) {
+      fetchPackageDetails();
+    }
+  }, [isEditMode, fetchPackageDetails]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -234,18 +234,23 @@ const PackageFormPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">
-        {isEditMode ? "Edit Package" : "Create New Package"}
-      </h1>
+    <div className="space-y-6">
+      <div className="pb-6 border-b border-stone-200/80">
+        <p className="text-[11px] font-mono uppercase tracking-wider text-ink-muted mb-1">
+          Itinerary catalog
+        </p>
+        <h1 className="font-serif text-3xl text-ink-primary font-normal">
+          {isEditMode ? "Edit travel package" : "Create new package"}
+        </h1>
+      </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="card-base p-6 sm:p-8">
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Basic Information */}
             <div className="space-y-4 md:col-span-2">
-              <h2 className="text-lg font-semibold border-b pb-2">
-                Basic Information
+              <h2 className="text-xs font-mono uppercase tracking-wider text-ink-muted pb-2 border-b border-stone-100">
+                Itinerary overview
               </h2>
 
               <div>
@@ -481,27 +486,27 @@ const PackageFormPage = () => {
             </div>
           </div>
 
-          <div className="mt-8 flex justify-end space-x-3">
+          <div className="mt-8 flex justify-end gap-3 pt-4 border-t border-stone-100">
             <button
               type="button"
               onClick={() => navigate("/admin/packages")}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              className="btn-secondary !text-xs !py-2 !px-4"
               disabled={submitting}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+              className="btn-primary !text-xs !py-2 !px-5 font-mono uppercase tracking-wider"
               disabled={submitting}
             >
               {submitting ? (
                 <span className="flex items-center">
                   <Spinner size="sm" className="mr-2" />
-                  {isEditMode ? "Updating..." : "Creating..."}
+                  {isEditMode ? "Recording..." : "Publishing..."}
                 </span>
               ) : (
-                <span>{isEditMode ? "Update Package" : "Create Package"}</span>
+                <span>{isEditMode ? "Update package" : "Publish package"}</span>
               )}
             </button>
           </div>

@@ -6,9 +6,17 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 // Admin creates a package
 const createPackage = asyncHandler(async (req, res) => {
-  let { name, description, destinations, duration, price, itinerary } = req.body;
+  let { name, description, destinations, duration, price, itinerary } =
+    req.body;
 
-  if (!name || !description || !destinations || !duration || !price || !itinerary) {
+  if (
+    !name ||
+    !description ||
+    !destinations ||
+    !duration ||
+    !price ||
+    !itinerary
+  ) {
     throw new ApiError(400, "All package fields are required");
   }
 
@@ -17,7 +25,7 @@ const createPackage = asyncHandler(async (req, res) => {
     try {
       destinations = JSON.parse(destinations);
     } catch {
-      destinations = destinations.split(",").map(d => d.trim());
+      destinations = destinations.split(",").map((d) => d.trim());
     }
   }
 
@@ -42,10 +50,10 @@ const createPackage = asyncHandler(async (req, res) => {
   let images = [];
   if (Array.isArray(req.files) && req.files.length > 0) {
     const uploadPromises = req.files.map((file) =>
-      uploadOnCloudinary(file.path)
+      uploadOnCloudinary(file.path),
     );
     images = await Promise.all(uploadPromises);
-    images = images.map(img => img.secure_url);
+    images = images.map((img) => img.secure_url);
   }
 
   const newPackage = await Package.create({
@@ -64,11 +72,18 @@ const createPackage = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, newPackage, "Package created successfully"));
 });
 
-
 // Admin updates a package
 const updatePackage = asyncHandler(async (req, res) => {
   const { packageId } = req.params;
-  const { name, description, destinations, duration, price, itinerary, images } = req.body;
+  const {
+    name,
+    description,
+    destinations,
+    duration,
+    price,
+    itinerary,
+    images,
+  } = req.body;
 
   const travelPackage = await Package.findById(packageId);
   if (!travelPackage) throw new ApiError(404, "Package not found");
@@ -83,18 +98,23 @@ const updatePackage = asyncHandler(async (req, res) => {
   // Handle uploaded images
   if (Array.isArray(req.files) && req.files.length > 0) {
     const uploadPromises = req.files.map((file) =>
-      uploadOnCloudinary(file.path)
+      uploadOnCloudinary(file.path),
     );
     const newImages = await Promise.all(uploadPromises);
-    travelPackage.images.push(...newImages.map(img => img.secure_url));
+    travelPackage.images.push(...newImages.map((img) => img.secure_url));
   }
 
   // Add/remove images if provided in request body
   if (images?.add) travelPackage.images.push(...images.add);
-  if (images?.remove) travelPackage.images = travelPackage.images.filter(img => !images.remove.includes(img));
+  if (images?.remove)
+    travelPackage.images = travelPackage.images.filter(
+      (img) => !images.remove.includes(img),
+    );
 
   const updatedPackage = await travelPackage.save();
-  return res.status(200).json(new ApiResponse(200, updatedPackage, "Package updated successfully"));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedPackage, "Package updated successfully"));
 });
 
 // Admin deletes a package
@@ -104,13 +124,17 @@ const deletePackage = asyncHandler(async (req, res) => {
   if (!travelPackage) throw new ApiError(404, "Package not found");
 
   await travelPackage.deleteOne();
-  return res.status(200).json(new ApiResponse(200, {}, "Package deleted successfully"));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Package deleted successfully"));
 });
 
 // User fetches packages
 const getAllPackages = asyncHandler(async (req, res) => {
   const packages = await Package.find().populate("reviews");
-  return res.status(200).json(new ApiResponse(200, packages, "Packages fetched successfully"));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, packages, "Packages fetched successfully"));
 });
 
 // User fetches a single package by ID
@@ -119,7 +143,9 @@ const getPackageById = asyncHandler(async (req, res) => {
   const travelPackage = await Package.findById(packageId).populate("reviews");
   if (!travelPackage) throw new ApiError(404, "Package not found");
 
-  return res.status(200).json(new ApiResponse(200, travelPackage, "Package fetched successfully"));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, travelPackage, "Package fetched successfully"));
 });
 
 export {
@@ -127,5 +153,5 @@ export {
   updatePackage,
   deletePackage,
   getAllPackages,
-  getPackageById
+  getPackageById,
 };
