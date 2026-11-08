@@ -37,7 +37,7 @@ export const paymentService = {
   },
 
   // Load YouPI-PG universal checkout SDK
-  loadYoupiSdk: (baseUrl = "http://localhost:7000") => {
+  loadYoupiSdk: (baseUrl = "https://localhost:7000") => {
     return new Promise((resolve) => {
       if (window.Youpi) {
         resolve();

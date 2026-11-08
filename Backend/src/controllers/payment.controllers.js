@@ -188,6 +188,20 @@ const verifyPayment = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Booking not found for this payment");
   }
 
+  // Enforce booking ownership for authenticated callers (unless admin)
+  if (
+    req.user &&
+    req.user.role !== "admin" &&
+    booking.userId &&
+    req.user._id &&
+    String(booking.userId) !== String(req.user._id)
+  ) {
+    throw new ApiError(
+      403,
+      "You are not authorized to verify payment for this booking",
+    );
+  }
+
   // Update booking status
   booking.paymentStatus = "Completed";
   booking.bookingStatus = "Confirmed";

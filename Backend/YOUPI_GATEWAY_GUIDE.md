@@ -91,15 +91,20 @@ By default, YouPI-PG runs:
 
 ### 2. Verify Payment
 - **URL**: `POST /api/v1/payments/verify`
-- **Auth**: `Bearer <User JWT>`
+- **Auth**: `Bearer <User JWT>` (caller must be the booking owner or an admin)
 - **Body**:
   ```json
   {
     "orderId": "youpi_651234abcd_1794082554964",
     "paymentId": "youpi_pay_1794082554964_abc123",
-    "utr": "431289104523"
+    "utr": "431289104523",
+    "signature": "hmac_sha256_hex_signature"
   }
   ```
+- **Security & Authorization Rules**:
+  - The endpoint verifies booking ownership (`booking.userId === req.user._id`); requests for other users' bookings return `403 Forbidden`.
+  - When a `signature` is provided, it is validated using constant-time HMAC-SHA256 (`crypto.timingSafeEqual`) against the configured webhook secret.
+  - Server-side settlement is finalized only upon valid signature verification or confirmed webhook callback from YouPI.
 - **Response**:
   ```json
   {

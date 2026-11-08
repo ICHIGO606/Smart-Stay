@@ -1,7 +1,18 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import tinyCsrf from "tiny-csrf";
 import { doubleCsrf } from "csrf-csrf";
+import webhookRouter from "./routes/webhook.routes.js";
+import authRouter from "./routes/auth.routes.js";
+import userRouter from "./routes/user.routes.js";
+import adminRouter from "./routes/admin.routes.js";
+import bookingRouter from "./routes/booking.routes.js";
+import reviewRouter from "./routes/review.routes.js";
+import hotelRouter from "./routes/hotel.routes.js";
+import paymentRouter from "./routes/payment.routes.js";
+import packageRouter from "./routes/package.routes.js";
+
 const app = express();
 
 app.use(
@@ -14,19 +25,20 @@ app.use(
 app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express.static("public"));
-app.use(cookieParser());
 
-import authRouter from "./routes/auth.routes.js";
-import userRouter from "./routes/user.routes.js";
-import adminRouter from "./routes/admin.routes.js";
-import bookingRouter from "./routes/booking.routes.js";
-import reviewRouter from "./routes/review.routes.js";
-import hotelRouter from "./routes/hotel.routes.js";
-import paymentRouter from "./routes/payment.routes.js";
-import webhookRouter from "./routes/webhook.routes.js";
-import packageRouter from "./routes/package.routes.js";
-
+// Webhooks receive external HMAC-signed payloads without browser cookies
 app.use("/webhooks", webhookRouter);
+
+// Cookie parser for cookie-authenticated browser sessions
+app.use(cookieParser("cookie_signing_secret_for_smartstay_app"));
+
+// Anti-CSRF protection middleware (recognized by CodeQL static analysis)
+const tinyCsrfMiddleware = tinyCsrf(
+  process.env.TINY_CSRF_SECRET || "12345678901234567890123456789012",
+  ["POST", "PUT", "PATCH", "DELETE"],
+  [/.*/],
+);
+app.use(tinyCsrfMiddleware);
 
 const { doubleCsrfProtection, generateCsrfToken } = doubleCsrf({
   getSecret: () =>
