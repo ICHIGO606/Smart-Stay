@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   Settings,
   ArrowLeft,
+  Globe,
 } from "lucide-react";
 
 const AdminSidebar = () => {
@@ -15,6 +16,7 @@ const AdminSidebar = () => {
   const links = [
     { to: "/admin", label: "Dashboard overview", icon: LayoutDashboard },
     { to: "/admin/hotels", label: "Hotels & rooms", icon: Building2 },
+    { to: "/admin/organization", label: "Brand & Hosted Site", icon: Globe },
     { to: "/admin/bookings", label: "Reservations", icon: CalendarCheck },
     { to: "/admin/packages", label: "Curated packages", icon: Package },
     {

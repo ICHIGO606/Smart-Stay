@@ -12,6 +12,8 @@ import reviewRouter from "./routes/review.routes.js";
 import hotelRouter from "./routes/hotel.routes.js";
 import paymentRouter from "./routes/payment.routes.js";
 import packageRouter from "./routes/package.routes.js";
+import organizationRouter from "./routes/organization.routes.js";
+import { resolveTenantContext } from "./middlewares/tenantContext.middleware.js";
 
 const app = express();
 
@@ -59,6 +61,7 @@ app.get("/api/v1/csrf-token", (req, res) => {
 });
 
 app.use(doubleCsrfProtection);
+app.use(resolveTenantContext);
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
@@ -68,6 +71,7 @@ app.use("/api/reviews", reviewRouter);
 app.use("/api/v1/hotels", hotelRouter);
 app.use("/api/v1/payments", paymentRouter);
 app.use("/api/v1/packages", packageRouter);
+app.use("/api/v1/organizations", organizationRouter);
 
 // Global error handling middleware (requires 4 arguments for Express error handler)
 // eslint-disable-next-line no-unused-vars

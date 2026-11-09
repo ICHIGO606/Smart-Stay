@@ -7,6 +7,8 @@ import {
   User,
   LogOut,
   LayoutDashboard,
+  Building2,
+  Sparkles,
   Menu,
   X,
 } from "lucide-react";
@@ -27,6 +29,7 @@ const Navbar = () => {
     { to: "/", label: "Overview" },
     { to: "/hotels", label: "Hotels" },
     { to: "/packages", label: "Curated packages" },
+    { to: "/orgs", label: "Partner brands" },
   ];
 
   const isActive = (path) => {
@@ -72,6 +75,14 @@ const Navbar = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
+            <Link
+              to="/onboard"
+              className="text-xs font-mono uppercase tracking-wider px-3 py-1.5 rounded-control text-ink-primary hover:bg-stone-100 border border-stone-200/80 transition-colors inline-flex items-center gap-1.5"
+            >
+              <Sparkles size={12} className="text-amber-600" />
+              <span>Onboard Brand</span>
+            </Link>
+
             {isAuthenticated ? (
               <div className="relative">
                 <button
@@ -110,6 +121,17 @@ const Navbar = () => {
                           : "Account dashboard"}
                       </span>
                     </Link>
+
+                    {user?.role === "admin" && (
+                      <Link
+                        to="/admin/organization"
+                        className="flex items-center gap-2.5 px-3.5 py-2 text-xs text-ink-secondary hover:text-ink-primary hover:bg-stone-50 transition-colors"
+                        onClick={() => setProfileMenuOpen(false)}
+                      >
+                        <Building2 size={14} className="text-ink-muted" />
+                        <span>Brand & Website Studio</span>
+                      </Link>
+                    )}
 
                     <button
                       onClick={() => {
@@ -174,6 +196,15 @@ const Navbar = () => {
           ))}
 
           <div className="pt-2 border-t border-stone-100 mt-2 space-y-1">
+            <Link
+              to="/onboard"
+              className="flex items-center gap-2 px-3 py-2 rounded-control text-sm text-ink-primary font-medium bg-stone-50"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Sparkles size={14} className="text-amber-600" />
+              <span>Onboard Your Brand</span>
+            </Link>
+
             {isAuthenticated ? (
               <>
                 <Link
