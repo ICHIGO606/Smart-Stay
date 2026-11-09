@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import adminHotelService from "../../services/adminHotelService";
+import { bookingService } from "../../services/bookingService";
 import { formatCurrency, formatDate } from "../../utils/formatters";
-import { API_BASE_URL } from "../../services/api";
 import {
   QrCode,
   Search,
@@ -86,6 +86,26 @@ const CheckInStationModal = ({ isOpen, onClose, onCheckInComplete }) => {
     setNotes("");
     setError("");
     setSuccessMessage("");
+  };
+
+  const handleOpenVoucher = async () => {
+    if (!verifiedVoucher?.bookingId) return;
+    try {
+      const html = await bookingService.getBookingVoucher(
+        verifiedVoucher.bookingId,
+        "html",
+      );
+      const blob = new Blob([html], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const newWin = window.open(url, "_blank", "noopener,noreferrer");
+      if (!newWin) {
+        setError("Pop-up blocked. Please allow pop-ups for this site.");
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (err) {
+      console.error("Failed to load voucher pass:", err);
+      setError("Failed to open voucher pass preview");
+    }
   };
 
   return (
@@ -273,12 +293,7 @@ const CheckInStationModal = ({ isOpen, onClose, onCheckInComplete }) => {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
               <button
                 type="button"
-                onClick={() =>
-                  window.open(
-                    `${API_BASE_URL}/bookings/${verifiedVoucher.bookingId}/voucher?format=html&token=${localStorage.getItem("accessToken") || ""}`,
-                    "_blank",
-                  )
-                }
+                onClick={handleOpenVoucher}
                 className="btn-secondary !text-xs !py-2 w-full sm:w-auto inline-flex items-center justify-center gap-1.5"
               >
                 <Ticket size={13} className="text-stone-500" />

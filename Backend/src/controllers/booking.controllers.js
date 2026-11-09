@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import crypto from "crypto";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -141,7 +142,18 @@ const createBooking = asyncHandler(async (req, res) => {
     req.body.roomNumbers = [assignedRoomNumber];
   }
 
+  const bookingId = new mongoose.Types.ObjectId();
+  const checkInCode = `STAY-${bookingId.toString().slice(-6).toUpperCase()}`;
+  const verificationPayload = `${bookingId}|${req.user._id}|${checkInDate}`;
+  const verificationToken = crypto
+    .createHash("sha256")
+    .update(verificationPayload)
+    .digest("hex")
+    .substring(0, 16)
+    .toUpperCase();
+
   const booking = await Booking.create({
+    _id: bookingId,
     user: req.user._id,
     bookingType,
     hotelId: bookingType === "Hotel" ? safeHotelId : undefined,
@@ -156,6 +168,8 @@ const createBooking = asyncHandler(async (req, res) => {
     totalAmount,
     paymentStatus,
     bookingStatus,
+    verificationToken,
+    checkInCode,
   });
 
   // Update the booked room entry with the actual booking ID
@@ -448,27 +462,41 @@ const getBookingVoucher = asyncHandler(async (req, res) => {
 // Front-desk QR check-in verification
 const verifyVoucherToken = asyncHandler(async (req, res) => {
   const { token } = req.params;
-  const safeToken = String(token).toUpperCase();
+  const safeToken = String(token || "").trim().toUpperCase();
 
-  const bookings = await Booking.find({
+  if (!safeToken) {
+    throw new ApiError(400, "Voucher token or check-in code is required");
+  }
+
+  // O(1) indexed query looking up verificationToken or checkInCode
+  let booking = await Booking.findOne({
+    $or: [{ verificationToken: safeToken }, { checkInCode: safeToken }],
     bookingStatus: { $in: ["Confirmed", "Pending"] },
   })
     .populate("hotelId")
     .populate("roomId")
     .populate("user", "fullName email phone");
 
-  const matchingBooking = bookings.find((b) => {
-    const data = generateVoucherData(b);
-    return (
-      data.verificationToken === safeToken || data.checkInCode === safeToken
-    );
-  });
+  // Fallback for legacy bookings created prior to schema indexing
+  if (!booking && safeToken.startsWith("STAY-") && safeToken.length === 11) {
+    const hexSuffix = safeToken.slice(5).toLowerCase();
+    const candidateBookings = await Booking.find({
+      bookingStatus: { $in: ["Confirmed", "Pending"] },
+    })
+      .populate("hotelId")
+      .populate("roomId")
+      .populate("user", "fullName email phone");
 
-  if (!matchingBooking) {
+    booking = candidateBookings.find(
+      (b) => b._id.toString().slice(-6).toLowerCase() === hexSuffix,
+    );
+  }
+
+  if (!booking) {
     throw new ApiError(404, "Invalid or expired check-in voucher token");
   }
 
-  const voucherData = generateVoucherData(matchingBooking);
+  const voucherData = generateVoucherData(booking);
   return res
     .status(200)
     .json(new ApiResponse(200, voucherData, "Check-in voucher verified"));

@@ -50,11 +50,10 @@ const RoomVisualization = ({ hotelId, onRoomSelect }) => {
   useEffect(() => {
     if (!hotelId) return;
 
-    const token = localStorage.getItem("accessToken") || "";
     let eventSource = null;
 
     try {
-      const sseUrl = `${API_BASE_URL}/admin/hotels/${hotelId}/live-stream?token=${encodeURIComponent(token)}`;
+      const sseUrl = `${API_BASE_URL}/admin/hotels/${hotelId}/live-stream`;
       eventSource = new EventSource(sseUrl, { withCredentials: true });
 
       eventSource.onopen = () => {

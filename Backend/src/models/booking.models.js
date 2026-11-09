@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import crypto from "crypto";
 
 const bookingSchema = new mongoose.Schema(
   {
@@ -58,13 +59,42 @@ const bookingSchema = new mongoose.Schema(
     },
 
     specialRequests: { type: String },
+
+    // Front-desk verification identifiers
+    verificationToken: {
+      type: String,
+      index: true,
+    },
+    checkInCode: {
+      type: String,
+      index: true,
+    },
   },
   { timestamps: true },
 );
+
+// Populate verification tokens deterministically on creation
+bookingSchema.pre("save", function (next) {
+  if (!this.checkInCode && this._id) {
+    this.checkInCode = `STAY-${this._id.toString().slice(-6).toUpperCase()}`;
+  }
+  if (!this.verificationToken && this._id && this.checkInDate) {
+    const payload = `${this._id}|${this.user?._id || this.user}|${this.checkInDate}`;
+    this.verificationToken = crypto
+      .createHash("sha256")
+      .update(payload)
+      .digest("hex")
+      .substring(0, 16)
+      .toUpperCase();
+  }
+  next();
+});
 
 // Indexes for performance
 bookingSchema.index({ user: 1, createdAt: -1 });
 bookingSchema.index({ hotel: 1, room: 1, checkInDate: 1 });
 bookingSchema.index({ bookingStatus: 1, paymentStatus: 1 });
+bookingSchema.index({ verificationToken: 1 });
+bookingSchema.index({ checkInCode: 1 });
 
 export const Booking = mongoose.model("Booking", bookingSchema);

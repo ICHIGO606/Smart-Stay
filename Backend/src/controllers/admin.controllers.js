@@ -554,8 +554,30 @@ const streamHotelLiveUpdates = asyncHandler(async (req, res) => {
 // Export bookings CSV (Pillar 5)
 const exportBookingsCsv = asyncHandler(async (req, res) => {
   const { hotelId } = req.query;
-  const query = {};
-  if (hotelId) query.hotelId = String(hotelId);
+  const isSuper =
+    req.user.username === "sadmin" || req.user.username === "admin";
+
+  let allowedHotelIds = [];
+  if (!isSuper) {
+    const adminHotels = await Hotel.find({ adminId: req.user._id }).select(
+      "_id",
+    );
+    allowedHotelIds = adminHotels.map((h) => h._id.toString());
+  }
+
+  if (hotelId && !isSuper && !allowedHotelIds.includes(String(hotelId))) {
+    throw new ApiError(
+      403,
+      "You are not authorized to export records for this hotel",
+    );
+  }
+
+  let query = {};
+  if (hotelId) {
+    query = { hotelId: String(hotelId) };
+  } else if (!isSuper) {
+    query = { hotelId: { $in: allowedHotelIds } };
+  }
 
   const bookings = await Booking.find(query)
     .populate("hotelId", "name city")
@@ -580,7 +602,11 @@ const exportBookingsCsv = asyncHandler(async (req, res) => {
 
   const escapeCsv = (val) => {
     if (val === null || val === undefined) return '""';
-    const str = String(val).replace(/"/g, '""');
+    let str = String(val).replace(/"/g, '""');
+    // Sanitize CSV formula injection (=, +, -, @, \t, \r)
+    if (/^[=+\-@\t\r]/.test(str)) {
+      str = `'${str}`;
+    }
     return `"${str}"`;
   };
 

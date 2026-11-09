@@ -20,7 +20,7 @@ const generateAccessAndRefreshToken = async (userId) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
-  const { fullName, username, email, password, age, role, gender } = req.body;
+  const { fullName, username, email, password, age, gender } = req.body;
 
   if (
     [fullName, email, password, gender].some(
@@ -47,7 +47,7 @@ const registerUser = asyncHandler(async (req, res) => {
     gender,
     username: generatedUsername.toLowerCase(),
     email,
-    role: role || "user", // Default role to 'user' if not provided
+    role: "user", // Public registration is strictly scoped to regular users
     password,
   });
   const createdUser = await User.findById(user._id).select(

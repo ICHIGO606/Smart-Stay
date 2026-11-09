@@ -30,8 +30,10 @@ export function generateVoucherData(booking) {
 
   return {
     bookingId: booking._id.toString(),
-    verificationToken,
-    checkInCode: `STAY-${booking._id.toString().slice(-6).toUpperCase()}`,
+    verificationToken: booking.verificationToken || verificationToken,
+    checkInCode:
+      booking.checkInCode ||
+      `STAY-${booking._id.toString().slice(-6).toUpperCase()}`,
     hotel: {
       id: hotel._id,
       name: hotel.name || "Boutique Property",
@@ -91,14 +93,49 @@ export function generateVoucherData(booking) {
 }
 
 /**
+ * HTML entity escaping to prevent Stored XSS in dynamic voucher generation
+ */
+export function escapeHtml(str) {
+  return String(str || "").replace(
+    /[&<>'"]/g,
+    (tag) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "'": "&#39;",
+        '"': "&quot;",
+      })[tag] || tag,
+  );
+}
+
+/**
  * Returns a printable, editorial HTML pass rendered with SmartStay design tokens
  */
 export function generateVoucherHtml(voucherData) {
+  const safeCheckInCode = escapeHtml(voucherData.checkInCode);
+  const safeHotelName = escapeHtml(voucherData.hotel.name);
+  const safeHotelAddress = escapeHtml(voucherData.hotel.address);
+  const safeHotelCity = escapeHtml(voucherData.hotel.city);
+  const safeCheckIn = escapeHtml(voucherData.dates.checkIn);
+  const safeCheckInTime = escapeHtml(voucherData.dates.checkInTime);
+  const safeCheckOut = escapeHtml(voucherData.dates.checkOut);
+  const safeCheckOutTime = escapeHtml(voucherData.dates.checkOutTime);
+  const safeRoomType = escapeHtml(voucherData.room.type);
+  const safeAssignedNumbers = escapeHtml(voucherData.room.assignedNumbers);
+  const safeGuestName = escapeHtml(voucherData.guest.name);
+  const safeToken = escapeHtml(voucherData.verificationToken);
+  const safeBookingStatus = escapeHtml(voucherData.settlement.bookingStatus);
+  const safePaymentMethod = escapeHtml(voucherData.settlement.paymentMethod);
+  const safeUtr = voucherData.settlement.utr ? escapeHtml(voucherData.settlement.utr) : null;
+  const safeCurrency = escapeHtml(voucherData.settlement.currency);
+  const safeBookingId = escapeHtml(voucherData.bookingId);
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>SmartStay Reservation Voucher • ${voucherData.checkInCode}</title>
+  <title>SmartStay Reservation Voucher • ${safeCheckInCode}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap');
@@ -225,36 +262,36 @@ export function generateVoucherHtml(voucherData) {
           Boutique Accommodation Pass
         </div>
       </div>
-      <div class="badge">${voucherData.checkInCode}</div>
+      <div class="badge">${safeCheckInCode}</div>
     </div>
 
     <div class="body">
       <div class="section-title">Property Dossier</div>
-      <div class="hotel-name">${voucherData.hotel.name}</div>
-      <div class="hotel-address">📍 ${voucherData.hotel.address}, ${voucherData.hotel.city}</div>
+      <div class="hotel-name">${safeHotelName}</div>
+      <div class="hotel-address">📍 ${safeHotelAddress}, ${safeHotelCity}</div>
 
       <div class="grid-2">
         <div class="info-box">
           <div class="info-label">Check-in Date</div>
-          <div class="info-value">${voucherData.dates.checkIn}</div>
-          <div class="info-sub">From ${voucherData.dates.checkInTime}</div>
+          <div class="info-value">${safeCheckIn}</div>
+          <div class="info-sub">From ${safeCheckInTime}</div>
         </div>
         <div class="info-box">
           <div class="info-label">Check-out Date</div>
-          <div class="info-value">${voucherData.dates.checkOut}</div>
-          <div class="info-sub">Until ${voucherData.dates.checkOutTime} (${voucherData.dates.nights} Nights)</div>
+          <div class="info-value">${safeCheckOut}</div>
+          <div class="info-sub">Until ${safeCheckOutTime} (${voucherData.dates.nights} Nights)</div>
         </div>
       </div>
 
       <div class="grid-2">
         <div class="info-box">
           <div class="info-label">Signature Room</div>
-          <div class="info-value">${voucherData.room.type}</div>
-          <div class="info-sub">Room № ${voucherData.room.assignedNumbers}</div>
+          <div class="info-value">${safeRoomType}</div>
+          <div class="info-sub">Room № ${safeAssignedNumbers}</div>
         </div>
         <div class="info-box">
           <div class="info-label">Primary Guest</div>
-          <div class="info-value">${voucherData.guest.name}</div>
+          <div class="info-value">${safeGuestName}</div>
           <div class="info-sub">${voucherData.guest.numberOfAdults} Adults${voucherData.guest.numberOfChildren > 0 ? `, ${voucherData.guest.numberOfChildren} Children` : ""}</div>
         </div>
       </div>
@@ -264,7 +301,7 @@ export function generateVoucherHtml(voucherData) {
           <h4>Front-Desk Check-In Pass</h4>
           <p>Present token or pass to the concierge for instant key handover.</p>
         </div>
-        <div class="qr-code-pill">${voucherData.verificationToken}</div>
+        <div class="qr-code-pill">${safeToken}</div>
       </div>
 
       <div class="section-title">Settlement Summary</div>
@@ -272,16 +309,16 @@ export function generateVoucherHtml(voucherData) {
         <tr>
           <td>Status & Method</td>
           <td style="text-align: right; font-family: 'JetBrains Mono', monospace;">
-            ${voucherData.settlement.bookingStatus} (${voucherData.settlement.paymentMethod})
+            ${safeBookingStatus} (${safePaymentMethod})
           </td>
         </tr>
         ${
-          voucherData.settlement.utr
+          safeUtr
             ? `
         <tr>
           <td>UPI Settlement Reference (UTR)</td>
           <td style="text-align: right; font-family: 'JetBrains Mono', monospace;">
-            ${voucherData.settlement.utr}
+            ${safeUtr}
           </td>
         </tr>`
             : ""
@@ -289,20 +326,20 @@ export function generateVoucherHtml(voucherData) {
         <tr>
           <td>Total Tariff Paid</td>
           <td style="text-align: right; font-family: 'JetBrains Mono', monospace;">
-            ${voucherData.settlement.currency} ${Number(voucherData.settlement.totalAmount).toLocaleString()}
+            ${safeCurrency} ${Number(voucherData.settlement.totalAmount).toLocaleString()}
           </td>
         </tr>
       </table>
 
       <div class="section-title">Arrival Guidelines</div>
       <ul class="policies">
-        ${voucherData.policies.map((p) => `<li>${p}</li>`).join("")}
+        ${voucherData.policies.map((p) => `<li>${escapeHtml(p)}</li>`).join("")}
       </ul>
     </div>
 
     <div class="footer">
       <span>SMARTSTAY PLATFORM • VERIFIED DOSSIER</span>
-      <span>${voucherData.bookingId}</span>
+      <span>${safeBookingId}</span>
     </div>
   </div>
 </body>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
+import toast from "react-hot-toast";
 import { bookingService } from "../services/bookingService";
-import { API_BASE_URL } from "../services/api";
 import {
   Calendar,
   Users,
@@ -49,6 +49,22 @@ const UserBookings = () => {
       console.error("Error cancelling booking:", err);
     } finally {
       setCancellingId(null);
+    }
+  };
+
+  const handleOpenVoucher = async (bookingId) => {
+    try {
+      const response = await bookingService.getBookingVoucher(bookingId, "html");
+      const blob = new Blob([response], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const newWin = window.open(url, "_blank", "noopener,noreferrer");
+      if (!newWin) {
+        toast.error("Pop-up blocked. Please allow pop-ups for this site.");
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (err) {
+      console.error("Failed to load voucher pass:", err);
+      toast.error("Failed to load voucher pass");
     }
   };
 
@@ -247,12 +263,7 @@ const UserBookings = () => {
               <div className="flex items-center justify-between pt-3 border-t border-stone-100">
                 <button
                   type="button"
-                  onClick={() =>
-                    window.open(
-                      `${API_BASE_URL}/bookings/${booking._id}/voucher?format=html&token=${localStorage.getItem("accessToken") || ""}`,
-                      "_blank",
-                    )
-                  }
+                  onClick={() => handleOpenVoucher(booking._id)}
                   className="btn-secondary !text-xs !py-1 inline-flex items-center gap-1.5 text-ink-primary hover:border-ink-primary"
                 >
                   <Ticket size={13} className="text-stone-500" />
