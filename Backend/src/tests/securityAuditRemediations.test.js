@@ -3,6 +3,7 @@ import path from "path";
 import { generateVoucherHtml, generateVoucherData } from "../utils/voucherGenerator.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
+import { googleLogin } from "../controllers/googleAuth.controllers.js";
 
 describe("Security Audit Remediations", () => {
   describe("smartstay-sec-004: XSS sanitization in voucher generator", () => {
@@ -106,6 +107,40 @@ describe("Security Audit Remediations", () => {
       const voucher = generateVoucherData(booking);
       expect(voucher.checkInCode).toBe("STAY-000001");
       expect(voucher.verificationToken).toHaveLength(16);
+    });
+  });
+
+  describe("CodeQL alert 119 & 120: Google OAuth state cookie security flags", () => {
+    test("sets state cookie with httpOnly: true, secure: true, and restricted path", async () => {
+      process.env.GOOGLE_CLIENT_ID = "test-client-id";
+      process.env.GOOGLE_CLIENT_SECRET = "test-client-secret";
+
+      let cookieCall = null;
+      let redirectUrl = null;
+
+      const req = {};
+      const res = {
+        cookie: (name, value, options) => {
+          cookieCall = { name, value, options };
+          return res;
+        },
+        redirect: (url) => {
+          redirectUrl = url;
+          return res;
+        },
+      };
+
+      await new Promise((resolve) => {
+        googleLogin(req, res, () => resolve());
+        if (redirectUrl) resolve();
+      });
+
+      expect(cookieCall).toBeDefined();
+      expect(cookieCall.name).toBe("googleOAuthState");
+      expect(cookieCall.options.httpOnly).toBe(true);
+      expect(cookieCall.options.secure).toBe(true);
+      expect(cookieCall.options.path).toBe("/api/v1/auth/google");
+      expect(redirectUrl).toContain("accounts.google.com");
     });
   });
 });
