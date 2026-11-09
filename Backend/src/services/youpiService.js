@@ -16,8 +16,7 @@ class YoupiService {
   getWebhookSecret() {
     return (
       process.env.YOUPI_WEBHOOK_SECRET ||
-      process.env.RAZORPAY_WEBHOOK_SECRET ||
-      "youpi_webhook_super_secret_key"
+      process.env.RAZORPAY_WEBHOOK_SECRET
     );
   }
 
@@ -140,7 +139,6 @@ class YoupiService {
         process.env.YOUPI_WEBHOOK_SECRET,
         process.env.RAZORPAY_KEY_SECRET,
         process.env.RAZORPAY_WEBHOOK_SECRET,
-        "youpi_webhook_super_secret_key",
       ].filter(Boolean);
 
       let isValidSig = false;

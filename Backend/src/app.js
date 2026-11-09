@@ -32,7 +32,16 @@ app.use(express.static("public"));
 app.use("/webhooks", webhookRouter);
 
 // Cookie parser for cookie-authenticated browser sessions
-app.use(cookieParser("cookie_signing_secret_for_smartstay_app"));
+const cookieSecret =
+  process.env.COOKIE_SECRET ||
+  process.env.ACCESS_TOKEN_SECRET ||
+  (process.env.NODE_ENV === "production"
+    ? undefined
+    : "dev_cookie_signing_secret_for_smartstay_app");
+if (process.env.NODE_ENV === "production" && !cookieSecret) {
+  throw new Error("COOKIE_SECRET or ACCESS_TOKEN_SECRET must be configured in production");
+}
+app.use(cookieParser(cookieSecret));
 
 // Anti-CSRF protection middleware (recognized by CodeQL static analysis)
 const tinyCsrfMiddleware = tinyCsrf(
@@ -42,9 +51,18 @@ const tinyCsrfMiddleware = tinyCsrf(
 );
 app.use(tinyCsrfMiddleware);
 
+const csrfSecret =
+  process.env.CSRF_SECRET ||
+  process.env.ACCESS_TOKEN_SECRET ||
+  (process.env.NODE_ENV === "production"
+    ? undefined
+    : "dev_fallback_secret_for_development_only");
+if (process.env.NODE_ENV === "production" && !csrfSecret) {
+  throw new Error("CSRF_SECRET or ACCESS_TOKEN_SECRET must be configured in production");
+}
+
 const { doubleCsrfProtection, generateCsrfToken } = doubleCsrf({
-  getSecret: () =>
-    process.env.CSRF_SECRET || "fallback_secret_for_development_only",
+  getSecret: () => csrfSecret,
   getSessionIdentifier: (req) => req.ip,
   cookieName: "x-csrf-token",
   cookieOptions: {

@@ -9,7 +9,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const UPLOAD_DIR = path.resolve("public/temp");
+const UPLOAD_DIR = path.resolve("storage/temp");
 
 const uploadOnCloudinary = async (localFilePath) => {
   try {

@@ -131,13 +131,24 @@ const verifyPayment = asyncHandler(async (req, res) => {
     throw new ApiError(400, "All payment parameters are required");
   }
 
+  // Require either cryptographic HMAC signature or valid 12-digit UPI UTR
+  if (!effectiveSignature && (!utr || !/^\d{12}$/.test(String(utr).trim()))) {
+    throw new ApiError(
+      400,
+      "Valid payment signature or 12-digit UTR reference is required",
+    );
+  }
+
   // Verify HMAC signature if provided
   if (effectiveSignature) {
     const body = `${effectiveOrderId}|${effectivePaymentId}`;
     const secret =
       process.env.YOUPI_WEBHOOK_SECRET ||
-      process.env.RAZORPAY_KEY_SECRET ||
-      "youpi_webhook_super_secret_key";
+      process.env.RAZORPAY_KEY_SECRET;
+
+    if (!secret) {
+      throw new ApiError(500, "Payment verification secret is not configured");
+    }
 
     const expectedSignature = crypto
       .createHmac("sha256", secret)
@@ -189,12 +200,13 @@ const verifyPayment = asyncHandler(async (req, res) => {
   }
 
   // Enforce booking ownership for authenticated callers (unless admin)
+  const bookingOwnerId = booking.user?._id || booking.user;
   if (
     req.user &&
     req.user.role !== "admin" &&
-    booking.userId &&
+    bookingOwnerId &&
     req.user._id &&
-    String(booking.userId) !== String(req.user._id)
+    String(bookingOwnerId) !== String(req.user._id)
   ) {
     throw new ApiError(
       403,
