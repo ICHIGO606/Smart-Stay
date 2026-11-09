@@ -5,6 +5,8 @@ import { AuthProvider } from "./context/AuthContext";
 import PublicLayout from "./layouts/PublicLayout";
 import UserLayout from "./layouts/UserLayout";
 import AdminLayout from "./layouts/AdminLayout";
+import TenantWebsiteLayout from "./layouts/TenantWebsiteLayout";
+import { TenantProvider } from "./context/TenantContext";
 
 // Public Pages
 import Home from "./pages/public/Home";
@@ -14,6 +16,12 @@ import HotelSearch from "./pages/public/HotelSearch";
 import HotelDetails from "./pages/public/HotelDetails";
 import PackageSearch from "./pages/public/PackageSearch";
 import PackageDetails from "./pages/public/PackageDetails";
+import OnboardingWizard from "./pages/public/OnboardingWizard";
+import OrganizationDirectory from "./pages/public/OrganizationDirectory";
+
+// Tenant Hosted Pages
+import TenantHome from "./pages/tenant/TenantHome";
+import TenantHotelDetails from "./pages/tenant/TenantHotelDetails";
 
 // User Pages
 import UserDashboard from "./pages/user/UserDashboard";
@@ -33,6 +41,7 @@ import AdminProfile from "./pages/admin/AdminProfile";
 import AdminVerifications from "./pages/admin/AdminVerifications";
 import PackageListPage from "./pages/admin/PackageListPage";
 import PackageFormPage from "./pages/admin/PackageFormPage";
+import OrganizationSettings from "./pages/admin/OrganizationSettings";
 // const AdminUsers = () => <div className="p-8"><h1 className="text-2xl font-bold">User Management</h1></div>;
 
 function App() {
@@ -53,6 +62,21 @@ function App() {
             />
             <Route path="packages" element={<PackageSearch />} />
             <Route path="packages/:id" element={<PackageDetails />} />
+            <Route path="orgs" element={<OrganizationDirectory />} />
+            <Route path="onboard" element={<OnboardingWizard />} />
+          </Route>
+
+          {/* Tenant Hosted Websites */}
+          <Route
+            path="/portal/:slug"
+            element={
+              <TenantProvider>
+                <TenantWebsiteLayout />
+              </TenantProvider>
+            }
+          >
+            <Route index element={<TenantHome />} />
+            <Route path="hotels/:id" element={<TenantHotelDetails />} />
           </Route>
 
           {/* User Routes */}
@@ -72,6 +96,7 @@ function App() {
             <Route path="packages/edit/:id" element={<PackageFormPage />} />
             {/* <Route path="users" element={<AdminUsers />} /> */}
             <Route path="verifications" element={<AdminVerifications />} />
+            <Route path="organization" element={<OrganizationSettings />} />
             <Route path="profile" element={<AdminProfile />} />
           </Route>
 

@@ -16,6 +16,12 @@ const hotelSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    organizationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      index: true,
+      default: null,
+    },
     currency: {
       type: String,
       default: "INR",

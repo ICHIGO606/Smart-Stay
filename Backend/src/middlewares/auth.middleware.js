@@ -26,6 +26,27 @@ export const verifyJWT = asyncHandler(async (req, _, next) => {
     throw new ApiError(401, err.message || "Invalid Access Token");
   }
 });
+
+export const optionalVerifyJWT = asyncHandler(async (req, _, next) => {
+  try {
+    const token =
+      req.cookies?.accessToken ||
+      req.header("Authorization")?.replace("Bearer ", "") ||
+      req.query?.token;
+    if (token) {
+      const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+      const user = await User.findById(decodedToken?._id).select(
+        "-password -refreshToken",
+      );
+      if (user) {
+        req.user = user;
+      }
+    }
+    next();
+  } catch {
+    next();
+  }
+});
 export const isAdmin = (req, res, next) => {
   if (req.user?.role !== "admin") {
     throw new ApiError(403, "Access denied. Admins only");

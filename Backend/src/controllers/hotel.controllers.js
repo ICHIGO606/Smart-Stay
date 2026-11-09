@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -35,10 +36,23 @@ const getHotels = asyncHandler(async (req, res) => {
     children = 0,
     minPrice,
     maxPrice,
+    organizationId,
   } = req.query;
 
-  const query = city ? { city: new RegExp(escapeRegex(city), "i") } : {};
-  const hotels = await Hotel.find(query);
+  const query = {};
+  if (typeof city === "string" && city.trim().length > 0) {
+    query.city = new RegExp(escapeRegex(city.trim()), "i");
+  }
+  if (
+    typeof organizationId === "string" &&
+    mongoose.Types.ObjectId.isValid(organizationId.trim())
+  ) {
+    query.organizationId = new mongoose.Types.ObjectId(organizationId.trim());
+  }
+  const hotels = await Hotel.find(query).populate(
+    "organizationId",
+    "name slug branding theme",
+  );
 
   const checkInDate = checkIn ? new Date(checkIn) : null;
   const checkOutDate = checkOut ? new Date(checkOut) : null;
@@ -135,7 +149,10 @@ const getRooms = asyncHandler(async (req, res) => {
 // Get hotel details by ID
 const getHotelDetails = asyncHandler(async (req, res) => {
   const { hotelId } = req.params;
-  const hotel = await Hotel.findById(hotelId);
+  const hotel = await Hotel.findById(hotelId).populate(
+    "organizationId",
+    "name slug branding theme contact",
+  );
   if (!hotel) throw new ApiError(404, "Hotel not found");
 
   // Get rooms for this hotel

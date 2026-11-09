@@ -340,9 +340,21 @@ const HotelSearch = () => {
                       <div className="p-5 flex-1 flex flex-col justify-between">
                         <div>
                           <div className="flex items-start justify-between gap-4 mb-1">
-                            <h3 className="text-base font-semibold text-ink-primary group-hover:text-accent transition-colors">
-                              {hotel.name}
-                            </h3>
+                            <div>
+                              <h3 className="text-base font-semibold text-ink-primary group-hover:text-accent transition-colors">
+                                {hotel.name}
+                              </h3>
+                              {hotel.organizationId && (
+                                <Link
+                                  to={`/portal/${hotel.organizationId.slug}`}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-stone-100 hover:bg-stone-200 border border-stone-200/80 text-[10px] font-mono text-stone-700 transition-colors mt-0.5"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <span className="w-1.5 h-1.5 rounded-full bg-stone-800" />
+                                  <span>By {hotel.organizationId.name}</span>
+                                </Link>
+                              )}
+                            </div>
                             {renderStars(hotel.starRating || 0)}
                           </div>
 
