@@ -8,20 +8,6 @@ const redirectUri = () =>
   process.env.GOOGLE_REDIRECT_URI ||
   "http://localhost:8000/api/v1/auth/google/callback";
 
-const stateCookieOptions = () => ({
-  httpOnly: true,
-  secure: true,
-  sameSite: "lax",
-  path: "/api/v1/auth/google",
-});
-
-const authCookieOptions = () => ({
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax",
-  path: "/",
-});
-
 const googleCredentials = () => ({
   clientId: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -36,7 +22,12 @@ const googleLogin = asyncHandler(async (_req, res) => {
   }
 
   const state = randomBytes(32).toString("hex");
-  res.cookie(stateCookieName, state, stateCookieOptions());
+  res.cookie(stateCookieName, state, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    path: "/api/v1/auth/google",
+  });
 
   const authorizationUrl = new URL(
     "https://accounts.google.com/o/oauth2/v2/auth",
@@ -55,7 +46,12 @@ const googleLogin = asyncHandler(async (_req, res) => {
 
 const googleLoginCallback = asyncHandler(async (req, res) => {
   const fail = (reason) => {
-    res.clearCookie(stateCookieName, stateCookieOptions());
+    res.clearCookie(stateCookieName, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/api/v1/auth/google",
+    });
     return res.redirect(
       `${frontendUrl()}/login?googleError=${encodeURIComponent(reason)}`,
     );
@@ -77,7 +73,12 @@ const googleLoginCallback = asyncHandler(async (req, res) => {
     return fail("google_auth_failed");
   }
 
-  res.clearCookie(stateCookieName, stateCookieOptions());
+  res.clearCookie(stateCookieName, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    path: "/api/v1/auth/google",
+  });
 
   try {
     const { clientId, clientSecret } = googleCredentials();
@@ -141,9 +142,16 @@ const googleLoginCallback = asyncHandler(async (req, res) => {
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
 
+    const authOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+    };
+
     return res
-      .cookie("accessToken", accessToken, authCookieOptions())
-      .cookie("refreshToken", refreshToken, authCookieOptions())
+      .cookie("accessToken", accessToken, authOptions)
+      .cookie("refreshToken", refreshToken, authOptions)
       .redirect(`${frontendUrl()}/login?google=success`);
   } catch (error) {
     console.error("Google OAuth callback failed:", error);
