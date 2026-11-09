@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -38,9 +39,15 @@ const getHotels = asyncHandler(async (req, res) => {
     organizationId,
   } = req.query;
 
-  const query = city ? { city: new RegExp(escapeRegex(city), "i") } : {};
-  if (organizationId) {
-    query.organizationId = organizationId;
+  const query = {};
+  if (typeof city === "string" && city.trim().length > 0) {
+    query.city = new RegExp(escapeRegex(city.trim()), "i");
+  }
+  if (
+    typeof organizationId === "string" &&
+    mongoose.Types.ObjectId.isValid(organizationId.trim())
+  ) {
+    query.organizationId = new mongoose.Types.ObjectId(organizationId.trim());
   }
   const hotels = await Hotel.find(query).populate(
     "organizationId",

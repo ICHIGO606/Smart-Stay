@@ -29,3 +29,4 @@ router.get("/my-organization", verifyJWT, getMyOrganization);
 router.patch("/:id", verifyJWT, updateOrganization);
 
 export default router;
+

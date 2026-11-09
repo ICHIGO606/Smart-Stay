@@ -289,3 +289,4 @@ const TenantHotelDetails = () => {
 };
 
 export default TenantHotelDetails;
+

@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -122,7 +123,7 @@ export const onboardOrganization = asyncHandler(async (req, res) => {
 
     const username = ownerInput.username
       ? String(ownerInput.username).trim().toLowerCase()
-      : `${slug}_admin_${Math.floor(1000 + Math.random() * 9000)}`;
+      : `${slug}_admin_${crypto.randomInt(1000, 10000)}`;
 
     owner = await User.create({
       fullName: ownerInput.fullName,
@@ -430,3 +431,4 @@ export const updateOrganization = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, organization, "Organization updated successfully"));
 });
+
