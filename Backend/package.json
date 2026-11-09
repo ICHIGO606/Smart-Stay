@@ -40,5 +40,10 @@
     "jest": "^30.5.2",
     "nodemon": "^3.1.10",
     "prettier": "^3.9.9"
+  },
+  "overrides": {
+    "deepmerge": "4.1.2",
+    "glob": "^14.0.4",
+    "minimatch": "^11.0.5"
   }
 }
